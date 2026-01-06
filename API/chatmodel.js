@@ -1,6 +1,7 @@
-export default async function handler(req, res) {
+// Switch to CommonJS syntax for better compatibility with default Vercel settings
+module.exports = async (req, res) => {
   // 1. Setup CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -16,11 +17,17 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check for global fetch (requires Node.js 18+)
+    if (typeof fetch === 'undefined') {
+        const msg = 'Node.js version is too old. Please set Node.js Version to 18.x or 20.x in Vercel Settings.';
+        console.error(msg);
+        return res.status(500).json({ error: msg });
+    }
+
     // 3. Robust Body Parsing
     let message;
     let body = req.body;
 
-    // Log the raw body type for debugging in Vercel logs
     console.log('Request Body Type:', typeof body);
 
     if (typeof body === 'string') {
@@ -32,7 +39,8 @@ export default async function handler(req, res) {
       }
     }
     
-    message = body?.message;
+    // Support both { message: "..." } and { prompt: "..." } just in case
+    message = body?.message || body?.prompt;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required in the request body' });
@@ -41,7 +49,6 @@ export default async function handler(req, res) {
     // 4. Get API key from Vercel Environment Variables
     const apiKey = process.env.GROQ_API_KEY;
 
-    // Debug log to check if key exists (DO NOT LOG THE KEY ITSELF)
     console.log('GROQ_API_KEY Status:', apiKey ? 'Found' : 'Missing');
 
     if (!apiKey) {
@@ -68,7 +75,7 @@ export default async function handler(req, res) {
                 content: message 
             }
         ],
-        model: "llama3-8b-8192", // Ensure this model name is current
+        model: "llama3-8b-8192", 
         temperature: 0.7,
         max_tokens: 1024,
       }),
@@ -77,9 +84,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      // Log the full error from Groq
       console.error('Groq API Error Response:', JSON.stringify(data, null, 2));
-      
       return res.status(response.status).json({ 
         error: 'Groq API Error', 
         details: data.error?.message || 'Unknown error from AI provider' 
@@ -98,4 +103,4 @@ export default async function handler(req, res) {
       details: error.message 
     });
   }
-}
+};

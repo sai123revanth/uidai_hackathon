@@ -24,6 +24,14 @@
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1); }
         }
+        
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.3s ease-out forwards;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen flex flex-col font-sans antialiased selection:bg-blue-500 selection:text-white">
@@ -51,7 +59,7 @@
         <!-- Welcome Message -->
         <div class="flex justify-start animate-fade-in-up">
             <div class="max-w-[85%] md:max-w-[70%] bg-gray-800 rounded-2xl rounded-tl-none px-6 py-4 shadow-md border border-gray-700">
-                <p class="text-gray-200 leading-relaxed">Hello! I'm your AI assistant powered by Groq. How can I help you today?</p>
+                <p class="text-gray-200 leading-relaxed">Hello! I'm your AI assistant. I'm connected to the backend and ready to help.</p>
             </div>
         </div>
     </main>
@@ -104,16 +112,16 @@
             }
         });
 
-        function appendMessage(role, text) {
+        function appendMessage(role, text, isError = false) {
             const isUser = role === 'user';
             const div = document.createElement('div');
-            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`;
+            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in-up`;
             
             const bubble = document.createElement('div');
             bubble.className = `max-w-[85%] md:max-w-[70%] px-6 py-4 shadow-md text-gray-200 leading-relaxed ${
                 isUser 
                 ? 'bg-blue-600 rounded-2xl rounded-tr-none' 
-                : 'bg-gray-800 rounded-2xl rounded-tl-none border border-gray-700'
+                : isError ? 'bg-red-900/50 border border-red-700 rounded-2xl rounded-tl-none' : 'bg-gray-800 rounded-2xl rounded-tl-none border border-gray-700'
             }`;
 
             // Handle basic formatting (newlines)
@@ -129,7 +137,7 @@
         function showTypingIndicator() {
             const div = document.createElement('div');
             div.id = 'typing-indicator';
-            div.className = 'flex justify-start animate-fade-in';
+            div.className = 'flex justify-start animate-fade-in-up';
             div.innerHTML = `
                 <div class="bg-gray-800 rounded-2xl rounded-tl-none px-6 py-4 border border-gray-700 flex items-center gap-1">
                     <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
@@ -172,13 +180,16 @@
                 if (response.ok) {
                     appendMessage('assistant', data.reply);
                 } else {
-                    appendMessage('assistant', "Sorry, I encountered an error. Please check your API configuration.");
-                    console.error('Error:', data.error);
+                    // Enhanced error display based on backend response
+                    const errorMsg = data.error || "Unknown error occurred";
+                    const details = data.details ? ` (${data.details})` : "";
+                    appendMessage('assistant', `Error: ${errorMsg}${details}`, true);
+                    console.error('API Error:', data);
                 }
 
             } catch (error) {
-                typingIndicator.remove();
-                appendMessage('assistant', "Network error. Please try again later.");
+                if(typingIndicator) typingIndicator.remove();
+                appendMessage('assistant', "Network Connection Error. Ensure you are connected to the internet and the Vercel function is deployed.", true);
                 console.error('Fetch error:', error);
             } finally {
                 input.disabled = false;

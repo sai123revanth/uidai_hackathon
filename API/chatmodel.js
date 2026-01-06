@@ -1,15 +1,12 @@
 export default async function handler(req, res) {
-  // 1. Setup CORS headers to allow the browser to talk to this API
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*'); // In production, replace '*' with your specific domain
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  // 1. Setup CORS headers
+  // allow * is only valid if allow-credentials is NOT true. 
+  // We removed credentials true to make the wildcard origin work safely.
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // 2. Handle the OPTIONS method (Preflight request)
-  // Browsers send this first to check if they are allowed to connect
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -20,26 +17,29 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let { message } = req.body;
+  let message;
 
-  // Safety check: sometimes req.body comes in as a string
-  if (typeof req.body === 'string') {
-      try {
-        const parsed = JSON.parse(req.body);
-        message = parsed.message;
-      } catch (e) {
-        return res.status(400).json({ error: 'Invalid JSON body' });
-      }
+  // 3. Robust Body Parsing
+  // Vercel sometimes parses it, sometimes passes a string. We handle both.
+  try {
+    let body = req.body;
+    if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+    message = body?.message;
+  } catch (e) {
+    return res.status(400).json({ error: 'Invalid JSON body', details: e.message });
   }
 
   if (!message) {
-    return res.status(400).json({ error: 'Message is required' });
+    return res.status(400).json({ error: 'Message is required in the request body' });
   }
 
   // Get API key from Vercel Environment Variables
   const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
+    console.error('Missing GROQ_API_KEY environment variable');
     return res.status(500).json({ error: 'Server configuration error: API Key missing' });
   }
 
@@ -52,18 +52,16 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         messages: [
-            // System prompt to define behavior
             { 
                 role: "system", 
                 content: "You are a helpful, friendly, and fast AI assistant." 
             },
-            // The user's message
             { 
                 role: "user", 
                 content: message 
             }
         ],
-        model: "llama3-8b-8192", // Using Llama 3 for speed and quality
+        model: "llama3-8b-8192",
         temperature: 0.7,
         max_tokens: 1024,
       }),
@@ -72,8 +70,11 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Groq API Error Details:', data);
-      throw new Error(data.error?.message || 'Failed to fetch from Groq');
+      console.error('Groq API Error Details:', JSON.stringify(data));
+      return res.status(response.status).json({ 
+        error: 'Error from Groq API', 
+        details: data.error?.message || 'Unknown error' 
+      });
     }
 
     // Extract the actual reply text
@@ -82,7 +83,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply });
 
   } catch (error) {
-    console.error('Groq API Error:', error);
+    console.error('Server Execution Error:', error);
     return res.status(500).json({ error: 'Failed to process request', details: error.message });
   }
 }

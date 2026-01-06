@@ -97,6 +97,12 @@
         const chatContainer = document.getElementById('chat-container');
         const sendBtn = document.getElementById('send-btn');
 
+        // Check if running on file protocol
+        if (window.location.protocol === 'file:') {
+            alert("⚠️ WARNING: You are running this file locally (file://). The chatbot will NOT work.\n\nPlease upload these files to Vercel or run a local server.");
+            appendMessage('assistant', "⚠️ SYSTEM ERROR: I am running in local file mode. Please deploy me to Vercel to allow me to speak.", true);
+        }
+
         // Auto-resize textarea
         input.addEventListener('input', function() {
             this.style.height = 'auto';
@@ -175,21 +181,26 @@
                 const data = await response.json();
                 
                 // Remove typing indicator
-                typingIndicator.remove();
+                if(typingIndicator) typingIndicator.remove();
 
                 if (response.ok) {
                     appendMessage('assistant', data.reply);
                 } else {
                     // Enhanced error display based on backend response
                     const errorMsg = data.error || "Unknown error occurred";
-                    const details = data.details ? ` (${data.details})` : "";
-                    appendMessage('assistant', `Error: ${errorMsg}${details}`, true);
+                    const details = data.details ? `\nDetails: ${data.details}` : "";
+                    
+                    if(response.status === 404) {
+                         appendMessage('assistant', `⚠️ Error 404: The backend file was not found.\nMake sure 'chatmodel.js' is inside the 'api' folder and 'vercel.json' is in the root.`, true);
+                    } else {
+                         appendMessage('assistant', `Error (${response.status}): ${errorMsg}${details}`, true);
+                    }
                     console.error('API Error:', data);
                 }
 
             } catch (error) {
                 if(typingIndicator) typingIndicator.remove();
-                appendMessage('assistant', "Network Connection Error. Ensure you are connected to the internet and the Vercel function is deployed.", true);
+                appendMessage('assistant', "Network Error: Could not reach the backend.\n1. Check if 'vercel.json' exists.\n2. Ensure you are on the Vercel-hosted URL, not local file.", true);
                 console.error('Fetch error:', error);
             } finally {
                 input.disabled = false;

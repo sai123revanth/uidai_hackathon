@@ -6,72 +6,160 @@
     <title>UIDAI Assistant (Multilingual)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        :root {
+            --glass-bg: rgba(15, 23, 42, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --accent-blue: #3b82f6;
+            --accent-orange: #f97316;
         }
+
         body {
-            background: radial-gradient(circle at top right, #0f172a, #000000);
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.1) 0%, transparent 50%),
+                #020617;
             height: 100vh;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
         .message-bubble {
             max-width: 85%;
             word-wrap: break-word;
             line-height: 1.6;
+            transition: transform 0.2s ease;
         }
+
+        .bot-bubble {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom-left-radius: 4px;
+        }
+
+        .user-bubble {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .input-container {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-container:focus-within {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Animated background glow */
+        .glow-sphere {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(60px);
+            pointer-events: none;
+        }
+
         #chat-container::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
         #chat-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-msg {
+            animation: fadeIn 0.3s ease forwards;
         }
     </style>
 </head>
-<body class="text-white flex flex-col items-center justify-center p-4">
+<body class="text-slate-200 flex flex-col items-center justify-center p-4 overflow-hidden">
 
-    <div class="w-full max-w-2xl flex flex-col h-[85vh] glass rounded-3xl overflow-hidden shadow-2xl">
+    <div class="glow-sphere top-[-10%] left-[-10%]"></div>
+    <div class="glow-sphere bottom-[-10%] right-[-10%]"></div>
+
+    <div class="w-full max-w-2xl flex flex-col h-[88vh] glass-panel rounded-[2.5rem] overflow-hidden relative">
         <!-- Header -->
-        <div class="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
-            <div class="flex items-center space-x-3">
-                <div class="w-3 h-3 bg-orange-500 rounded-full animate-pulse shadow-[0_0_10px_#f97316]"></div>
+        <div class="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                        <svg viewBox="0 0 24 24" class="w-7 h-7 text-white fill-current" xmlns="http://www.w3.org/2000/svg">
+                           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                        </svg>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-[#0f172a] rounded-full"></div>
+                </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight leading-none">UIDAI <span class="text-blue-400">Assistant</span></h1>
-                    <p class="text-[10px] text-white/40 mt-1 uppercase tracking-wider">Aadhaar Helpdesk • बहुभाषी</p>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        UIDAI <span class="text-blue-400 font-medium">Assistant</span>
+                    </h1>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <p class="text-[11px] text-slate-400 uppercase tracking-widest font-bold">Official Support • बहुभाषी</p>
+                    </div>
                 </div>
             </div>
-            <!-- Removed AI Powered Tag -->
+            <button class="text-slate-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+            </button>
         </div>
 
         <!-- Chat History -->
-        <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4">
-            <div class="flex justify-start">
-                <div class="message-bubble glass bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5">
-                    <p class="font-medium mb-1">Namaste!</p>
-                    I am your UIDAI Assistant. You can ask me questions in English, Hindi, Tamil, Telugu, Marathi, or any other Indian language.
+        <div id="chat-container" class="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+            <div class="flex justify-start animate-msg">
+                <div class="message-bubble bot-bubble px-5 py-4 rounded-[1.5rem] shadow-sm">
+                    <p class="text-blue-400 font-bold text-xs uppercase tracking-tighter mb-1 opacity-80">Assistant</p>
+                    <p class="text-sm leading-relaxed">Namaste! I am your <b>UIDAI Assistant</b>. I can help you with Aadhaar updates, verification, and services in multiple Indian languages. How may I assist you today?</p>
                 </div>
             </div>
         </div>
 
         <!-- Input Area -->
-        <form id="chat-form" class="p-4 bg-white/5 border-t border-white/10 flex space-x-2">
-            <input 
-                type="text" 
-                id="user-input" 
-                placeholder="Type in your preferred language..." 
-                class="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder-white/30"
-                required
-                autocomplete="off"
-            >
-            <button 
-                type="submit" 
-                id="send-btn"
-                class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center justify-center"
-            >
-                <span>Send</span>
-            </button>
-        </form>
+        <div class="p-6 bg-white/[0.01] border-t border-white/5">
+            <form id="chat-form" class="relative group">
+                <div class="input-container flex items-center rounded-2xl p-1.5 pr-2">
+                    <input 
+                        type="text" 
+                        id="user-input" 
+                        placeholder="Type your query here..." 
+                        class="flex-1 bg-transparent border-none rounded-xl px-4 py-3 text-white focus:outline-none placeholder-slate-500 text-sm"
+                        required
+                        autocomplete="off"
+                    >
+                    <button 
+                        type="submit" 
+                        id="send-btn"
+                        class="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-600/20"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 rotate-90" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex justify-center mt-3">
+                    <p class="text-[10px] text-slate-500 font-medium">Ensuring Secure Digital Identity for All Indians</p>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -81,17 +169,17 @@
 
         function addMessage(text, isUser = false) {
             const wrapper = document.createElement('div');
-            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-msg`;
             
             const bubble = document.createElement('div');
-            bubble.className = `message-bubble p-4 rounded-2xl shadow-sm ${
+            bubble.className = `message-bubble px-5 py-4 rounded-[1.5rem] shadow-md ${
                 isUser 
-                ? 'bg-blue-600 rounded-tr-none' 
-                : 'glass bg-white/5 rounded-tl-none border border-white/5'
+                ? 'user-bubble text-white' 
+                : 'bot-bubble'
             }`;
             
-            // Allow basic line breaks in AI response
-            bubble.innerHTML = text.replace(/\n/g, '<br>');
+            const label = isUser ? '' : '<p class="text-blue-400 font-bold text-xs uppercase tracking-tighter mb-1 opacity-80">Assistant</p>';
+            bubble.innerHTML = `${label}<p class="text-sm leading-relaxed">${text.replace(/\n/g, '<br>')}</p>`;
             
             wrapper.appendChild(bubble);
             chatContainer.appendChild(wrapper);
@@ -108,9 +196,15 @@
             
             const loadingId = 'loading-' + Date.now();
             const loadingMsg = document.createElement('div');
-            loadingMsg.id = loadingId;
-            loadingMsg.className = 'flex justify-start italic text-white/50 text-sm ml-2';
-            loadingMsg.textContent = 'Processing request...';
+            loadingId && (loadingMsg.id = loadingId);
+            loadingMsg.className = 'flex justify-start animate-msg';
+            loadingMsg.innerHTML = `
+                <div class="message-bubble bot-bubble px-5 py-3 rounded-[1.5rem] flex items-center space-x-2">
+                    <div class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                </div>
+            `;
             chatContainer.appendChild(loadingMsg);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -126,14 +220,14 @@
                 if (loader) chatContainer.removeChild(loader);
 
                 if (data.error) {
-                    addMessage("Error: " + data.error);
+                    addMessage("Technical Error: " + data.error);
                 } else {
                     addMessage(data.reply);
                 }
             } catch (err) {
                 const loader = document.getElementById(loadingId);
                 if (loader) chatContainer.removeChild(loader);
-                addMessage("Unable to reach the assistant. Please try again later.");
+                addMessage("Unable to reach the server. Please try again.");
             }
         });
     </script>

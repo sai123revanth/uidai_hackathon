@@ -5,240 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUMA AI Chatbot</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .message-bubble {
-            max-width: 85%;
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .typing-dot {
-            width: 6px;
-            height: 6px;
-            background: #94a3b8;
-            border-radius: 50%;
-            display: inline-block;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
+        .glass {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        body {
+            background: radial-gradient(circle at top right, #1e1b4b, #000000);
+            height: 100vh;
         }
-
-        .luma-glow {
-            box-shadow: 0 0 15px rgba(129, 140, 248, 0.3);
+        .message-bubble {
+            max-width: 80%;
+            word-wrap: break-word;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="text-white flex flex-col items-center justify-center p-4">
 
-    <div class="w-full max-w-4xl h-[90vh] flex flex-col glass-panel rounded-3xl overflow-hidden relative">
-        
+    <div class="w-full max-w-2xl flex flex-col h-[80vh] glass rounded-3xl overflow-hidden shadow-2xl">
         <!-- Header -->
-        <header class="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
-            <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center luma-glow">
-                    <i class="fas fa-sparkles text-white text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-semibold text-white tracking-tight">LUMA <span class="gradient-text font-bold">AI</span></h1>
-                    <div class="flex items-center">
-                        <span class="w-2 h-2 bg-emerald-400 rounded-full mr-2"></span>
-                        <span class="text-xs text-slate-400">System Online</span>
-                    </div>
-                </div>
+        <div class="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+            <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                <h1 class="text-xl font-bold tracking-tight">LUMA AI <span class="text-indigo-400">Assistant</span></h1>
             </div>
-            <div class="flex space-x-2">
-                <button class="p-2 text-slate-400 hover:text-white transition-colors">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <button class="p-2 text-slate-400 hover:text-white transition-colors md:hidden" id="mobileMenu">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-            </div>
-        </header>
+        </div>
 
-        <!-- Chat Area -->
-        <main id="chatContainer" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-900/20">
-            <!-- Initial Message -->
-            <div class="flex items-start space-x-4 mb-4">
-                <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 border border-white/5">
-                    <i class="fas fa-robot text-indigo-400 text-sm"></i>
+        <!-- Chat History -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div class="flex justify-start">
+                <div class="message-bubble glass bg-white/5 p-4 rounded-2xl rounded-tl-none">
+                    Hello! I am your LUMA AI Assistant. How can I help you today?
                 </div>
-                <div class="message-bubble bg-slate-800/50 text-slate-200 p-4 rounded-2xl rounded-tl-none border border-white/5 shadow-sm">
-                    <p class="text-sm leading-relaxed">
-                        Hello! I am LUMA. How can I assist you with your creative or technical projects today?
-                    </p>
-                    <span class="text-[10px] text-slate-500 mt-2 block">Just now</span>
-                </div>
-            </div>
-        </main>
-
-        <!-- Typing Indicator (Hidden by default) -->
-        <div id="typingIndicator" class="hidden px-6 py-2">
-            <div class="flex items-center space-x-2 text-slate-400 text-xs">
-                <div class="flex space-x-1">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-                <span>Luma is thinking...</span>
             </div>
         </div>
 
         <!-- Input Area -->
-        <footer class="p-6 bg-slate-900/40 border-t border-white/5">
-            <form id="chatForm" class="relative">
-                <input 
-                    type="text" 
-                    id="userInput"
-                    placeholder="Ask Luma something..." 
-                    class="w-full bg-slate-800/80 border border-white/10 rounded-2xl py-4 pl-6 pr-14 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all shadow-inner"
-                    autocomplete="off"
-                >
-                <button 
-                    type="submit"
-                    class="absolute right-2 top-2 bottom-2 w-12 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all flex items-center justify-center shadow-lg active:scale-95"
-                >
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </form>
-            <div class="mt-4 flex justify-center space-x-6">
-                <p class="text-[11px] text-slate-500">Press Enter to send</p>
-                <p class="text-[11px] text-slate-500">•</p>
-                <p class="text-[11px] text-slate-500">Luma AI v2.4</p>
-            </div>
-        </footer>
+        <form id="chat-form" class="p-4 bg-white/5 border-t border-white/10 flex space-x-2">
+            <input 
+                type="text" 
+                id="user-input" 
+                placeholder="Ask me something..." 
+                class="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-white/30"
+                required
+            >
+            <button 
+                type="submit" 
+                id="send-btn"
+                class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg shadow-indigo-500/20"
+            >
+                Send
+            </button>
+        </form>
     </div>
 
     <script>
-        const chatForm = document.getElementById('chatForm');
-        const userInput = document.getElementById('userInput');
-        const chatContainer = document.getElementById('chatContainer');
-        const typingIndicator = document.getElementById('typingIndicator');
+        const chatContainer = document.getElementById('chat-container');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
 
-        function scrollToBottom() {
-            chatContainer.scrollTo({
-                top: chatContainer.scrollHeight,
-                behavior: 'smooth'
-            });
-        }
-
-        function createMessage(text, isUser = false) {
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `flex items-start space-x-4 ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`;
-
-            const iconHtml = isUser 
-                ? `<div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 border border-white/10 shadow-lg">
-                    <i class="fas fa-user text-white text-sm"></i>
-                   </div>`
-                : `<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 border border-white/5">
-                    <i class="fas fa-robot text-indigo-400 text-sm"></i>
-                   </div>`;
-
-            const bubbleClass = isUser
-                ? 'bg-indigo-600 text-white rounded-tr-none'
-                : 'bg-slate-800/50 text-slate-200 rounded-tl-none border border-white/5';
-
-            messageDiv.innerHTML = `
-                ${iconHtml}
-                <div class="message-bubble ${bubbleClass} p-4 rounded-2xl shadow-sm">
-                    <p class="text-sm leading-relaxed">${text}</p>
-                    <span class="text-[10px] ${isUser ? 'text-indigo-200' : 'text-slate-500'} mt-2 block">${time}</span>
-                </div>
-            `;
-
-            chatContainer.appendChild(messageDiv);
-            scrollToBottom();
-        }
-
-        async function handleAIResponse(userText) {
-            // Show typing indicator
-            typingIndicator.classList.remove('hidden');
-            scrollToBottom();
-
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            typingIndicator.classList.add('hidden');
-
-            // Simple Logic for demo
-            let response = "";
-            const lowerText = userText.toLowerCase();
-
-            if (lowerText.includes("hello") || lowerText.includes("hi")) {
-                response = "Greetings! I am ready to help. What's on your mind?";
-            } else if (lowerText.includes("who are you")) {
-                response = "I am LUMA, a specialized AI assistant designed for high-performance interaction and problem solving.";
-            } else if (lowerText.includes("time")) {
-                response = `The current system time is ${new Date().toLocaleTimeString()}.`;
-            } else {
-                response = "That's an interesting point. As LUMA AI, I'm processing that information to provide the most accurate context possible. Would you like me to dive deeper into this topic?";
-            }
-
-            createMessage(response, false);
-        }
-
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = userInput.value.trim();
+        function addMessage(text, isUser = false) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
             
-            if (text) {
-                createMessage(text, true);
-                userInput.value = '';
-                handleAIResponse(text);
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble p-4 rounded-2xl ${
+                isUser 
+                ? 'bg-indigo-600 rounded-tr-none' 
+                : 'glass bg-white/5 rounded-tl-none'
+            }`;
+            bubble.textContent = text;
+            
+            wrapper.appendChild(bubble);
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            userInput.value = '';
+            
+            // Show loading state
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'flex justify-start italic text-white/50 text-sm';
+            loadingMsg.textContent = 'Luma is thinking...';
+            chatContainer.appendChild(loadingMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: message })
+                });
+
+                const data = await response.json();
+                chatContainer.removeChild(loadingMsg);
+
+                if (data.error) {
+                    addMessage("Error: " + data.error);
+                } else {
+                    addMessage(data.reply);
+                }
+            } catch (err) {
+                chatContainer.removeChild(loadingMsg);
+                addMessage("Failed to connect to the server.");
             }
         });
-
-        // Focus input on load
-        window.onload = () => userInput.focus();
     </script>
 </body>
 </html>

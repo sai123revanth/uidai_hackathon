@@ -1,7 +1,5 @@
 export default async function handler(req, res) {
   // 1. Setup CORS headers
-  // allow * is only valid if allow-credentials is NOT true. 
-  // We removed credentials true to make the wildcard origin work safely.
   res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -17,33 +15,42 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let message;
-
-  // 3. Robust Body Parsing
-  // Vercel sometimes parses it, sometimes passes a string. We handle both.
   try {
+    // 3. Robust Body Parsing
+    let message;
     let body = req.body;
+
+    // Log the raw body type for debugging in Vercel logs
+    console.log('Request Body Type:', typeof body);
+
     if (typeof body === 'string') {
-      body = JSON.parse(body);
+      try {
+        body = JSON.parse(body);
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError);
+        return res.status(400).json({ error: 'Invalid JSON body' });
+      }
     }
+    
     message = body?.message;
-  } catch (e) {
-    return res.status(400).json({ error: 'Invalid JSON body', details: e.message });
-  }
 
-  if (!message) {
-    return res.status(400).json({ error: 'Message is required in the request body' });
-  }
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required in the request body' });
+    }
 
-  // Get API key from Vercel Environment Variables
-  const apiKey = process.env.GROQ_API_KEY;
+    // 4. Get API key from Vercel Environment Variables
+    const apiKey = process.env.GROQ_API_KEY;
 
-  if (!apiKey) {
-    console.error('Missing GROQ_API_KEY environment variable');
-    return res.status(500).json({ error: 'Server configuration error: API Key missing' });
-  }
+    // Debug log to check if key exists (DO NOT LOG THE KEY ITSELF)
+    console.log('GROQ_API_KEY Status:', apiKey ? 'Found' : 'Missing');
 
-  try {
+    if (!apiKey) {
+      return res.status(500).json({ 
+        error: 'Server Error: GROQ_API_KEY is missing in Vercel Environment Variables.' 
+      });
+    }
+
+    // 5. Call Groq API
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -61,7 +68,7 @@ export default async function handler(req, res) {
                 content: message 
             }
         ],
-        model: "llama3-8b-8192",
+        model: "llama3-8b-8192", // Ensure this model name is current
         temperature: 0.7,
         max_tokens: 1024,
       }),
@@ -70,10 +77,12 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Groq API Error Details:', JSON.stringify(data));
+      // Log the full error from Groq
+      console.error('Groq API Error Response:', JSON.stringify(data, null, 2));
+      
       return res.status(response.status).json({ 
-        error: 'Error from Groq API', 
-        details: data.error?.message || 'Unknown error' 
+        error: 'Groq API Error', 
+        details: data.error?.message || 'Unknown error from AI provider' 
       });
     }
 
@@ -84,6 +93,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Server Execution Error:', error);
-    return res.status(500).json({ error: 'Failed to process request', details: error.message });
+    return res.status(500).json({ 
+      error: 'Internal Server Error', 
+      details: error.message 
+    });
   }
 }

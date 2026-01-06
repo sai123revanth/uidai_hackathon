@@ -1,10 +1,36 @@
 export default async function handler(req, res) {
+  // 1. Setup CORS headers to allow the browser to talk to this API
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*'); // In production, replace '*' with your specific domain
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  // 2. Handle the OPTIONS method (Preflight request)
+  // Browsers send this first to check if they are allowed to connect
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { message } = req.body;
+  let { message } = req.body;
+
+  // Safety check: sometimes req.body comes in as a string
+  if (typeof req.body === 'string') {
+      try {
+        const parsed = JSON.parse(req.body);
+        message = parsed.message;
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid JSON body' });
+      }
+  }
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
@@ -46,6 +72,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Groq API Error Details:', data);
       throw new Error(data.error?.message || 'Failed to fetch from Groq');
     }
 
@@ -56,6 +83,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Groq API Error:', error);
-    return res.status(500).json({ error: 'Failed to process request' });
+    return res.status(500).json({ error: 'Failed to process request', details: error.message });
   }
 }

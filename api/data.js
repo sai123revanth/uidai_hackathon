@@ -6,52 +6,51 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Server configuration error: UIDAI_API_KEY is missing.' });
     }
 
-    // 2. Get parameters passed from your HTML frontend
-    // Default to 100 rows and Andhra Pradesh if not specified
+    // 2. Parameters from frontend
     const limit = req.query.limit || 100;
     const state = req.query.state || 'Andhra Pradesh';
 
-    // 3. Define the Hackathon API Endpoint
-    // IMPORTANT: Replace this URL with the actual endpoint URL provided in your Hackathon documentation.
-    // It usually looks like: https://api.uidai.gov.in/hackathon/data or similar.
-    const EXTERNAL_API_URL = 'https://api.data.gov.in/resource/ecd49b12-3084-4521-8f7e-ca8bf72069ba?'; 
+    // 3. The exact endpoint from the Data.gov.in / UIDAI portal
+    // Based on your screenshot, this is the specific resource ID for Aadhaar insights
+    const BASE_URL = 'https://api.data.gov.in/resource/319e0787-8d05-43a0-8356-591a580a569a'; 
 
     try {
-        // 4. Make the request to the real UIDAI API
-        const response = await fetch(`${EXTERNAL_API_URL}?limit=${limit}&state=${encodeURIComponent(state)}&format=json`, {
+        /**
+         * 4. Construct the URL with correct query params:
+         * api-key: The authentication key
+         * format: json (as selected in your screenshot)
+         * limit: 100
+         * filters[state]: Filter for Andhra Pradesh
+         */
+        const targetUrl = new URL(BASE_URL);
+        targetUrl.searchParams.append('api-key', API_KEY);
+        targetUrl.searchParams.append('format', 'json');
+        targetUrl.searchParams.append('limit', limit);
+        targetUrl.searchParams.append('filters[state]', state);
+
+        const response = await fetch(targetUrl.toString(), {
             method: 'GET',
             headers: {
-                // Common patterns for API keys. Uncomment the one used by your specific Hackathon documentation:
-                
-                // Pattern A: Bearer Token (Most common)
-                // 'Authorization': `Bearer ${API_KEY}`,
-                
-                // Pattern B: Custom Header
-                'x-api-key': API_KEY,
-                
-                // Pattern C: Sometimes keys are sent as 'apikey'
-                // 'apikey': API_KEY,
-
-                'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
         });
 
         if (!response.ok) {
-            throw new Error(`UIDAI API responded with status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`External API error (${response.status}): ${errorText}`);
         }
 
         const data = await response.json();
 
         // 5. Return the data to your frontend
-        // We set Cache-Control to prevent hitting the hackathon API limit too frequently
+        // Note: data.gov.in usually returns an object with a 'records' array
         res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
         return res.status(200).json(data);
 
     } catch (error) {
         console.error('Proxy Error:', error);
         return res.status(500).json({ 
-            error: 'Failed to fetch data from UIDAI', 
+            error: 'Failed to fetch data from the UIDAI portal', 
             details: error.message 
         });
     }

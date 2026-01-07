@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- Background Circle (Optional, can be removed for transparent look) -->
+<rect width="32" height="32" rx="8" fill="#000000"/>
+
+<!-- Define Gradient -->
+
+<defs>
+<linearGradient id="udaan_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#3b82f6" />
+<stop offset="100%" stop-color="#8b5cf6" />
+</linearGradient>
+</defs>
+
+<!-- Stylized Rocket/Flight Icon -->
+
+<path d="M16 6L24 22L16 19L8 22L16 6Z" fill="url(#udaan_grad)" />
+
+<!-- Data Node Detail -->
+
+<circle cx="16" cy="14" r="1.5" fill="white" fill-opacity="0.8"/>
+</svg>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UDAAN - Unified Data Analysis for Aadhaar Network</title>
-    <!-- Import Plus Jakarta Sans and Rajdhani for the Watermark -->
+    <!-- Import Plus Jakarta Sans and Rajdhani -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -149,8 +149,9 @@
         #chartdiv {
             width: 100%;
             height: 100%;
-            /* Removed styling as it is now on .map-section */
         }
+
+        /* Watermark styling Removed as per instruction, but placeholder style kept for structure if needed later */
 
         /* Sticky Notes (Floating Info) */
         .sticky-note {
@@ -344,6 +345,53 @@
             letter-spacing: 0.15em;
         }
 
+        /* AI Search Bar Styles */
+        .ai-search-container {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ai-search-container:focus-within {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--accent-1);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .ai-search-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            flex: 1;
+            outline: none;
+        }
+
+        .ai-search-btn {
+            background: var(--accent-1);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .ai-search-btn:hover {
+            transform: scale(1.05);
+        }
+
         /* Select styling based on Luma inputs */
         select {
             width: 100%;
@@ -399,6 +447,13 @@
             box-sizing: border-box;
         }
 
+        .module-card.highlight {
+            border-color: var(--accent-1);
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+            transform: scale(1.02);
+        }
+
         .module-card:hover {
             transform: translateY(-2px);
             background: rgba(255, 255, 255, 0.06);
@@ -418,10 +473,15 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* Module Colors */
         .icon-slum { color: var(--accent-3); } 
         .icon-sprawl { color: var(--accent-1); }
         .icon-rent { color: #34d399; }
         .icon-smart { color: var(--accent-2); }
+        .icon-migration { color: var(--accent-2); }
+        .icon-voter { color: var(--accent-1); }
+        .icon-delimitation { color: #fbbf24; }
+        .icon-fraud { color: #f87171; }
 
         .module-icon svg {
             width: 24px;
@@ -469,6 +529,50 @@
             background: rgba(255,255,255,0.2); 
         }
 
+        /* AI Notification Popup */
+        .ai-popup {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            width: 90%;
+            max-width: 400px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--accent-1);
+            border-radius: 20px;
+            padding: 1.5rem;
+            z-index: 1000;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .ai-popup.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .ai-popup-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: var(--accent-1);
+            font-weight: 800;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .ai-popup-body {
+            color: #ddd;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
         @media (max-width: 900px) {
             .main-container {
                 flex-direction: column;
@@ -494,11 +598,9 @@
                 white-space: normal;
                 line-height: 1.1;
             }
-            /* Hide notes on small mobile to avoid blocking map */
             .sticky-note, .summary-box {
                 display: none;
             }
-            /* Adjust floating select on mobile */
             .select-container {
                 top: 1rem;
                 right: 1rem;
@@ -522,7 +624,6 @@
             cursor: pointer;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            /* Reuse glass panel styles mixed with accent border */
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -710,6 +811,15 @@
         <div class="aura aura-2"></div>
     </div>
 
+    <!-- AI Notification Popup -->
+    <div id="aiPopup" class="ai-popup">
+        <div class="ai-popup-header">
+            <i data-lucide="bot"></i>
+            <span>AI Insight</span>
+        </div>
+        <div id="aiPopupBody" class="ai-popup-body"></div>
+    </div>
+
     <div class="main-container">
         <!-- Map Container with Sticky Notes & Floating Select -->
         <div class="map-section">
@@ -781,9 +891,19 @@
             </div>
 
             <div class="dashboard-content">
+                <!-- AI Search Bar -->
+                <div class="menu-label">AI Navigation</div>
+                <div class="ai-search-container">
+                    <input type="text" id="aiSearchInput" class="ai-search-input" placeholder="e.g., How can I track urban displacement?">
+                    <button id="aiSearchBtn" class="ai-search-btn">
+                        <i data-lucide="sparkles" style="width:16px; height:16px;"></i>
+                    </button>
+                </div>
+
                 <div class="menu-label" style="margin-bottom: 0.5rem;">Live Analytics Modules</div>
-                <div class="analytics-grid">
-                    <div class="module-card">
+                <div class="analytics-grid" id="modulesGrid">
+                    <!-- Slum Gentrification -->
+                    <div class="module-card" data-module="Slum Gentrification">
                         <div class="module-icon icon-slum">
                             <i data-lucide="building-2"></i>
                         </div>
@@ -793,7 +913,8 @@
                         </div>
                     </div>
 
-                    <div class="module-card">
+                    <!-- Suburban Sprawl -->
+                    <div class="module-card" data-module="Suburban Sprawl">
                         <div class="module-icon icon-sprawl">
                             <i data-lucide="expand"></i>
                         </div>
@@ -803,7 +924,8 @@
                         </div>
                     </div>
 
-                    <div class="module-card">
+                    <!-- Rental Heatmap -->
+                    <div class="module-card" data-module="Rental Heatmap">
                         <div class="module-icon icon-rent">
                             <i data-lucide="bar-chart-3"></i>
                         </div>
@@ -813,13 +935,58 @@
                         </div>
                     </div>
 
-                    <div class="module-card">
+                    <!-- Smart Allocation -->
+                    <div class="module-card" data-module="Smart Allocation">
                         <div class="module-icon icon-smart">
                             <i data-lucide="cpu"></i>
                         </div>
                         <div class="module-content">
                             <span class="module-text">Smart Allocation</span>
                             <span class="module-subtext">Resource Optimization</span>
+                        </div>
+                    </div>
+
+                    <!-- Family Migration Index -->
+                    <div class="module-card" data-module="Family Migration">
+                        <div class="module-icon icon-migration">
+                            <i data-lucide="milestone"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Family Migration</span>
+                            <span class="module-subtext">Multi-generational tracking</span>
+                        </div>
+                    </div>
+
+                    <!-- First-Time Voter Readiness -->
+                    <div class="module-card" data-module="Voter Readiness">
+                        <div class="module-icon icon-voter">
+                            <i data-lucide="user-check"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Voter Readiness</span>
+                            <span class="module-subtext">New eligible voter analysis</span>
+                        </div>
+                    </div>
+
+                    <!-- Constituency Delimitation Data -->
+                    <div class="module-card" data-module="Delimitation Data">
+                        <div class="module-icon icon-delimitation">
+                            <i data-lucide="map-pin"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Delimitation Data</span>
+                            <span class="module-subtext">Constituency boundary mapping</span>
+                        </div>
+                    </div>
+
+                    <!-- Voter Fraud Prevention -->
+                    <div class="module-card" data-module="Fraud Prevention">
+                        <div class="module-icon icon-fraud">
+                            <i data-lucide="fingerprint"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Fraud Prevention</span>
+                            <span class="module-subtext">Aadhaar integrity checks</span>
                         </div>
                     </div>
                 </div>
@@ -860,7 +1027,11 @@
 // Initialize Lucide Icons
 lucide.createIcons();
 
-// Chatbot Interaction Logic
+// Elements
+const aiSearchInput = document.getElementById('aiSearchInput');
+const aiSearchBtn = document.getElementById('aiSearchBtn');
+const aiPopup = document.getElementById('aiPopup');
+const aiPopupBody = document.getElementById('aiPopupBody');
 const chatbotBtn = document.querySelector('.chatbot-float');
 const chatWindow = document.getElementById('chatWindow');
 const chatClose = document.getElementById('chatClose');
@@ -868,8 +1039,76 @@ const chatSend = document.getElementById('chatSend');
 const chatInput = document.getElementById('chatInput');
 const chatMessages = document.getElementById('chatMessages');
 
+// AI Search Logic
+async function handleAISearch() {
+    const query = aiSearchInput.value.trim();
+    if (!query) return;
+
+    aiSearchBtn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" style="width:16px; height:16px;"></i>`;
+    lucide.createIcons();
+
+    const modules = [
+        "Slum Gentrification", "Suburban Sprawl", "Rental Heatmap", 
+        "Smart Allocation", "Family Migration", "Voter Readiness", 
+        "Delimitation Data", "Fraud Prevention"
+    ];
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: `Task: Identify which of these modules matches the user query: [${modules.join(", ")}]. 
+                If a module matches, return ONLY the module name. 
+                If no module is directly relevant, return a helpful response in any Indian language or English explaining why, starting with 'NO_MATCH: '.
+                User query: "${query}"`
+            })
+        });
+
+        const data = await response.json();
+        const aiText = data.reply;
+
+        if (aiText.startsWith('NO_MATCH:')) {
+            showAiPopup(aiText.replace('NO_MATCH:', '').trim());
+        } else {
+            const matchedModule = modules.find(m => aiText.includes(m));
+            if (matchedModule) {
+                highlightModule(matchedModule);
+            } else {
+                showAiPopup(aiText);
+            }
+        }
+    } catch (error) {
+        showAiPopup("I encountered an issue connecting to my neural core. Please try again.");
+    } finally {
+        aiSearchBtn.innerHTML = `<i data-lucide="sparkles" style="width:16px; height:16px;"></i>`;
+        lucide.createIcons();
+    }
+}
+
+function highlightModule(moduleName) {
+    const cards = document.querySelectorAll('.module-card');
+    cards.forEach(card => card.classList.remove('highlight'));
+    
+    const target = Array.from(cards).find(c => c.getAttribute('data-module') === moduleName);
+    if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('highlight');
+        setTimeout(() => target.classList.remove('highlight'), 3000);
+    }
+}
+
+function showAiPopup(message) {
+    aiPopupBody.innerText = message;
+    aiPopup.classList.add('visible');
+    setTimeout(() => aiPopup.classList.remove('visible'), 6000);
+}
+
+aiSearchBtn.addEventListener('click', handleAISearch);
+aiSearchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleAISearch(); });
+
+// Existing Chatbot Logic
 chatbotBtn.addEventListener('click', () => {
-    // Simple toggle logic instead of one-way open
     if (chatWindow.classList.contains('active')) {
         chatWindow.classList.remove('active');
     } else {
@@ -885,7 +1124,6 @@ async function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // User Message
     const userMsg = document.createElement('div');
     userMsg.className = 'message user';
     userMsg.innerText = text;
@@ -893,7 +1131,6 @@ async function sendMessage() {
     chatInput.value = '';
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    // Loading Indicator
     const loadingMsg = document.createElement('div');
     loadingMsg.className = 'message bot';
     loadingMsg.innerText = "...";
@@ -903,20 +1140,13 @@ async function sendMessage() {
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: text })
         });
 
-        if (!response.ok) throw new Error('Network response was not ok');
-
         const data = await response.json();
-        
-        // Remove loading
         chatMessages.removeChild(loadingMsg);
 
-        // Bot Response
         const botMsg = document.createElement('div');
         botMsg.className = 'message bot';
         botMsg.innerText = data.reply;
@@ -924,21 +1154,18 @@ async function sendMessage() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
     } catch (error) {
-        console.error('Error:', error);
         chatMessages.removeChild(loadingMsg);
         const errorMsg = document.createElement('div');
         errorMsg.className = 'message bot';
-        errorMsg.innerText = "Sorry, I encountered an error connecting to the server.";
+        errorMsg.innerText = "Error connecting to server.";
         chatMessages.appendChild(errorMsg);
     }
 }
 
 chatSend.addEventListener('click', sendMessage);
-chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
+chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-// Data
+// Map Data
 var stateData = [
     { id: "IN-AP", name: "Andhra Pradesh" },
     { id: "IN-AR", name: "Arunachal Pradesh" },
@@ -986,114 +1213,63 @@ var stateData = [
     { id: "IN-AN", name: "Andaman and Nicobar Islands" }
 ];
 
-// Helper function to update the Summary Box using the Chat API
 async function updateSummary(name) {
     const summaryContent = document.getElementById('summary-content');
     const title = document.getElementById('summary-title');
-    
     title.innerText = name ? name.toUpperCase() + " ANALYSIS" : "SUMMARY";
     
     if (name) {
-        summaryContent.innerHTML = `<div style="display:flex; align-items:center; gap:8px; color:var(--accent-1);"><i data-lucide="loader-2" class="animate-spin" style="width:14px;"></i> AI generating analysis...</div>`;
+        summaryContent.innerHTML = `<div style="display:flex; align-items:center; gap:8px; color:var(--accent-1);"><i data-lucide="loader-2" class="animate-spin" style="width:14px;"></i> AI generating...</div>`;
         lucide.createIcons();
-
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    message: `Provide a short, professional urban analysis summary for the jurisdiction of ${name} within the Project UDAAN framework. Focus on demographic trends and resource allocation importance.` 
+                    message: `Provide a short, professional urban analysis summary for the jurisdiction of ${name} within the Project UDAAN framework. Focus on demographic trends.` 
                 })
             });
-
-            if (!response.ok) throw new Error('API Error');
-
             const data = await response.json();
             summaryContent.innerHTML = data.reply;
         } catch (error) {
-            console.error('Summary fetch error:', error);
-            summaryContent.innerHTML = "Error fetching analysis. Please check your network or API connection.";
+            summaryContent.innerHTML = "Error fetching analysis.";
         }
     } else {
-        summaryContent.innerHTML = "Select a jurisdiction on the map to view comprehensive Aadhaar-linked urban analysis and demographic insights.";
+        summaryContent.innerHTML = "Select a jurisdiction on the map.";
     }
 }
 
 am5.ready(function() {
     var root = am5.Root.new("chartdiv");
-
     root.setThemes([ am5themes_Animated.new(root) ]);
-
-    var chart = root.container.children.push(am5map.MapChart.new(root, {
-        panX: "none",
-        panY: "none",
-        wheelY: "none",
-        projection: am5map.geoMercator()
-    }));
-
+    var chart = root.container.children.push(am5map.MapChart.new(root, { panX: "none", panY: "none", wheelY: "none", projection: am5map.geoMercator() }));
     chart.seriesContainer.draggable = false;
     chart.seriesContainer.resizable = false;
     chart.chartContainer.wheelable = false;
     chart.maxZoomLevel = 1;
     chart.minZoomLevel = 1;
 
-    var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
-        geoJSON: am5geodata_indiaLow,
-        valueField: "value",
-        calculateAggregates: true
-    }));
-
-    // INITIAL MAP STYLING - Matching Luma Dark Theme
-    polygonSeries.mapPolygons.template.setAll({
-        tooltipText: "{name}",
-        fill: am5.color(0x1a1a2e), // Dark Slate to match background theme
-        fillOpacity: 0.8, 
-        stroke: am5.color(0x000000), 
-        strokeWidth: 1,
-        interactive: true,
-        cursorOverStyle: "pointer"
-    });
-
-    // FLAG COLORING LOGIC
+    var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, { geoJSON: am5geodata_indiaLow, valueField: "value", calculateAggregates: true }));
+    polygonSeries.mapPolygons.template.setAll({ tooltipText: "{name}", fill: am5.color(0x1a1a2e), fillOpacity: 0.8, stroke: am5.color(0x000000), strokeWidth: 1, interactive: true, cursorOverStyle: "pointer" });
     polygonSeries.events.on("datavalidated", function () {
       polygonSeries.mapPolygons.each(function (polygon) {
         var centroid = polygon.geoCentroid();
         if (centroid) {
             var lat = centroid.latitude;
-            // Latitude-based coloring for Tricolour
-            if (lat >= 24) {
-                // Top: Saffron
-                polygon.set("fill", am5.color(0xFF9933)); 
-            } else if (lat >= 17) {
-                // Middle: White
-                polygon.set("fill", am5.color(0xFFFFFF)); 
-            } else {
-                // Bottom: Green
-                polygon.set("fill", am5.color(0x138808)); 
-            }
+            if (lat >= 24) polygon.set("fill", am5.color(0xFF9933)); 
+            else if (lat >= 17) polygon.set("fill", am5.color(0xFFFFFF)); 
+            else polygon.set("fill", am5.color(0x138808)); 
         }
       });
     });
 
-    // Hover State - Luma Blue
-    polygonSeries.mapPolygons.template.states.create("hover", {
-        fill: am5.color(0x3b82f6), 
-        stroke: am5.color(0xffffff),
-        strokeWidth: 1.5
-    });
-
-    // Active State - Luma Violet
-    var activeState = polygonSeries.mapPolygons.template.states.create("active", {
-        fill: am5.color(0x8b5cf6), 
-        stroke: am5.color(0xffffff),
-        strokeWidth: 2
-    });
+    polygonSeries.mapPolygons.template.states.create("hover", { fill: am5.color(0x3b82f6), stroke: am5.color(0xffffff), strokeWidth: 1.5 });
+    polygonSeries.mapPolygons.template.states.create("active", { fill: am5.color(0x8b5cf6), stroke: am5.color(0xffffff), strokeWidth: 2 });
 
     var previousPolygon;
     var selectElement = document.getElementById('stateSelect');
     var sortedData = [...stateData].sort((a, b) => a.name.localeCompare(b.name));
     var uniqueNames = new Set();
-
     sortedData.forEach(function(item) {
         if (!uniqueNames.has(item.name)) {
             var opt = document.createElement('option');
@@ -1107,13 +1283,9 @@ am5.ready(function() {
     polygonSeries.mapPolygons.template.events.on("click", function(ev) {
         var dataItem = ev.target.dataItem;
         var dataContext = dataItem.dataContext;
-        
         if(dataContext && dataContext.id) {
             selectElement.value = dataContext.id;
-            
-            // Trigger summary update via AI
             updateSummary(dataContext.name);
-
             if (selectElement.value === "") {
                  for (var i = 0; i < selectElement.options.length; i++) {
                      if (selectElement.options[i].text === dataContext.name) {
@@ -1123,9 +1295,7 @@ am5.ready(function() {
                  }
             }
         }
-        if (previousPolygon) {
-            previousPolygon.states.applyAnimate("default");
-        }
+        if (previousPolygon) previousPolygon.states.applyAnimate("default");
         ev.target.states.applyAnimate("active");
         previousPolygon = ev.target;
     });
@@ -1134,20 +1304,12 @@ am5.ready(function() {
         var selectedId = e.target.value;
         var selectedName = e.target.options[e.target.selectedIndex].text;
         var targetPolygon;
-        
-        // Trigger summary update via AI
         updateSummary(selectedName);
-
         polygonSeries.mapPolygons.each(function(polygon) {
-            if (polygon.dataItem.dataContext.id === selectedId || polygon.dataItem.dataContext.name === selectedName) {
-                targetPolygon = polygon;
-            }
+            if (polygon.dataItem.dataContext.id === selectedId || polygon.dataItem.dataContext.name === selectedName) targetPolygon = polygon;
         });
-
         if (targetPolygon) {
-            if (previousPolygon) {
-                previousPolygon.states.applyAnimate("default");
-            }
+            if (previousPolygon) previousPolygon.states.applyAnimate("default");
             targetPolygon.states.applyAnimate("active");
             previousPolygon = targetPolygon;
         }
@@ -1156,13 +1318,11 @@ am5.ready(function() {
     polygonSeries.data.setAll(stateData);
 });
 
-// Parallax Auras (from Luma JS)
 const auras = document.querySelectorAll('.aura');
 window.addEventListener('mousemove', (e) => {
     if (window.innerWidth < 1024) return;
     const x = (e.clientX / window.innerWidth - 0.5) * 30;
     const y = (e.clientY / window.innerHeight - 0.5) * 30;
-    
     auras.forEach((aura, index) => {
         const speed = (index + 1) * 0.3;
         aura.style.transform = `translate(${x * speed}px, ${y * speed}px)`;

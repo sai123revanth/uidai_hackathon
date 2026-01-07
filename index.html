@@ -1060,7 +1060,7 @@ async function handleAISearch() {
             body: JSON.stringify({ 
                 message: `Task: Identify which of these modules matches the user query: [${modules.join(", ")}]. 
                 If a module matches, return ONLY the module name. 
-                If no module is directly relevant, return a helpful response in any Indian language or English explaining why, starting with 'NO_MATCH: '.
+                If no module is directly relevant, return a helpful response STRICTLY IN ENGLISH LANGUAGE ONLY explaining why, starting with 'NO_MATCH: '.
                 User query: "${query}"`
             })
         });

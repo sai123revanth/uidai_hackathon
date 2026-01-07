@@ -838,7 +838,7 @@
             <div id="summary-box" class="summary-box">
                 <div class="summary-header">
                     <i data-lucide="activity" style="width: 16px; height: 16px; color: var(--accent-1);"></i>
-                    <span id="summary-title">Summary</span>
+                    <span id="summary-title">AI Summary</span>
                 </div>
                 <div id="summary-content" class="summary-content">
                     Select a jurisdiction on the map to view comprehensive Aadhaar-linked urban analysis and demographic insights.
@@ -1217,7 +1217,7 @@ var stateData = [
 async function updateSummary(name) {
     const summaryContent = document.getElementById('summary-content');
     const title = document.getElementById('summary-title');
-    title.innerText = name ? name.toUpperCase() + " ANALYSIS" : "SUMMARY";
+    title.innerText = name ? name.toUpperCase() + " ANALYSIS" : "AI SUMMARY";
     
     if (name) {
         summaryContent.innerHTML = `<div style="display:flex; align-items:center; gap:8px; color:var(--accent-1);"><i data-lucide="loader-2" class="animate-spin" style="width:14px;"></i> AI generating...</div>`;

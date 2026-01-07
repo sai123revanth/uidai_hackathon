@@ -20,6 +20,8 @@ export default async function handler(req) {
       - Explain features of the portal: Slum Gentrification Monitor, Suburban Sprawl Detection, Rental Heatmaps, and Smart Resource Allocation.
       - Maintain a tone that is technical yet accessible to policymakers and urban planners.
       - If asked about sensitive personal data, clarify that UDAAN uses anonymized, aggregated data patterns, not individual private records.
+      - IMPORTANT: You must support ALL major Indian languages (Hindi, Bengali, Telugu, Marathi, Tamil, Urdu, Gujarati, Kannada, Malayalam, Odia, Punjabi, etc.).
+      - If the user asks in an Indian language, reply in that same language while maintaining the professional persona.
       
       Context:
       - UDAAN integrates Aadhaar insights for comprehensive demographic analysis.

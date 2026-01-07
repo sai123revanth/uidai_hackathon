@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UDAAN - Unified Data Analysis for Aadhaar Network</title>
-    <!-- Import Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Import Plus Jakarta Sans and Rajdhani for the Watermark -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
@@ -152,6 +152,30 @@
             /* Removed styling as it is now on .map-section */
         }
 
+        /* Watermark styling */
+        .map-watermark {
+            position: absolute;
+            top: 50%;
+            right: 4%; /* Moved to right */
+            transform: translateY(-50%);
+            font-size: 13vh; /* Adjusted size for visibility */
+            font-weight: 800;
+            font-family: 'Rajdhani', sans-serif; /* Changed to Rajdhani for professional tech look */
+            /* Double Border Text Style */
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.15);
+            text-shadow: 
+                4px 4px 0px rgba(255, 255, 255, 0.03),
+                -1px -1px 0 rgba(255, 255, 255, 0.02); 
+            pointer-events: none;
+            z-index: 5;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 1.2rem;
+            white-space: nowrap;
+            user-select: none;
+        }
+
         /* Sticky Notes (Floating Info) */
         .sticky-note {
             position: absolute;
@@ -207,6 +231,7 @@
             bottom: 2rem;
             right: 2rem;
             width: 280px;
+            max-height: 300px;
             padding: 1.25rem;
             border-radius: 20px;
             z-index: 30;
@@ -215,6 +240,7 @@
             border: 1px solid var(--border);
             transition: all 0.3s ease;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            overflow-y: auto;
         }
 
         .summary-header {
@@ -712,6 +738,9 @@
         <!-- Map Container with Sticky Notes & Floating Select -->
         <div class="map-section">
             <div id="chartdiv"></div>
+            
+            <!-- Watermark -->
+            <div class="map-watermark">INDIA</div>
 
             <!-- Floating Select Jurisdiction -->
             <div class="select-container">
@@ -870,10 +899,8 @@ chatbotBtn.addEventListener('click', () => {
     // Simple toggle logic instead of one-way open
     if (chatWindow.classList.contains('active')) {
         chatWindow.classList.remove('active');
-        // Ensure button remains visible
     } else {
         chatWindow.classList.add('active');
-        // Do NOT hide the button, just ensure z-index is managed if overlap
     }
 });
 
@@ -986,36 +1013,34 @@ var stateData = [
     { id: "IN-AN", name: "Andaman and Nicobar Islands" }
 ];
 
-// Helper function to update the Summary Box
-function updateSummary(name) {
+// Helper function to update the Summary Box using the Chat API
+async function updateSummary(name) {
     const summaryContent = document.getElementById('summary-content');
     const title = document.getElementById('summary-title');
     
-    title.innerText = name ? name.toUpperCase() + " SUMMARY" : "SUMMARY";
+    title.innerText = name ? name.toUpperCase() + " ANALYSIS" : "SUMMARY";
     
     if (name) {
-        // Generate pseudo-random data for visualization
-        const population = (Math.floor(Math.random() * 80) + 5) + "M";
-        const growth = (Math.random() * 4 + 1).toFixed(1) + "%";
-        const aadhar = (Math.floor(Math.random() * 15) + 85) + "%";
-        
-        summaryContent.innerHTML = `
-            <div class="summary-stat-row">
-                <span style="color:var(--text-secondary)">Population:</span>
-                <span style="color:#fff; font-weight:700;">${population}</span>
-            </div>
-            <div class="summary-stat-row">
-                <span style="color:var(--text-secondary)">Urban Growth:</span>
-                <span style="color:var(--accent-1); font-weight:700;">+${growth}</span>
-            </div>
-            <div class="summary-stat-row">
-                <span style="color:var(--text-secondary)">Aadhaar Coverage:</span>
-                <span style="color:var(--accent-3); font-weight:700;">${aadhar}</span>
-            </div>
-            <div style="margin-top:12px; font-size:0.75rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
-                <span style="color:var(--accent-2)">●</span> High priority zone for infrastructure development based on recent migration patterns.
-            </div>
-        `;
+        summaryContent.innerHTML = `<div style="display:flex; align-items:center; gap:8px; color:var(--accent-1);"><i data-lucide="loader-2" class="animate-spin" style="width:14px;"></i> AI generating analysis...</div>`;
+        lucide.createIcons();
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: `Provide a short, professional urban analysis summary for the jurisdiction of ${name} within the Project UDAAN framework. Focus on demographic trends and resource allocation importance.` 
+                })
+            });
+
+            if (!response.ok) throw new Error('API Error');
+
+            const data = await response.json();
+            summaryContent.innerHTML = data.reply;
+        } catch (error) {
+            console.error('Summary fetch error:', error);
+            summaryContent.innerHTML = "Error fetching analysis. Please check your network or API connection.";
+        }
     } else {
         summaryContent.innerHTML = "Select a jurisdiction on the map to view comprehensive Aadhaar-linked urban analysis and demographic insights.";
     }
@@ -1113,7 +1138,7 @@ am5.ready(function() {
         if(dataContext && dataContext.id) {
             selectElement.value = dataContext.id;
             
-            // Trigger summary update
+            // Trigger summary update via AI
             updateSummary(dataContext.name);
 
             if (selectElement.value === "") {
@@ -1137,7 +1162,7 @@ am5.ready(function() {
         var selectedName = e.target.options[e.target.selectedIndex].text;
         var targetPolygon;
         
-        // Trigger summary update
+        // Trigger summary update via AI
         updateSummary(selectedName);
 
         polygonSeries.mapPolygons.each(function(polygon) {

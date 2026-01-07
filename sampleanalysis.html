@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS for parsing Excel/CSV -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbar for table */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="text-blue-600 h-6 w-6"></i>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">DataInsight</h1>
+            </div>
+            <div class="text-sm text-slate-500">
+                Supports .xlsx, .xls, .csv
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        
+        <!-- Upload Section -->
+        <div id="upload-section" class="max-w-2xl mx-auto mt-10 text-center">
+            <div class="bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-300 p-10 transition-all hover:border-blue-400 hover:bg-blue-50 group cursor-pointer relative" id="drop-zone">
+                <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".xlsx, .xls, .csv" />
+                
+                <div class="flex flex-col items-center justify-center gap-4">
+                    <div class="bg-blue-100 p-4 rounded-full text-blue-600 group-hover:scale-110 transition-transform">
+                        <i data-lucide="upload-cloud" class="h-8 w-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-700">Click or Drag file here</h3>
+                        <p class="text-slate-500 mt-1">Upload your Excel or CSV file to analyze</p>
+                    </div>
+                    <div class="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                        Secure local processing
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error Message -->
+            <div id="error-message" class="hidden mt-4 bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center justify-center gap-2">
+                <i data-lucide="alert-circle" class="h-4 w-4"></i>
+                <span id="error-text"></span>
+            </div>
+        </div>
+
+        <!-- Dashboard (Hidden by default) -->
+        <div id="dashboard" class="hidden space-y-6 fade-in">
+            
+            <!-- Toolbar -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 id="filename-display" class="font-semibold text-slate-800">filename.xlsx</h2>
+                    <p id="row-col-count" class="text-sm text-slate-500">Loading...</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="resetApp()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="trash-2" class="h-4 w-4"></i> Reset
+                    </button>
+                    <button onclick="exportToJSON()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                        <i data-lucide="download" class="h-4 w-4"></i> Export JSON
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Left: Analysis Panel -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Column Selector -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Select Column to Analyze</label>
+                        <select id="column-selector" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-shadow">
+                            <option>Select a column...</option>
+                        </select>
+                    </div>
+
+                    <!-- Stats Card -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Quick Stats</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                <span class="text-slate-600">Total Rows</span>
+                                <span id="stat-total" class="font-mono font-medium text-slate-900">-</span>
+                            </div>
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                <span class="text-slate-600">Unique Values</span>
+                                <span id="stat-unique" class="font-mono font-medium text-slate-900">-</span>
+                            </div>
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                <span class="text-slate-600">Empty Cells</span>
+                                <span id="stat-empty" class="font-mono font-medium text-slate-900">-</span>
+                            </div>
+                             <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                <span class="text-slate-600">Data Type</span>
+                                <span id="stat-type" class="font-mono font-medium text-blue-600">-</span>
+                            </div>
+                             <!-- Numeric Only Stats -->
+                            <div id="numeric-stats" class="hidden space-y-4 pt-2">
+                                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                    <span class="text-slate-600">Sum</span>
+                                    <span id="stat-sum" class="font-mono font-medium text-slate-900">-</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                                    <span class="text-slate-600">Average</span>
+                                    <span id="stat-avg" class="font-mono font-medium text-slate-900">-</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-600">Min / Max</span>
+                                    <span id="stat-minmax" class="font-mono font-medium text-slate-900">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                         <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Distribution</h3>
+                         <div class="relative h-64 w-full">
+                             <canvas id="dataChart"></canvas>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Right: Data Table -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-[800px]">
+                        <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl">
+                            <h3 class="font-semibold text-slate-700">Data Preview</h3>
+                            <span class="text-xs text-slate-400">Showing first 100 rows</span>
+                        </div>
+                        <div class="overflow-auto custom-scrollbar flex-grow p-0">
+                            <table class="min-w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                                    <tr id="table-head">
+                                        <!-- Headers injected here -->
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="divide-y divide-slate-100">
+                                    <!-- Body injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // State
+        let globalData = [];
+        let headers = [];
+        let chartInstance = null;
+
+        // DOM Elements
+        const fileInput = document.getElementById('file-input');
+        const uploadSection = document.getElementById('upload-section');
+        const dashboard = document.getElementById('dashboard');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const tableHead = document.getElementById('table-head');
+        const tableBody = document.getElementById('table-body');
+        const columnSelector = document.getElementById('column-selector');
+
+        // Event Listeners
+        fileInput.addEventListener('change', handleFileSelect, false);
+        columnSelector.addEventListener('change', (e) => analyzeColumn(e.target.value));
+
+        // Handle File Upload
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Reset UI
+            errorMessage.classList.add('hidden');
+            
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // Get first sheet
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convert to JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+
+                    if (jsonData.length === 0) {
+                        throw new Error("File appears to be empty");
+                    }
+
+                    // Process Data
+                    headers = jsonData[0];
+                    // Create object array for easier handling, filtering out empty rows
+                    globalData = jsonData.slice(1).map(row => {
+                        let obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header] = row[index];
+                        });
+                        return obj;
+                    }).filter(row => Object.values(row).some(val => val !== undefined && val !== null && val !== ''));
+
+                    // Update UI
+                    document.getElementById('filename-display').textContent = file.name;
+                    document.getElementById('row-col-count').textContent = `${globalData.length} rows • ${headers.length} columns`;
+                    
+                    renderTable(headers, globalData.slice(0, 100)); // Show max 100 rows for performance
+                    populateColumnSelector(headers);
+                    
+                    // Switch views
+                    uploadSection.classList.add('hidden');
+                    dashboard.classList.remove('hidden');
+                    
+                    // Auto-select first column
+                    if(headers.length > 0) {
+                        columnSelector.value = headers[0];
+                        analyzeColumn(headers[0]);
+                    }
+
+                } catch (err) {
+                    showError("Error parsing file. Please ensure it is a valid Excel or CSV file.");
+                    console.error(err);
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderTable(headers, data) {
+            // Render Headers
+            tableHead.innerHTML = headers.map(h => 
+                `<th class="px-6 py-3 font-medium text-slate-500 uppercase tracking-wider text-xs border-b border-slate-200 bg-slate-50">${h}</th>`
+            ).join('');
+
+            // Render Body
+            tableBody.innerHTML = data.map(row => {
+                return `<tr class="hover:bg-blue-50 transition-colors">` + 
+                    headers.map(h => `<td class="px-6 py-4 text-slate-600 border-b border-slate-100">${row[h] !== undefined ? row[h] : ''}</td>`).join('') +
+                `</tr>`;
+            }).join('');
+        }
+
+        function populateColumnSelector(headers) {
+            columnSelector.innerHTML = headers.map(h => `<option value="${h}">${h}</option>`).join('');
+        }
+
+        function analyzeColumn(columnName) {
+            if (!columnName) return;
+
+            const values = globalData.map(row => row[columnName]);
+            const total = values.length;
+            const definedValues = values.filter(v => v !== undefined && v !== null && v !== '');
+            const emptyCount = total - definedValues.length;
+            const uniqueValues = [...new Set(definedValues)];
+            
+            // Determine Type (heuristic)
+            const isNumeric = definedValues.every(v => !isNaN(parseFloat(v)) && isFinite(v));
+            
+            // Update Stats UI
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-unique').textContent = uniqueValues.length;
+            document.getElementById('stat-empty').textContent = emptyCount;
+            document.getElementById('stat-type').textContent = isNumeric ? 'Numeric' : 'Text';
+
+            const numericStats = document.getElementById('numeric-stats');
+            
+            if (isNumeric && definedValues.length > 0) {
+                numericStats.classList.remove('hidden');
+                const numbers = definedValues.map(v => parseFloat(v));
+                const sum = numbers.reduce((a, b) => a + b, 0);
+                const avg = sum / numbers.length;
+                const min = Math.min(...numbers);
+                const max = Math.max(...numbers);
+
+                document.getElementById('stat-sum').textContent = formatNumber(sum);
+                document.getElementById('stat-avg').textContent = formatNumber(avg);
+                document.getElementById('stat-minmax').textContent = `${formatNumber(min)} / ${formatNumber(max)}`;
+            } else {
+                numericStats.classList.add('hidden');
+            }
+
+            updateChart(columnName, definedValues, isNumeric);
+        }
+
+        function updateChart(label, values, isNumeric) {
+            const ctx = document.getElementById('dataChart').getContext('2d');
+            
+            // Process data for chart
+            // Frequency map
+            const counts = {};
+            values.forEach(v => {
+                counts[v] = (counts[v] || 0) + 1;
+            });
+
+            // Sort and slice
+            let sortedLabels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+            
+            // If too many unique values, limit to top 10
+            if (sortedLabels.length > 10) {
+                sortedLabels = sortedLabels.slice(0, 10);
+            }
+            
+            const chartData = sortedLabels.map(l => counts[l]);
+
+            // Destroy old chart
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: `Frequency: ${label}`,
+                        data: chartData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Utilities
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
+        }
+
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function resetApp() {
+            fileInput.value = '';
+            dashboard.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            globalData = [];
+            headers = [];
+        }
+
+        function exportToJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(globalData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "exported_data.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    </script>
+</body>
+</html>

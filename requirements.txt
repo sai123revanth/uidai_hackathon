@@ -61,3 +61,4 @@ wcwidth==0.2.14
 Werkzeug==3.1.4
 xgboost==3.1.1
 flask-cors==3.0.10
+sklearn==0.0.post1

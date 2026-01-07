@@ -168,9 +168,10 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
 
-        .note-1 { top: 12%; left: 4%; animation-delay: 0s; }
-        .note-2 { bottom: 20%; left: 5%; animation-delay: 2.5s; }
-        .note-3 { top: 40%; left: 3%; animation-delay: 5s; } /* Moved to left middle */
+        /* Aligned in a vertical line on the left side */
+        .note-1 { top: 15%; left: 2rem; animation-delay: 0s; }
+        .note-3 { top: 45%; left: 2rem; animation-delay: 5s; }
+        .note-2 { top: 75%; left: 2rem; animation-delay: 2.5s; }
 
         @keyframes float {
             0%, 100% { transform: translateY(0); }
@@ -844,7 +845,7 @@
                 </div>
             </div>
 
-            <!-- Sticky Note 1: Top Left -->
+            <!-- Sticky Note 1: Top Left - Aligned in a line -->
             <div class="sticky-note note-1">
                 <div class="note-header">
                     <div class="accent-dot" style="background: var(--accent-3);"></div>
@@ -855,18 +856,7 @@
                 </div>
             </div>
 
-            <!-- Sticky Note 2: Bottom Left (Arabian Sea) -->
-            <div class="sticky-note note-2">
-                <div class="note-header">
-                    <div class="accent-dot" style="background: var(--accent-1);"></div>
-                    Real-time Monitoring
-                </div>
-                <div class="note-body">
-                    Live tracking of urban sprawl, migration trends, and resource density across states.
-                </div>
-            </div>
-
-            <!-- Sticky Note 3: Bottom Left Middle -->
+            <!-- Sticky Note 2: Left Middle - Aligned in a line -->
             <div class="sticky-note note-3">
                 <div class="note-header">
                     <div class="accent-dot" style="background: var(--accent-2);"></div>
@@ -874,6 +864,17 @@
                 </div>
                 <div class="note-body">
                     AI-driven resource allocation ensuring smarter, inclusive, and efficient city planning.
+                </div>
+            </div>
+
+            <!-- Sticky Note 3: Bottom Left - Aligned in a line -->
+            <div class="sticky-note note-2">
+                <div class="note-header">
+                    <div class="accent-dot" style="background: var(--accent-1);"></div>
+                    Real-time Monitoring
+                </div>
+                <div class="note-body">
+                    Live tracking of urban sprawl, migration trends, and resource density across states.
                 </div>
             </div>
         </div>

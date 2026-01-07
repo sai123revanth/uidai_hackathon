@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     // 3. Define the Hackathon API Endpoint
     // IMPORTANT: Replace this URL with the actual endpoint URL provided in your Hackathon documentation.
     // It usually looks like: https://api.uidai.gov.in/hackathon/data or similar.
-    const EXTERNAL_API_URL = 'https://api.uidai.gov.in/hackathon/v1/insights'; 
+    const EXTERNAL_API_URL = 'https://api.data.gov.in/resource/ecd49b12-3084-4521-8f7e-ca8bf72069ba?'; 
 
     try {
         // 4. Make the request to the real UIDAI API

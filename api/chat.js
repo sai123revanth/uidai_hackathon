@@ -1,66 +1,69 @@
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
+export const config = {
+  runtime: 'edge',
+};
+
+export default async function handler(req) {
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+  }
+
+  try {
+    const { message } = await req.json();
+
+    // System prompt defining the UDAAN persona
+    const systemPrompt = `
+      You are the AI Assistant for Project UDAAN (Unified Data Analysis for Aadhaar Network).
+      
+      Your Role:
+      - Provide professional, insightful, and data-driven answers regarding urban analytics, Aadhaar integration, and demographics in India.
+      - Explain features of the portal: Slum Gentrification Monitor, Suburban Sprawl Detection, Rental Heatmaps, and Smart Resource Allocation.
+      - Maintain a tone that is technical yet accessible to policymakers and urban planners.
+      - If asked about sensitive personal data, clarify that UDAAN uses anonymized, aggregated data patterns, not individual private records.
+      
+      Context:
+      - UDAAN integrates Aadhaar insights for comprehensive demographic analysis.
+      - It monitors real-time urban sprawl and migration trends.
+      - It aids in AI-driven resource allocation for smart city planning.
+    `;
+
+    // Using Groq API with OpenAI compatibility
+    // Ensure process.env.LUMA_API_KEY contains your Groq API Key
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.LUMA_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
+
+    const data = await response.json();
+
+    // Error handling for the API response
+    if (!response.ok) {
+      console.error('Groq API Error:', data);
+      return new Response(JSON.stringify({ error: 'Failed to process query' }), { status: 500 });
     }
 
-    const { prompt } = req.body;
-    const apiKey = process.env.LUMA_API_KEY;
+    // Extract the content from Groq's OpenAI-compatible response structure
+    const botResponse = data.choices[0].message.content;
 
-    if (!apiKey) {
-        return res.status(500).json({ 
-            error: 'API Key not configured. Please add your Groq API Key to Vercel environment variables.' 
-        });
-    }
+    return new Response(JSON.stringify({ reply: botResponse }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-    try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [
-                    { 
-                        role: "system", 
-                        content: `You are the UIDAI (Unique Identification Authority of India) Assistant. 
-                        
-                        CRITICAL INSTRUCTION: You must support all Indian languages (Hindi, Bengali, Telugu, Marathi, Tamil, Urdu, Gujarati, Kannada, Odia, Malayalam, Punjabi, etc.). 
-                        Detect the language used by the user in their query and respond ENTIRELY in that same language. 
-                        If the user asks in Hindi, answer in Hindi. If they ask in Tamil, answer in Tamil.
-                        
-                        Knowledge Domain:
-                        - Aadhaar enrollment, updates (Name, Address, DOB, Gender, Mobile, Email).
-                        - Document requirements (POI, POA).
-                        - Aadhaar PVC Card, E-Aadhaar downloads, and m-Aadhaar.
-                        - Authentication history and biometric locking.
-                        - Finding Aadhaar centers.
-                        
-                        Always be professional, helpful, and concise. Ensure your translations are accurate and culturally appropriate for the specific Indian language used.` 
-                    },
-                    { 
-                        role: "user", 
-                        content: prompt 
-                    }
-                ],
-                temperature: 0.5, // Lower temperature for more factual multilingual accuracy
-                max_tokens: 1500
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            return res.status(response.status).json({ 
-                error: data.error?.message || 'API Communication Error' 
-            });
-        }
-
-        const reply = data.choices?.[0]?.message?.content || "I am unable to provide a response at this moment.";
-        return res.status(200).json({ reply });
-
-    } catch (error) {
-        return res.status(500).json({ error: "Internal Server Error" });
-    }
+  } catch (error) {
+    console.error('Server Error:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+  }
 }

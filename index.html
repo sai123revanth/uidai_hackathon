@@ -3,343 +3,1200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UIDAI Aadhaar Data Insights - Andhra Pradesh</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>UDAAN - Unified Data Analysis for Aadhaar Network</title>
+    <!-- Import Plus Jakarta Sans and Rajdhani for the Watermark -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .aadhaar-gradient {
-            background: linear-gradient(90deg, #FDB913 0%, #FFFFFF 50%, #009900 100%);
-            height: 4px;
+        :root {
+            /* Exact Luma Variables */
+            --bg: #000000;
+            --accent-1: #3b82f6; 
+            --accent-2: #8b5cf6; 
+            --accent-3: #ec4899; 
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
         }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-800">
 
-    <!-- Top Branding Strip -->
-    <div class="aadhaar-gradient"></div>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            letter-spacing: -0.01em;
+            width: 100%;
+        }
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="bg-blue-900 text-white p-2 rounded-lg">
-                        <i class="fa-solid fa-fingerprint text-2xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-900">UIDAI Data Insights</h1>
-                        <p class="text-xs text-gray-500">Hackathon 2026 Dashboard</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium border border-green-200">
-                        <i class="fa-solid fa-circle-check mr-1"></i> System Online
-                    </span>
-                    <button class="text-gray-400 hover:text-gray-600">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
+        /* --- Luma Background System --- */
+        .bg-fixed-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+            background: var(--bg);
+        }
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        .grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(ellipse at center, black, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black, transparent 80%);
+        }
+
+        .aura {
+            position: absolute;
+            width: 90vw;
+            height: 90vw;
+            max-width: 800px;
+            max-height: 800px;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.25; 
+            pointer-events: none;
+            will-change: transform;
+            animation: aura-move 20s infinite alternate ease-in-out;
+        }
+        .aura-1 { background: var(--accent-1); top: -10%; left: -15%; }
+        .aura-2 { background: var(--accent-3); bottom: -10%; right: -10%; animation-delay: -7s; }
+
+        @keyframes aura-move {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 30px) scale(1.05); }
+        }
+
+        /* --- Glassmorphism Utils --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+        }
+
+        .border-beam {
+            position: relative;
+        }
         
-        <!-- Controls & Filters -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
-            <div class="flex flex-col md:flex-row md:items-end gap-6">
-                
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Target State</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-location-dot absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" id="stateInput" value="Andhra Pradesh" 
-                            class="pl-10 block w-full rounded-lg border-gray-300 bg-gray-50 border p-2.5 focus:ring-blue-500 focus:border-blue-500" readonly>
-                    </div>
-                </div>
-
-                <div class="w-full md:w-48">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Row Limit</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-list-ol absolute left-3 top-3 text-gray-400"></i>
-                        <input type="number" id="limitInput" value="100" 
-                            class="pl-10 block w-full rounded-lg border-gray-300 bg-gray-50 border p-2.5 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
-
-                <div class="w-full md:w-64">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Source</label>
-                    <select id="sourceSelect" class="block w-full rounded-lg border-gray-300 border p-2.5 focus:ring-blue-500 focus:border-blue-500 bg-white">
-                        <option value="mock">Demo Data (Preview)</option>
-                        <option value="live">Live API (Requires Proxy)</option>
-                    </select>
-                </div>
-
-                <button onclick="fetchData()" class="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-down"></i>
-                    Retrieve Data
-                </button>
-            </div>
-            
-            <!-- API Key Warning (Hidden by default) -->
-            <div id="apiKeyWarning" class="hidden mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex items-start gap-2">
-                <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-                <div>
-                    <strong>Vercel Environment Variable Note:</strong> 
-                    Client-side HTML cannot access <code>process.env.UIDAI_API_KEY</code> directly. 
-                    <br>To use your secure key, point the "Live" request to a Vercel Serverless Function (e.g., <code>/api/uidai-proxy</code>).
-                </div>
-            </div>
-        </div>
-
-        <!-- Metrics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="metricsArea">
-            <!-- Populated by JS -->
-        </div>
-
-        <!-- Data Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-800">
-                    Data Results 
-                    <span id="resultCount" class="ml-2 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">0 items</span>
-                </h2>
-                <div class="flex gap-2">
-                    <button onclick="exportJSON()" class="text-sm px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 text-gray-600">
-                        <i class="fa-solid fa-code mr-1"></i> JSON
-                    </button>
-                    <button onclick="exportCSV()" class="text-sm px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-100 text-gray-600">
-                        <i class="fa-solid fa-file-csv mr-1"></i> CSV
-                    </button>
-                </div>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-gray-600">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-4 font-bold border-b">District</th>
-                            <th scope="col" class="px-6 py-4 font-bold border-b text-right">Aadhaar Generated</th>
-                            <th scope="col" class="px-6 py-4 font-bold border-b text-right">Updates</th>
-                            <th scope="col" class="px-6 py-4 font-bold border-b text-center">Gender</th>
-                            <th scope="col" class="px-6 py-4 font-bold border-b text-center">Age Group</th>
-                            <th scope="col" class="px-6 py-4 font-bold border-b text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-gray-200">
-                        <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                                Click "Retrieve Data" to load information.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
-        // State to hold our data
-        let currentData = [];
-
-        // Realistic Districts in Andhra Pradesh for Mock Data
-        const apDistricts = [
-            "Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", 
-            "Rajahmundry", "Tirupati", "Kakinada", "Kadapa", "Anantapur",
-            "Vizianagaram", "Eluru", "Ongole", "Nandyal", "Machilipatnam"
-        ];
-
-        // --- MOCK DATA GENERATOR (For Demo) ---
-        function generateMockData(count) {
-            const data = [];
-            for (let i = 0; i < count; i++) {
-                const district = apDistricts[Math.floor(Math.random() * apDistricts.length)];
-                const generated = Math.floor(Math.random() * 5000) + 1000;
-                const updates = Math.floor(Math.random() * 3000) + 500;
-                
-                data.push({
-                    id: `UID-${10000 + i}`,
-                    state: "Andhra Pradesh",
-                    district: district,
-                    aadhaar_generated: generated,
-                    aadhaar_updated: updates,
-                    gender: Math.random() > 0.5 ? "Male" : "Female",
-                    age_group: Math.random() > 0.3 ? "18-45" : (Math.random() > 0.5 ? "45+" : "0-18"),
-                    status: Math.random() > 0.95 ? "Pending" : "Active"
-                });
-            }
-            return data;
+        .border-beam::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: conic-gradient(from 0deg, transparent 50%, var(--accent-1), var(--accent-2), var(--accent-3), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            animation: spin-beam 5s linear infinite;
+            pointer-events: none;
+            opacity: 0.5;
         }
 
-        // --- MAIN FETCH FUNCTION ---
-        async function fetchData() {
-            const source = document.getElementById('sourceSelect').value;
-            const limit = document.getElementById('limitInput').value;
-            const tableBody = document.getElementById('tableBody');
-            const apiKeyWarning = document.getElementById('apiKeyWarning');
+        @keyframes spin-beam {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
-            // Show Loading State
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-blue-600">
-                        <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-2"></i>
-                        <p>Fetching secure data from UIDAI Insights...</p>
-                    </td>
-                </tr>
-            `;
+        .text-glow {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+        }
+        
+        .gradient-brand {
+            background: linear-gradient(to right, #ffffff, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-            if (source === 'mock') {
-                // SIMULATED API CALL
-                apiKeyWarning.classList.add('hidden');
-                setTimeout(() => {
-                    currentData = generateMockData(parseInt(limit));
-                    renderTable(currentData);
-                    updateMetrics(currentData);
-                }, 800); // Fake delay for realism
+        /* --- Layout --- */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex: 1;
+            height: 100vh;
+            padding: 24px;
+            gap: 24px;
+            box-sizing: border-box;
+        }
 
+        /* Map Section (Left) - Now a wrapper class */
+        .map-section {
+            flex: 3;
+            height: 100%;
+            border-radius: 32px;
+            /* Applying Luma glass-panel style */
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #chartdiv {
+            width: 100%;
+            height: 100%;
+            /* Removed styling as it is now on .map-section */
+        }
+
+        /* Watermark styling */
+        .map-watermark {
+            position: absolute;
+            top: 50%;
+            right: 4%; /* Moved to right */
+            transform: translateY(-50%);
+            font-size: 13vh; /* Adjusted size for visibility */
+            font-weight: 800;
+            font-family: 'Rajdhani', sans-serif; /* Changed to Rajdhani for professional tech look */
+            /* Double Border Text Style */
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.15);
+            text-shadow: 
+                4px 4px 0px rgba(255, 255, 255, 0.03),
+                -1px -1px 0 rgba(255, 255, 255, 0.02); 
+            pointer-events: none;
+            z-index: 5;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 1.2rem;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        /* Sticky Notes (Floating Info) */
+        .sticky-note {
+            position: absolute;
+            width: 200px;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            z-index: 20;
+            pointer-events: none; /* Allow clicking through to map */
+            animation: float 8s ease-in-out infinite;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .note-1 { top: 12%; left: 4%; animation-delay: 0s; }
+        .note-2 { bottom: 20%; left: 5%; animation-delay: 2.5s; }
+        .note-3 { top: 40%; left: 3%; animation-delay: 5s; } /* Moved to left middle */
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .note-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+        }
+
+        .note-body {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        .accent-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* --- Summary Box --- */
+        .summary-box {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            width: 280px;
+            padding: 1.25rem;
+            border-radius: 20px;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+
+        .summary-content {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .summary-stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+
+        /* Dashboard Section (Right) */
+        #dashboard {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 10px;
+            overflow: hidden; 
+            min-width: 340px;
+        }
+
+        /* Branding */
+        .app-brand {
+            padding: 0.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        
+        .brand-header-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .brand-logo svg {
+            color: var(--accent-1);
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+        }
+
+        .app-brand h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            white-space: nowrap;
+        }
+        
+        .app-brand p {
+            margin-top: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.8;
+        }
+
+        .dashboard-content {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-right: 8px;
+            min-height: 0;
+        }
+
+        /* Controls - Floating in Map */
+        .select-container {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            z-index: 40;
+            width: 240px;
+            background: rgba(0, 0, 0, 0.5); /* Darker for better contrast on map */
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .select-label, .menu-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        /* Select styling based on Luma inputs */
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        select option {
+            background-color: #000000;
+            color: white;
+        }
+
+        /* Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Two columns layout */
+            gap: 12px;
+        }
+
+        .module-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column; /* Stack vertically for compact grid */
+            align-items: flex-start;
+            gap: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+        }
+
+        .module-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .icon-slum { color: var(--accent-3); } 
+        .icon-sprawl { color: var(--accent-1); }
+        .icon-rent { color: #34d399; }
+        .icon-smart { color: var(--accent-2); }
+
+        .module-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke-width: 1.5;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .module-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .module-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            display: block;
+            line-height: 1.2;
+        }
+        
+        .module-subtext {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1); 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.2); 
+        }
+
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+                padding: 16px;
+            }
+            .map-section {
+                height: 50vh;
+                flex: none;
+            }
+            #dashboard {
+                flex: none;
+                width: 100%;
+                overflow: visible;
+                padding: 0;
+            }
+            .dashboard-content {
+                overflow: visible;
+            }
+            .app-brand h1 {
+                font-size: 2rem;
+                white-space: normal;
+                line-height: 1.1;
+            }
+            /* Hide notes on small mobile to avoid blocking map */
+            .sticky-note, .summary-box {
+                display: none;
+            }
+            /* Adjust floating select on mobile */
+            .select-container {
+                top: 1rem;
+                right: 1rem;
+                width: 180px;
+                padding: 0.8rem;
+            }
+        }
+
+        /* Chatbot Floating Action Button */
+        .chatbot-float {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            /* Reuse glass panel styles mixed with accent border */
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chatbot-float::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            opacity: 0.6;
+        }
+
+        .chatbot-float:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .chatbot-float svg {
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
+        }
+
+        /* --- Chat Window Styles --- */
+        .chat-window {
+            position: fixed;
+            bottom: 6rem; /* Above the float button */
+            left: 2rem;
+            width: 340px;
+            height: 480px;
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            z-index: 501;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .chat-window.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .chat-header {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .chat-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            max-width: 80%;
+        }
+
+        .message.bot {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            color: #ddd;
+        }
+
+        .message.user {
+            background: var(--accent-1);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-input-area {
+            padding: 12px;
+            border-top: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--accent-1);
+        }
+
+        .chat-input-area button {
+            background: var(--accent-1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .chat-input-area button:hover {
+            transform: scale(1.05);
+        }
+
+        .am5-layer-30 { display: none !important; }
+    </style>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/geodata/indiaLow.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+</head>
+<body>
+
+    <!-- Luma Fixed Background System -->
+    <div class="bg-fixed-container">
+        <div class="grid-bg"></div>
+        <div class="aura aura-1"></div>
+        <div class="aura aura-2"></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Map Container with Sticky Notes & Floating Select -->
+        <div class="map-section">
+            <div id="chartdiv"></div>
+            
+            <!-- Watermark -->
+            <div class="map-watermark">INDIA</div>
+
+            <!-- Floating Select Jurisdiction -->
+            <div class="select-container">
+                <label for="stateSelect" class="select-label">Select Jurisdiction</label>
+                <select id="stateSelect">
+                    <option value="" disabled selected>Choose a State...</option>
+                </select>
+            </div>
+
+            <!-- Summary Box - Bottom Right -->
+            <div id="summary-box" class="summary-box">
+                <div class="summary-header">
+                    <i data-lucide="activity" style="width: 16px; height: 16px; color: var(--accent-1);"></i>
+                    <span id="summary-title">Summary</span>
+                </div>
+                <div id="summary-content" class="summary-content">
+                    Select a jurisdiction on the map to view comprehensive Aadhaar-linked urban analysis and demographic insights.
+                </div>
+            </div>
+
+            <!-- Sticky Note 1: Top Left -->
+            <div class="sticky-note note-1">
+                <div class="note-header">
+                    <div class="accent-dot" style="background: var(--accent-3);"></div>
+                    Data Unification
+                </div>
+                <div class="note-body">
+                    Integrating Aadhaar insights for comprehensive demographic analysis and pattern recognition.
+                </div>
+            </div>
+
+            <!-- Sticky Note 2: Bottom Left (Arabian Sea) -->
+            <div class="sticky-note note-2">
+                <div class="note-header">
+                    <div class="accent-dot" style="background: var(--accent-1);"></div>
+                    Real-time Monitoring
+                </div>
+                <div class="note-body">
+                    Live tracking of urban sprawl, migration trends, and resource density across states.
+                </div>
+            </div>
+
+            <!-- Sticky Note 3: Bottom Left Middle -->
+            <div class="sticky-note note-3">
+                <div class="note-header">
+                    <div class="accent-dot" style="background: var(--accent-2);"></div>
+                    Policy Impact
+                </div>
+                <div class="note-body">
+                    AI-driven resource allocation ensuring smarter, inclusive, and efficient city planning.
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Container -->
+        <div id="dashboard">
+            <div class="app-brand">
+                <div class="brand-header-row">
+                    <div class="brand-logo">
+                        <i data-lucide="rocket"></i>
+                    </div>
+                    <h1>Project UDAAN</h1>
+                </div>
+                <p>Unified Data Analysis for Aadhaar Network</p>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="menu-label" style="margin-bottom: 0.5rem;">Live Analytics Modules</div>
+                <div class="analytics-grid">
+                    <div class="module-card">
+                        <div class="module-icon icon-slum">
+                            <i data-lucide="building-2"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Slum Gentrification</span>
+                            <span class="module-subtext">Monitor urban displacement</span>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-icon icon-sprawl">
+                            <i data-lucide="expand"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Suburban Sprawl</span>
+                            <span class="module-subtext">Detect expansion patterns</span>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-icon icon-rent">
+                            <i data-lucide="bar-chart-3"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Rental Heatmap</span>
+                            <span class="module-subtext">Market value analysis</span>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-icon icon-smart">
+                            <i data-lucide="cpu"></i>
+                        </div>
+                        <div class="module-content">
+                            <span class="module-text">Smart Allocation</span>
+                            <span class="module-subtext">Resource Optimization</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Button -->
+    <div class="chatbot-float">
+        <i data-lucide="message-circle"></i>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <div class="chat-title">
+                <i data-lucide="bot" style="width: 18px; height: 18px; color: var(--accent-1);"></i>
+                <span>UDAAN AI Assistant</span>
+            </div>
+            <button class="chat-close" id="chatClose">
+                <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+            </button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                Hello! I am the UDAAN AI Assistant. How can I help you analyze the Aadhaar network data today?
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" placeholder="Type your query..." id="chatInput">
+            <button id="chatSend">
+                <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+            </button>
+        </div>
+    </div>
+
+<script>
+// Initialize Lucide Icons
+lucide.createIcons();
+
+// Chatbot Interaction Logic
+const chatbotBtn = document.querySelector('.chatbot-float');
+const chatWindow = document.getElementById('chatWindow');
+const chatClose = document.getElementById('chatClose');
+const chatSend = document.getElementById('chatSend');
+const chatInput = document.getElementById('chatInput');
+const chatMessages = document.getElementById('chatMessages');
+
+chatbotBtn.addEventListener('click', () => {
+    // Simple toggle logic instead of one-way open
+    if (chatWindow.classList.contains('active')) {
+        chatWindow.classList.remove('active');
+        // Ensure button remains visible
+    } else {
+        chatWindow.classList.add('active');
+        // Do NOT hide the button, just ensure z-index is managed if overlap
+    }
+});
+
+chatClose.addEventListener('click', () => {
+    chatWindow.classList.remove('active');
+});
+
+async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    // User Message
+    const userMsg = document.createElement('div');
+    userMsg.className = 'message user';
+    userMsg.innerText = text;
+    chatMessages.appendChild(userMsg);
+    chatInput.value = '';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Loading Indicator
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'message bot';
+    loadingMsg.innerText = "...";
+    chatMessages.appendChild(loadingMsg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: text })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+        
+        // Remove loading
+        chatMessages.removeChild(loadingMsg);
+
+        // Bot Response
+        const botMsg = document.createElement('div');
+        botMsg.className = 'message bot';
+        botMsg.innerText = data.reply;
+        chatMessages.appendChild(botMsg);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    } catch (error) {
+        console.error('Error:', error);
+        chatMessages.removeChild(loadingMsg);
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message bot';
+        errorMsg.innerText = "Sorry, I encountered an error connecting to the server.";
+        chatMessages.appendChild(errorMsg);
+    }
+}
+
+chatSend.addEventListener('click', sendMessage);
+chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+});
+
+// Data
+var stateData = [
+    { id: "IN-AP", name: "Andhra Pradesh" },
+    { id: "IN-AR", name: "Arunachal Pradesh" },
+    { id: "IN-AS", name: "Assam" },
+    { id: "IN-BR", name: "Bihar" },
+    { id: "IN-CH", name: "Chandigarh" },
+    { id: "IN-CT", name: "Chhattisgarh" },
+    { id: "IN-CG", name: "Chhattisgarh" },
+    { id: "IN-DH", name: "Dadra and Nagar Haveli and Daman and Diu" }, 
+    { id: "IN-DD", name: "Dadra and Nagar Haveli and Daman and Diu" },
+    { id: "IN-DN", name: "Dadra and Nagar Haveli and Daman and Diu" },
+    { id: "IN-DA", name: "Dadra and Nagar Haveli and Daman and Diu" },
+    { id: "IN-DL", name: "Delhi" },
+    { id: "IN-GA", name: "Goa" },
+    { id: "IN-GJ", name: "Gujarat" },
+    { id: "IN-HR", name: "Haryana" },
+    { id: "IN-HP", name: "Himachal Pradesh" },
+    { id: "IN-JK", name: "Jammu and Kashmir" },
+    { id: "IN-LA", name: "Ladakh" },
+    { id: "IN-JH", name: "Jharkhand" },
+    { id: "IN-KA", name: "Karnataka" },
+    { id: "IN-KL", name: "Kerala" },
+    { id: "IN-LD", name: "Lakshadweep" },
+    { id: "IN-MP", name: "Madhya Pradesh" },
+    { id: "IN-MH", name: "Maharashtra" },
+    { id: "IN-MN", name: "Manipur" },
+    { id: "IN-ML", name: "Meghalaya" },
+    { id: "IN-MZ", name: "Mizoram" },
+    { id: "IN-NL", name: "Nagaland" },
+    { id: "IN-OR", name: "Odisha" },
+    { id: "IN-OD", name: "Odisha" },
+    { id: "IN-PY", name: "Puducherry (Pondicherry)" },
+    { id: "IN-PO", name: "Puducherry (Pondicherry)" },
+    { id: "IN-PB", name: "Punjab" },
+    { id: "IN-RJ", name: "Rajasthan" },
+    { id: "IN-SK", name: "Sikkim" },
+    { id: "IN-TN", name: "Tamil Nadu" },
+    { id: "IN-TG", name: "Telangana" },
+    { id: "IN-TL", name: "Telangana" },
+    { id: "IN-TR", name: "Tripura" },
+    { id: "IN-UP", name: "Uttar Pradesh" },
+    { id: "IN-UT", name: "Uttarakhand" },
+    { id: "IN-UA", name: "Uttarakhand" },
+    { id: "IN-WB", name: "West Bengal" },
+    { id: "IN-AN", name: "Andaman and Nicobar Islands" }
+];
+
+// Helper function to update the Summary Box
+function updateSummary(name) {
+    const summaryContent = document.getElementById('summary-content');
+    const title = document.getElementById('summary-title');
+    
+    title.innerText = name ? name.toUpperCase() + " SUMMARY" : "SUMMARY";
+    
+    if (name) {
+        // Generate pseudo-random data for visualization
+        const population = (Math.floor(Math.random() * 80) + 5) + "M";
+        const growth = (Math.random() * 4 + 1).toFixed(1) + "%";
+        const aadhar = (Math.floor(Math.random() * 15) + 85) + "%";
+        
+        summaryContent.innerHTML = `
+            <div class="summary-stat-row">
+                <span style="color:var(--text-secondary)">Population:</span>
+                <span style="color:#fff; font-weight:700;">${population}</span>
+            </div>
+            <div class="summary-stat-row">
+                <span style="color:var(--text-secondary)">Urban Growth:</span>
+                <span style="color:var(--accent-1); font-weight:700;">+${growth}</span>
+            </div>
+            <div class="summary-stat-row">
+                <span style="color:var(--text-secondary)">Aadhaar Coverage:</span>
+                <span style="color:var(--accent-3); font-weight:700;">${aadhar}</span>
+            </div>
+            <div style="margin-top:12px; font-size:0.75rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+                <span style="color:var(--accent-2)">●</span> High priority zone for infrastructure development based on recent migration patterns.
+            </div>
+        `;
+    } else {
+        summaryContent.innerHTML = "Select a jurisdiction on the map to view comprehensive Aadhaar-linked urban analysis and demographic insights.";
+    }
+}
+
+am5.ready(function() {
+    var root = am5.Root.new("chartdiv");
+
+    root.setThemes([ am5themes_Animated.new(root) ]);
+
+    var chart = root.container.children.push(am5map.MapChart.new(root, {
+        panX: "none",
+        panY: "none",
+        wheelY: "none",
+        projection: am5map.geoMercator()
+    }));
+
+    chart.seriesContainer.draggable = false;
+    chart.seriesContainer.resizable = false;
+    chart.chartContainer.wheelable = false;
+    chart.maxZoomLevel = 1;
+    chart.minZoomLevel = 1;
+
+    var polygonSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {
+        geoJSON: am5geodata_indiaLow,
+        valueField: "value",
+        calculateAggregates: true
+    }));
+
+    // INITIAL MAP STYLING - Matching Luma Dark Theme
+    polygonSeries.mapPolygons.template.setAll({
+        tooltipText: "{name}",
+        fill: am5.color(0x1a1a2e), // Dark Slate to match background theme
+        fillOpacity: 0.8, 
+        stroke: am5.color(0x000000), 
+        strokeWidth: 1,
+        interactive: true,
+        cursorOverStyle: "pointer"
+    });
+
+    // FLAG COLORING LOGIC
+    polygonSeries.events.on("datavalidated", function () {
+      polygonSeries.mapPolygons.each(function (polygon) {
+        var centroid = polygon.geoCentroid();
+        if (centroid) {
+            var lat = centroid.latitude;
+            // Latitude-based coloring for Tricolour
+            if (lat >= 24) {
+                // Top: Saffron
+                polygon.set("fill", am5.color(0xFF9933)); 
+            } else if (lat >= 17) {
+                // Middle: White
+                polygon.set("fill", am5.color(0xFFFFFF)); 
             } else {
-                // REAL API CALL TEMPLATE
-                // Note: This block shows how you would structure the call if you had the backend proxy
-                apiKeyWarning.classList.remove('hidden');
-                
-                try {
-                    // ------------------------------------------------------------
-                    // VERCEL INTEGRATION INSTRUCTION:
-                    // ------------------------------------------------------------
-                    // 1. Create a file in your project: /api/get-uidai-data.js
-                    // 2. In that file, read process.env.UIDAI_API_KEY
-                    // 3. Make the fetch to the real UIDAI endpoint from there
-                    // 4. Return the JSON to this frontend
-                    // ------------------------------------------------------------
-
-                    // Example of what the call would look like:
-                    /*
-                    const response = await fetch(`/api/get-uidai-data?limit=${limit}&state=AndhraPradesh`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    const result = await response.json();
-                    currentData = result.data; // Adjust based on actual API response structure
-                    renderTable(currentData);
-                    */
-
-                    // For now, since we don't have the proxy running, we revert to error
-                    throw new Error("Backend proxy not found. Please implement the Vercel Function or switch to Demo Data.");
-
-                } catch (error) {
-                    tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-red-500 bg-red-50">
-                                <i class="fa-solid fa-circle-exclamation text-2xl mb-2"></i>
-                                <p><strong>Connection Failed:</strong> ${error.message}</p>
-                                <p class="text-xs text-gray-500 mt-2">Switch to 'Demo Data' to preview the dashboard interface.</p>
-                            </td>
-                        </tr>
-                    `;
-                }
+                // Bottom: Green
+                polygon.set("fill", am5.color(0x138808)); 
             }
         }
+      });
+    });
 
-        // --- RENDER FUNCTIONS ---
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
+    // Hover State - Luma Blue
+    polygonSeries.mapPolygons.template.states.create("hover", {
+        fill: am5.color(0x3b82f6), 
+        stroke: am5.color(0xffffff),
+        strokeWidth: 1.5
+    });
+
+    // Active State - Luma Violet
+    var activeState = polygonSeries.mapPolygons.template.states.create("active", {
+        fill: am5.color(0x8b5cf6), 
+        stroke: am5.color(0xffffff),
+        strokeWidth: 2
+    });
+
+    var previousPolygon;
+    var selectElement = document.getElementById('stateSelect');
+    var sortedData = [...stateData].sort((a, b) => a.name.localeCompare(b.name));
+    var uniqueNames = new Set();
+
+    sortedData.forEach(function(item) {
+        if (!uniqueNames.has(item.name)) {
+            var opt = document.createElement('option');
+            opt.value = item.id;
+            opt.innerHTML = item.name;
+            selectElement.appendChild(opt);
+            uniqueNames.add(item.name);
+        }
+    });
+
+    polygonSeries.mapPolygons.template.events.on("click", function(ev) {
+        var dataItem = ev.target.dataItem;
+        var dataContext = dataItem.dataContext;
+        
+        if(dataContext && dataContext.id) {
+            selectElement.value = dataContext.id;
             
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center">No records found</td></tr>`;
-                return;
+            // Trigger summary update
+            updateSummary(dataContext.name);
+
+            if (selectElement.value === "") {
+                 for (var i = 0; i < selectElement.options.length; i++) {
+                     if (selectElement.options[i].text === dataContext.name) {
+                         selectElement.selectedIndex = i;
+                         break;
+                     }
+                 }
             }
-
-            let html = '';
-            data.forEach((row, index) => {
-                html += `
-                    <tr class="hover:bg-slate-50 transition-colors border-b last:border-0">
-                        <td class="px-6 py-4 font-medium text-gray-900">${row.district}</td>
-                        <td class="px-6 py-4 text-right font-mono text-blue-600">${row.aadhaar_generated.toLocaleString()}</td>
-                        <td class="px-6 py-4 text-right font-mono text-green-600">${row.aadhaar_updated.toLocaleString()}</td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${row.gender === 'Male' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'}">
-                                ${row.gender}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-center text-gray-500 text-xs">${row.age_group}</td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${row.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-yellow-800'}">
-                                <span class="w-1.5 h-1.5 rounded-full ${row.status === 'Active' ? 'bg-emerald-500' : 'bg-yellow-500'}"></span>
-                                ${row.status}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            tbody.innerHTML = html;
-            document.getElementById('resultCount').innerText = `${data.length} records`;
         }
-
-        function updateMetrics(data) {
-            const totalGen = data.reduce((sum, item) => sum + item.aadhaar_generated, 0);
-            const totalUpd = data.reduce((sum, item) => sum + item.aadhaar_updated, 0);
-            const uniqueDistricts = [...new Set(data.map(item => item.district))].length;
-
-            const cards = [
-                { title: "Total Enrolments", value: totalGen.toLocaleString(), icon: "fa-id-card", color: "text-blue-600", bg: "bg-blue-50" },
-                { title: "Total Updates", value: totalUpd.toLocaleString(), icon: "fa-rotate", color: "text-green-600", bg: "bg-green-50" },
-                { title: "Districts Covered", value: uniqueDistricts, icon: "fa-map-location-dot", color: "text-purple-600", bg: "bg-purple-50" },
-                { title: "Data Source", value: "Andhra Pradesh", icon: "fa-server", color: "text-orange-600", bg: "bg-orange-50" },
-            ];
-
-            const metricsArea = document.getElementById('metricsArea');
-            metricsArea.innerHTML = cards.map(card => `
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                    <div class="${card.bg} ${card.color} w-12 h-12 rounded-lg flex items-center justify-center text-xl">
-                        <i class="fa-solid ${card.icon}"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">${card.title}</p>
-                        <p class="text-xl font-bold text-gray-800">${card.value}</p>
-                    </div>
-                </div>
-            `).join('');
+        if (previousPolygon) {
+            previousPolygon.states.applyAnimate("default");
         }
+        ev.target.states.applyAnimate("active");
+        previousPolygon = ev.target;
+    });
 
-        // --- EXPORT UTILS ---
-        function exportJSON() {
-            if (currentData.length === 0) return alert("No data to export!");
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "uidai_hackathon_data.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+    selectElement.addEventListener('change', function(e) {
+        var selectedId = e.target.value;
+        var selectedName = e.target.options[e.target.selectedIndex].text;
+        var targetPolygon;
+        
+        // Trigger summary update
+        updateSummary(selectedName);
+
+        polygonSeries.mapPolygons.each(function(polygon) {
+            if (polygon.dataItem.dataContext.id === selectedId || polygon.dataItem.dataContext.name === selectedName) {
+                targetPolygon = polygon;
+            }
+        });
+
+        if (targetPolygon) {
+            if (previousPolygon) {
+                previousPolygon.states.applyAnimate("default");
+            }
+            targetPolygon.states.applyAnimate("active");
+            previousPolygon = targetPolygon;
         }
+    });
 
-        function exportCSV() {
-            if (currentData.length === 0) return alert("No data to export!");
-            const headers = Object.keys(currentData[0]);
-            const csvRows = [
-                headers.join(','), 
-                ...currentData.map(row => headers.map(fieldName => JSON.stringify(row[fieldName], (key, value) => value === null ? '' : value)).join(','))
-            ];
-            const csvString = csvRows.join('\n');
-            const blob = new Blob([csvString], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'uidai_hackathon_data.csv');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
+    polygonSeries.data.setAll(stateData);
+});
 
-        // Init with empty
-        document.getElementById('resultCount').innerText = "Ready to fetch";
-    </script>
+// Parallax Auras (from Luma JS)
+const auras = document.querySelectorAll('.aura');
+window.addEventListener('mousemove', (e) => {
+    if (window.innerWidth < 1024) return;
+    const x = (e.clientX / window.innerWidth - 0.5) * 30;
+    const y = (e.clientY / window.innerHeight - 0.5) * 30;
+    
+    auras.forEach((aura, index) => {
+        const speed = (index + 1) * 0.3;
+        aura.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+    });
+});
+</script>
 </body>
 </html>

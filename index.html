@@ -152,30 +152,6 @@
             /* Removed styling as it is now on .map-section */
         }
 
-        /* Watermark styling */
-        .map-watermark {
-            position: absolute;
-            top: 50%;
-            right: 4%; /* Moved to right */
-            transform: translateY(-50%);
-            font-size: 13vh; /* Adjusted size for visibility */
-            font-weight: 800;
-            font-family: 'Rajdhani', sans-serif; /* Changed to Rajdhani for professional tech look */
-            /* Double Border Text Style */
-            color: transparent;
-            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.15);
-            text-shadow: 
-                4px 4px 0px rgba(255, 255, 255, 0.03),
-                -1px -1px 0 rgba(255, 255, 255, 0.02); 
-            pointer-events: none;
-            z-index: 5;
-            writing-mode: vertical-rl;
-            text-orientation: upright;
-            letter-spacing: 1.2rem;
-            white-space: nowrap;
-            user-select: none;
-        }
-
         /* Sticky Notes (Floating Info) */
         .sticky-note {
             position: absolute;
@@ -739,9 +715,6 @@
         <div class="map-section">
             <div id="chartdiv"></div>
             
-            <!-- Watermark -->
-            <div class="map-watermark">INDIA</div>
-
             <!-- Floating Select Jurisdiction -->
             <div class="select-container">
                 <label for="stateSelect" class="select-label">Select Jurisdiction</label>

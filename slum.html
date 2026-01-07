@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDAAN - Slum Gentrification Monitor</title>
+    <!-- Import Plus Jakarta Sans and Rajdhani -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --accent-1: #3b82f6; 
+            --accent-2: #8b5cf6; 
+            --accent-3: #ec4899; 
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            letter-spacing: -0.01em;
+            width: 100%;
+        }
+
+        /* --- Background System --- */
+        .bg-fixed-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+            background: var(--bg);
+        }
+
+        .grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(ellipse at center, black, transparent 90%);
+        }
+
+        .aura {
+            position: absolute;
+            width: 80vw;
+            height: 80vw;
+            max-width: 600px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15; 
+            pointer-events: none;
+        }
+        .aura-1 { background: var(--accent-1); top: -10%; left: -10%; }
+        .aura-2 { background: var(--accent-2); bottom: -10%; right: -10%; }
+
+        /* --- Layout --- */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            height: 100vh;
+            padding: 24px;
+            gap: 24px;
+            box-sizing: border-box;
+        }
+
+        /* --- Left Sidebar: States List --- */
+        .states-sidebar {
+            flex: 0 0 300px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-1);
+        }
+
+        .states-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .state-item {
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .state-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .state-item.active {
+            background: var(--accent-1);
+            color: white;
+        }
+
+        /* --- Right Content: Monitor Dashboard --- */
+        .monitor-dashboard {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+        }
+
+        .monitor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .monitor-title-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            background: rgba(236, 72, 153, 0.1);
+            color: var(--accent-3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .monitor-title h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .monitor-title p {
+            margin: 4px 0 0 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* --- Insight Section --- */
+        .alert-banner {
+            background: rgba(236, 72, 153, 0.05);
+            border: 1px solid rgba(236, 72, 153, 0.2);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .alert-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .highlight-text {
+            color: var(--accent-3);
+            font-weight: 700;
+        }
+
+        /* --- Visualizations --- */
+        .viz-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .chart-placeholder {
+            height: 250px;
+            width: 100%;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bar {
+            width: 12%;
+            background: linear-gradient(to top, var(--accent-1), var(--accent-2));
+            border-radius: 8px 8px 0 0;
+            transition: height 1s ease-out;
+            position: relative;
+        }
+
+        .bar.spike {
+            background: linear-gradient(to top, var(--accent-3), #ff7eb3);
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: 'Rajdhani';
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        /* --- Action Table --- */
+        .action-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .action-table th {
+            text-align: left;
+            padding: 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .action-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-urgent { background: rgba(236, 72, 153, 0.1); color: var(--accent-3); border: 1px solid var(--accent-3); }
+        .badge-planning { background: rgba(59, 130, 246, 0.1); color: var(--accent-1); border: 1px solid var(--accent-1); }
+
+        .btn-action {
+            background: var(--accent-1);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-action:hover { opacity: 0.8; }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="bg-fixed-container">
+        <div class="grid-bg"></div>
+        <div class="aura aura-1"></div>
+        <div class="aura aura-2"></div>
+    </div>
+
+    <div class="main-container">
+        <!-- Part 1: States List -->
+        <div class="states-sidebar">
+            <div class="sidebar-header">
+                <h2>Jurisdictions</h2>
+            </div>
+            <div class="states-list" id="statesList">
+                <!-- States populated via JS -->
+            </div>
+        </div>
+
+        <!-- Part 2: Monitor Dashboard -->
+        <div class="monitor-dashboard">
+            <!-- Header Card -->
+            <div class="glass-card">
+                <div class="monitor-header">
+                    <div class="monitor-title-row">
+                        <div class="icon-box">
+                            <i data-lucide="building-2"></i>
+                        </div>
+                        <div class="monitor-title">
+                            <h1>Slum Gentrification Monitor</h1>
+                            <p>Analyzing demographic spikes and address registration anomalies</p>
+                        </div>
+                    </div>
+                    <a href="index.html" style="color: var(--accent-1); text-decoration: none; font-size: 0.85rem; font-weight: 600;">← Back to Main Dashboard</a>
+                </div>
+
+                <div class="alert-banner">
+                    <i data-lucide="alert-triangle" style="color: var(--accent-3);"></i>
+                    <div class="alert-text">
+                        A sudden spike in <span class="highlight-text">Demo_age_5_17</span> (new address registrations) in an <span class="highlight-text">"Unorganized" PIN code</span> 
+                        detected. This pattern identifies emerging slum clusters before physical density is visible. 
+                        <br><strong>Requirement:</strong> City governance must initiate immediate water/sewage planning.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Grid -->
+            <div class="viz-grid">
+                <div class="glass-card">
+                    <div class="sidebar-header" style="background:transparent; padding: 0 0 20px 0;">
+                        <h2>New Address Registrations (Age 5-17)</h2>
+                    </div>
+                    <div class="chart-placeholder">
+                        <div class="bar" style="height: 30%;"><div class="bar-label">JUL</div></div>
+                        <div class="bar" style="height: 35%;"><div class="bar-label">AUG</div></div>
+                        <div class="bar" style="height: 32%;"><div class="bar-label">SEP</div></div>
+                        <div class="bar" style="height: 40%;"><div class="bar-label">OCT</div></div>
+                        <div class="bar" style="height: 45%;"><div class="bar-label">NOV</div></div>
+                        <div class="bar spike" style="height: 90%;"><div class="bar-label" style="color:var(--accent-3); font-weight:800;">DEC (Spike)</div></div>
+                    </div>
+                </div>
+
+                <div class="glass-card stat-card">
+                    <span class="stat-label">PIN Code 400070</span>
+                    <span class="stat-value" style="color: var(--accent-3);">+114%</span>
+                    <span class="stat-label">Address Delta (MoM)</span>
+                    <hr style="border: none; border-top: 1px solid var(--border); width: 100%; margin: 10px 0;">
+                    <span class="stat-label">Confidence Index</span>
+                    <span class="stat-value">92.4%</span>
+                </div>
+            </div>
+
+            <!-- Infrastructure Planning Table -->
+            <div class="glass-card">
+                <div class="sidebar-header" style="background:transparent; padding: 0 0 20px 0;">
+                    <h2>Immediate Infrastructure Planning Tasks</h2>
+                </div>
+                <table class="action-table">
+                    <thead>
+                        <tr>
+                            <th>Action Required</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Deployment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Potable Water Line Extension</td>
+                            <td><span class="badge badge-urgent">Critical</span></td>
+                            <td><span style="color: var(--accent-1);">AI Estimated</span></td>
+                            <td><button class="btn-action">Initiate Plan</button></td>
+                        </tr>
+                        <tr>
+                            <td>Temporary Sewage Connection</td>
+                            <td><span class="badge badge-urgent">Critical</span></td>
+                            <td><span style="color: var(--accent-1);">AI Estimated</span></td>
+                            <td><button class="btn-action">Initiate Plan</button></td>
+                        </tr>
+                        <tr>
+                            <td>Primary Health Center Mobile Unit</td>
+                            <td><span class="badge badge-planning">Moderate</span></td>
+                            <td><span style="color: var(--text-secondary);">Queued</span></td>
+                            <td><button class="btn-action" style="background: rgba(255,255,255,0.1);">Assign</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // 36 States/UTs Data
+        const states = [
+            "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+            "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", 
+            "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
+            "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
+            "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", 
+            "Uttar Pradesh", "Uttarakhand", "West Bengal", 
+            "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
+            "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+        ];
+
+        const statesList = document.getElementById('statesList');
+        
+        states.forEach((state, index) => {
+            const div = document.createElement('div');
+            div.className = `state-item ${index === 13 ? 'active' : ''}`; // Default to Maharashtra for sample
+            div.innerHTML = `
+                <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                ${state}
+            `;
+            statesList.appendChild(div);
+        });
+
+        // Re-run icon initialization for dynamic elements
+        lucide.createIcons();
+
+        // Parallax Effect for Auras
+        window.addEventListener('mousemove', (e) => {
+            const auras = document.querySelectorAll('.aura');
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            
+            auras.forEach((aura, index) => {
+                const speed = (index + 1) * 0.5;
+                aura.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+            });
+        });
+    </script>
+</body>
+</html>

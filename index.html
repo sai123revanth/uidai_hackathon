@@ -151,8 +151,6 @@
             height: 100%;
         }
 
-        /* Watermark styling Removed as per instruction, but placeholder style kept for structure if needed later */
-
         /* Sticky Notes (Floating Info) */
         .sticky-note {
             position: absolute;
@@ -328,7 +326,7 @@
             right: 2rem;
             z-index: 40;
             width: 240px;
-            background: rgba(0, 0, 0, 0.5); /* Darker for better contrast on map */
+            background: rgba(0, 0, 0, 0.5); 
             backdrop-filter: blur(16px);
             border-radius: 16px;
             padding: 1rem;
@@ -427,7 +425,7 @@
         /* Analytics Grid */
         .analytics-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Two columns layout */
+            grid-template-columns: repeat(2, 1fr); 
             gap: 12px;
         }
 
@@ -437,7 +435,7 @@
             border-radius: 20px;
             padding: 16px;
             display: flex;
-            flex-direction: column; /* Stack vertically for compact grid */
+            flex-direction: column; 
             align-items: flex-start;
             gap: 12px;
             border: 1px solid var(--border);
@@ -660,7 +658,7 @@
         /* --- Chat Window Styles --- */
         .chat-window {
             position: fixed;
-            bottom: 6rem; /* Above the float button */
+            bottom: 6rem; 
             left: 2rem;
             width: 340px;
             height: 480px;
@@ -1039,6 +1037,17 @@ const chatClose = document.getElementById('chatClose');
 const chatSend = document.getElementById('chatSend');
 const chatInput = document.getElementById('chatInput');
 const chatMessages = document.getElementById('chatMessages');
+const moduleCards = document.querySelectorAll('.module-card');
+
+// Navigation Logic
+moduleCards.forEach(card => {
+    card.addEventListener('click', () => {
+        const moduleName = card.getAttribute('data-module');
+        if (moduleName === "Slum Gentrification") {
+            window.location.href = 'slum.html';
+        }
+    });
+});
 
 // AI Search Logic
 async function handleAISearch() {

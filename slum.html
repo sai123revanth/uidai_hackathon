@@ -3,102 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UIDAI Hackathon | Early Enrolment Dashboard</title>
+    <title>UIDAI Insight Engine | Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .chart-container {
-            position: relative;
-            height: 500px;
-            width: 100%;
-            overflow: hidden;
-            border-radius: 0.75rem;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .gradient-text {
-            background: linear-gradient(90deg, #1e3a8a, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .chart-container { position: relative; height: 550px; width: 100%; overflow: hidden; border-radius: 0.75rem; background: #fff; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .gradient-text { background: linear-gradient(90deg, #1e3a8a, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
-    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 p-2 rounded-lg">
-                    <i class="fas fa-chart-line text-white text-xl"></i>
-                </div>
+                <div class="bg-blue-600 p-2 rounded-lg"><i class="fas fa-chart-line text-white text-xl"></i></div>
                 <h1 class="text-2xl font-bold gradient-text">UIDAI Insight Engine</h1>
             </div>
             <div class="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                <i class="fas fa-circle text-green-500 text-[10px] mr-2"></i> Live API Connected
+                <i class="fas fa-circle text-green-500 text-[10px] mr-2"></i> Live API: insight-1-jlcg.onrender.com
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
         
-        <!-- Summary Stat Cards -->
         <div id="stat-cards" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="glass p-6 rounded-xl shadow-sm border-l-4 border-blue-600">
                 <p class="text-sm text-slate-500 font-semibold uppercase">Total Early Enrolment (0-5)</p>
-                <h2 id="total-0-5" class="text-3xl font-bold mt-2">Loading...</h2>
+                <h2 id="total-0-5" class="text-3xl font-bold mt-2">...</h2>
             </div>
             <div class="glass p-6 rounded-xl shadow-sm border-l-4 border-orange-500">
                 <p class="text-sm text-slate-500 font-semibold uppercase">Highest Inequality State</p>
-                <h2 id="unequal-state" class="text-3xl font-bold mt-2">Loading...</h2>
+                <h2 id="unequal-state" class="text-3xl font-bold mt-2">...</h2>
             </div>
             <div class="glass p-6 rounded-xl shadow-sm border-l-4 border-emerald-500">
-                <p class="text-sm text-slate-500 font-semibold uppercase">Coverage Efficiency</p>
-                <h2 class="text-3xl font-bold mt-2">94.2%</h2>
+                <p class="text-sm text-slate-500 font-semibold uppercase">Data Status</p>
+                <h2 class="text-3xl font-bold mt-2 text-emerald-600">Online</h2>
             </div>
         </div>
 
-        <!-- Visualization Section 1 -->
         <section class="mb-12">
             <div class="flex items-center space-x-2 mb-4">
                 <i class="fas fa-map-marked-alt text-blue-600"></i>
-                <h2 class="text-xl font-bold">Geographic Penetration Gaps (Treemap)</h2>
+                <h2 class="text-xl font-bold">Geographic Penetration Gaps</h2>
             </div>
-            <div class="bg-white p-2 rounded-2xl shadow-lg chart-container">
-                <iframe src="/visual/treemap" id="treemap-frame"></iframe>
+            <div class="bg-white rounded-2xl shadow-lg chart-container">
+                <iframe src="https://insight-1-jlcg.onrender.com/visual/treemap"></iframe>
             </div>
-            <p class="mt-3 text-sm text-slate-500 italic">
-                * Larger boxes represent higher volume. Red-shifted colors indicate areas needing immediate intervention.
-            </p>
         </section>
 
-        <!-- Two Column Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            
-            <!-- Growth Trend Chart -->
             <section>
                 <div class="flex items-center space-x-2 mb-4">
                     <i class="fas fa-chart-area text-blue-600"></i>
                     <h2 class="text-xl font-bold">Performance Slope Analysis</h2>
                 </div>
-                <div class="bg-white p-2 rounded-2xl shadow-lg chart-container">
-                    <iframe src="/visual/trend" id="trend-frame"></iframe>
+                <div class="bg-white rounded-2xl shadow-lg chart-container">
+                    <iframe src="https://insight-1-jlcg.onrender.com/visual/trend"></iframe>
                 </div>
             </section>
 
-            <!-- Data Table / Inequality List -->
             <section>
                 <div class="flex items-center space-x-2 mb-4">
                     <i class="fas fa-exclamation-triangle text-orange-500"></i>
-                    <h2 class="text-xl font-bold">Top Inequality Pockets (State-wise)</h2>
+                    <h2 class="text-xl font-bold">Inequality Priority (State-wise)</h2>
                 </div>
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
                     <table class="w-full text-left">
@@ -106,43 +76,30 @@
                             <tr>
                                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">State</th>
                                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Variance Index</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Action Rank</th>
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="inequality-table-body">
-                            <!-- Data injected here -->
-                        </tbody>
+                        <tbody id="inequality-table-body"></tbody>
                     </table>
                     <div id="table-loader" class="p-8 text-center text-slate-400">
-                        <i class="fas fa-spinner fa-spin mr-2"></i> Loading statistical data...
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Loading live data...
                     </div>
                 </div>
             </section>
         </div>
-
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-8 mt-12">
-        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
-            <p>© 2026 UIDAI Hackathon Submission - Insight 1 Engine</p>
-            <p class="mt-2">Powered by Flask API & Plotly</p>
-        </div>
-    </footer>
-
     <script>
-        // Use relative URLs assuming this is hosted on the same domain as Flask
-        // If testing locally while API is on another port, use http://127.0.0.1:5000/...
-        const API_BASE = ""; 
+        const API_BASE = "https://insight-1-jlcg.onrender.com"; 
 
         async function fetchDashboardData() {
             try {
-                // 1. Fetch Inequality Data
+                // Fetch Inequality JSON
                 const ineqRes = await fetch(`${API_BASE}/api/inequality`);
                 const ineqData = await ineqRes.json();
                 
                 const tableBody = document.getElementById('inequality-table-body');
-                const loader = document.getElementById('table-loader');
-                loader.style.display = 'none';
+                document.getElementById('table-loader').style.display = 'none';
 
                 ineqData.forEach((item, index) => {
                     const row = document.createElement('tr');
@@ -152,7 +109,7 @@
                         <td class="px-6 py-4 text-slate-600">${parseFloat(item.variance_std).toFixed(2)}</td>
                         <td class="px-6 py-4">
                             <span class="px-2 py-1 rounded text-xs font-bold ${index === 0 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}">
-                                ${index === 0 ? 'CRITICAL' : 'HIGH PRIORITY'}
+                                ${index === 0 ? 'CRITICAL' : 'HIGH'}
                             </span>
                         </td>
                     `;
@@ -163,24 +120,21 @@
                     document.getElementById('unequal-state').innerText = ineqData[0].state;
                 }
 
-                // 2. Fetch Summary Data for total count
+                // Fetch Summary JSON
                 const summaryRes = await fetch(`${API_BASE}/api/summary`);
                 const summaryData = await summaryRes.json();
                 
                 let total05 = 0;
-                Object.values(summaryData).forEach(state => {
-                    total05 += state.age_0_5;
-                });
+                Object.values(summaryData).forEach(state => { total05 += state.age_0_5; });
                 document.getElementById('total-0-5').innerText = total05.toLocaleString();
 
             } catch (error) {
-                console.error("Failed to fetch API data:", error);
-                document.getElementById('total-0-5').innerText = "Error";
-                document.getElementById('unequal-state').innerText = "Offline";
+                console.error("Dashboard Sync Error:", error);
+                document.getElementById('total-0-5').innerText = "Offline";
+                document.getElementById('unequal-state').innerText = "Error";
             }
         }
 
-        // Initialize dashboard
         window.onload = fetchDashboardData;
     </script>
 </body>

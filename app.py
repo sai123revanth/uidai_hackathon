@@ -2,189 +2,125 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
+import os
 
-# Page configuration
+# --- Page Configuration ---
 st.set_page_config(
-    page_title="Aadhar Enrolment Insights",
+    page_title="UIDAI Enrolment Analytics",
     page_icon="🆔",
     layout="wide"
 )
 
-# --- Helper Functions ---
-
-@st.cache_data
-def load_and_clean_data(file_path):
-    """Loads data and performs cleaning/feature engineering."""
+# --- Data Loading & Cleaning ---
+@st.cache_data(show_spinner="Cleaning and analyzing data...")
+def load_data(file_path):
+    if not os.path.exists(file_path):
+        return None
+        
     try:
-        df = pd.read_csv(file_path)
+        # Load with low_memory=False to handle the large row count efficiently
+        df = pd.read_csv(file_path, low_memory=False)
+        
+        # 1. Clean Dates (Your file uses DD-MM-YYYY)
+        df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y', errors='coerce')
+        
+        # 2. Convert Numeric Columns & Handle Missing Values
+        cols_to_fix = ['age_0_5', 'age_5_17', 'age_18_greater']
+        for col in cols_to_fix:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        
+        # 3. Create Total Column
+        df['total_enrolments'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
+        
+        # 4. Extract Time Features
+        df['month'] = df['date'].dt.strftime('%B %Y')
+        df['day_name'] = df['date'].dt.day_name()
+        
+        return df
     except Exception as e:
-        st.error(f"Error loading CSV: {e}")
+        st.error(f"Error processing CSV: {e}")
         return None
 
-    # 1. Clean Dates
-    # The snippet shows DD-MM-YYYY format
-    df['date'] = pd.to_datetime(df['date'], dayfirst=True, errors='coerce')
-    
-    # 2. Handle missing values
-    # Fill numeric columns with 0 if null, drop rows with missing critical labels if necessary
-    numeric_cols = ['age_0_5', 'age_5_17', 'age_18_greater']
-    df[numeric_cols] = df[numeric_cols].fillna(0)
-    
-    # 3. Feature Engineering
-    df['total_enrolments'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
-    df['month_year'] = df['date'].dt.to_period('M').astype(str)
-    df['day_of_week'] = df['date'].dt.day_name()
-    
-    return df
-
-# --- Main Application ---
-
+# --- Main App ---
 def main():
-    st.title("📊 Aadhar Enrolment Analytics Dashboard")
-    st.markdown("""
-    This dashboard provides deep insights into Aadhar enrolment patterns across various states and age groups. 
-    Use the sidebar to filter data and explore specific regions or timeframes.
-    """)
+    st.title("📊 Aadhar Enrolment Insights Dashboard")
+    st.markdown("---")
 
-    # Load Data
-    data_file = "api_data_aadhar_enrolment_0_500000.csv"
-    df = load_and_clean_data(data_file)
+    # Correct filename from your upload
+    FILE_NAME = "api_data_aadhar_enrolment_0_500000.csv"
+    
+    df = load_data(FILE_NAME)
 
     if df is None:
+        st.error(f"⚠️ Dataset `{FILE_NAME}` not found.")
+        st.info("Ensure the CSV file is in the same GitHub repository folder as this `app.py` script.")
         st.stop()
 
     # --- Sidebar Filters ---
-    st.sidebar.header("Filter Controls")
+    st.sidebar.header("🔍 Global Filters")
+    
+    # State Filter
+    states = sorted(df['state'].unique().tolist())
+    selected_states = st.sidebar.multiselect("Select States", states, default=states[:5])
     
     # Date Range Filter
-    min_date = df['date'].min().to_pydatetime()
-    max_date = df['date'].max().to_pydatetime()
-    
-    date_range = st.sidebar.date_input(
-        "Select Date Range",
-        value=(min_date, max_date),
-        min_value=min_date,
-        max_value=max_date
-    )
+    valid_dates = df['date'].dropna()
+    min_d, max_d = valid_dates.min().to_pydatetime(), valid_dates.max().to_pydatetime()
+    date_range = st.sidebar.date_input("Date Range", value=(min_d, max_d), min_value=min_d, max_value=max_d)
 
-    # State Filter
-    all_states = sorted(df['state'].unique().tolist())
-    selected_states = st.sidebar.multiselect("Select States", all_states, default=all_states[:5])
-
-    # Filtered Dataframe
+    # Apply Filters
+    filtered_df = df.copy()
+    if selected_states:
+        filtered_df = filtered_df[filtered_df['state'].isin(selected_states)]
     if len(date_range) == 2:
-        start_date, end_date = date_range
-        mask = (df['date'].dt.date >= start_date) & (df['date'].dt.date <= end_date)
-        if selected_states:
-            mask = mask & (df['state'].isin(selected_states))
-        filtered_df = df.loc[mask]
-    else:
-        filtered_df = df
+        filtered_df = filtered_df[(filtered_df['date'].dt.date >= date_range[0]) & 
+                                 (filtered_df['date'].dt.date <= date_range[1])]
 
-    # --- Top Level Metrics ---
+    # --- Metrics Bar ---
     total_e = filtered_df['total_enrolments'].sum()
-    child_e = filtered_df['age_0_5'].sum()
-    youth_e = filtered_df['age_5_17'].sum()
-    adult_e = filtered_df['age_18_greater'].sum()
+    c_05 = filtered_df['age_0_5'].sum()
+    c_517 = filtered_df['age_5_17'].sum()
+    c_18 = filtered_df['age_18_greater'].sum()
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Total Enrolments", f"{total_e:,}")
-    m2.metric("Children (0-5)", f"{child_e:,}", f"{child_e/total_e:.1%}")
-    m3.metric("Youth (5-17)", f"{youth_e:,}", f"{youth_e/total_e:.1%}")
-    m4.metric("Adults (18+)", f"{adult_e:,}", f"{adult_e/total_e:.1%}")
+    m1.metric("Total Registrations", f"{total_e:,.0f}")
+    m2.metric("Age 0-5", f"{c_05:,.0f}", f"{c_05/total_e:.1%}" if total_e > 0 else "0%")
+    m3.metric("Age 5-17", f"{c_517:,.0f}", f"{c_517/total_e:.1%}" if total_e > 0 else "0%")
+    m4.metric("Age 18+", f"{c_18:,.0f}", f"{c_18/total_e:.1%}" if total_e > 0 else "0%")
 
-    st.divider()
-
-    # --- Layout for Insights ---
-    col_left, col_right = st.columns([1, 1])
-
-    with col_left:
-        st.subheader("📍 Regional Distribution (Top States)")
-        state_data = filtered_df.groupby('state')['total_enrolments'].sum().sort_values(ascending=False).reset_index()
-        fig_state = px.bar(
-            state_data.head(15), 
-            x='total_enrolments', 
-            y='state', 
-            orientation='h',
-            color='total_enrolments',
-            color_continuous_scale='Viridis',
-            labels={'total_enrolments': 'Enrolments', 'state': 'State'}
-        )
-        fig_state.update_layout(yaxis={'categoryorder':'total ascending'})
-        st.plotly_chart(fig_state, use_container_width=True)
-
-    with col_right:
-        st.subheader("👥 Age Demographics Breakdown")
-        demo_counts = {
-            'Age 0-5': child_e,
-            'Age 5-17': youth_e,
-            'Age 18+': adult_e
-        }
-        fig_pie = px.pie(
-            names=list(demo_counts.keys()), 
-            values=list(demo_counts.values()),
-            hole=0.4,
-            color_discrete_sequence=px.colors.qualitative.Pastel
-        )
-        st.plotly_chart(fig_pie, use_container_width=True)
-
-    st.divider()
-
-    # --- Time Series Analysis ---
-    st.subheader("📈 Enrolment Trends Over Time")
-    trend_data = filtered_df.groupby('date')[['age_0_5', 'age_5_17', 'age_18_greater']].sum().reset_index()
+    st.markdown("### Regional & Demographic Insights")
     
-    fig_line = go.Figure()
-    fig_line.add_trace(go.Scatter(x=trend_data['date'], y=trend_data['age_0_5'], name='0-5 Years', line=dict(width=2)))
-    fig_line.add_trace(go.Scatter(x=trend_data['date'], y=trend_data['age_5_17'], name='5-17 Years', line=dict(width=2)))
-    fig_line.add_trace(go.Scatter(x=trend_data['date'], y=trend_data['age_18_greater'], name='18+ Years', line=dict(width=2)))
+    c1, c2 = st.columns(2)
     
-    fig_line.update_layout(
-        xaxis_title="Date",
-        yaxis_title="Count",
-        hovermode="x unified",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
-
-    # --- District Deep Dive ---
-    st.divider()
-    st.subheader("🔍 District-Level Hotspots")
-    
-    if selected_states:
-        # Show districts for the first selected state for clarity
-        target_state = selected_states[0]
-        st.info(f"Showing Top Districts in **{target_state}**")
-        district_data = filtered_df[filtered_df['state'] == target_state].groupby('district')['total_enrolments'].sum().sort_values(ascending=False).head(10).reset_index()
-        
-        fig_dist = px.treemap(
-            district_data, 
-            path=['district'], 
-            values='total_enrolments',
-            color='total_enrolments',
-            color_continuous_scale='Blues'
-        )
+    with c1:
+        st.subheader("📍 Top Enrolment Districts")
+        dist_data = filtered_df.groupby(['state', 'district'])['total_enrolments'].sum().reset_index().sort_values('total_enrolments', ascending=False)
+        fig_dist = px.bar(dist_data.head(15), x='total_enrolments', y='district', color='state', 
+                          orientation='h', labels={'total_enrolments': 'Enrolments'})
+        fig_dist.update_layout(yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig_dist, use_container_width=True)
-    else:
-        st.warning("Please select at least one state in the sidebar to view district insights.")
 
-    # --- Data Table Section ---
-    with st.expander("📄 View Raw Processed Data"):
-        st.dataframe(filtered_df.sort_values(by='date', ascending=False), use_container_width=True)
-        
-    # --- Actionable Insights ---
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("💡 Key Observations")
-    
-    max_state = state_data.iloc[0]['state'] if not state_data.empty else "N/A"
-    dominant_age = max(demo_counts, key=demo_counts.get)
-    
-    st.sidebar.info(f"""
-    - **Top State:** {max_state} leads in total enrolments.
-    - **Primary Target:** The {dominant_age} group represents the largest segment of current enrolments.
-    - **Trend Check:** View the line chart to identify if enrolment is peaking or declining.
-    """)
+    with c2:
+        st.subheader("👥 Demographic Split")
+        demo_fig = px.pie(
+            values=[c_05, c_517, c_18],
+            names=['0-5 Years', '5-17 Years', '18+ Years'],
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Bold
+        )
+        st.plotly_chart(demo_fig, use_container_width=True)
+
+    st.markdown("### 📈 Timeline Analysis")
+    timeline = filtered_df.groupby('date')[['age_0_5', 'age_5_17', 'age_18_greater']].sum().reset_index()
+    fig_time = px.line(timeline, x='date', y=['age_0_5', 'age_5_17', 'age_18_greater'], 
+                       labels={'value': 'Count', 'date': 'Date', 'variable': 'Age Group'},
+                       title="Daily Registration Velocity")
+    st.plotly_chart(fig_time, use_container_width=True)
+
+    # --- Raw Data Expander ---
+    with st.expander("📄 View Filtered Dataset"):
+        st.write(f"Showing {len(filtered_df):,} rows")
+        st.dataframe(filtered_df.head(1000), use_container_width=True)
 
 if __name__ == "__main__":
     main()

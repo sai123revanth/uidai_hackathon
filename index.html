@@ -902,13 +902,13 @@
 
                 <div class="menu-label" style="margin-bottom: 0.5rem;">Live Analytics Modules</div>
                 <div class="analytics-grid" id="modulesGrid">
-                    <!-- Slum Gentrification -->
-                    <div class="module-card" data-module="Enrolment Penetration Gaps">
+                    <!-- AAdhaar analytics module -->
+                    <div class="module-card" data-module="AAdhaar analytics module">
                         <div class="module-icon icon-slum">
                             <i data-lucide="building-2"></i>
                         </div>
                         <div class="module-content">
-                            <span class="module-text">Enrolment Penetration Gaps</span>
+                            <span class="module-text">AAdhaar analytics module</span>
                             <span class="module-subtext">NA</span>
                         </div>
                     </div>
@@ -1044,8 +1044,8 @@ const moduleCards = document.querySelectorAll('.module-card');
 moduleCards.forEach(card => {
     card.addEventListener('click', () => {
         const moduleName = card.getAttribute('data-module');
-        if (moduleName === "Enrolment Penetration Gaps") {
-            window.location.href = 'slum.html';
+        if (moduleName === "AAdhaar analytics module") {
+            window.location.href = 'insights_1.html';
         }
     });
 });
@@ -1059,7 +1059,7 @@ async function handleAISearch() {
     lucide.createIcons();
 
     const modules = [
-        "Slum Gentrification", "Suburban Sprawl", "Rental Heatmap", 
+        "AAdhaar analytics module", "Suburban Sprawl", "Rental Heatmap", 
         "Smart Allocation", "Family Migration", "Voter Readiness", 
         "Delimitation Data", "Fraud Prevention"
     ];

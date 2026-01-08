@@ -28,29 +28,45 @@ seo_meta_tags = """
     <p>Keywords: Aadhar Data, India Demographics, Policy Making, Education Statistics, Workforce Analytics, Youth Index, Streamlit Dashboard.</p>
 </div>
 <style>
+    /* Professional Dark Gradient Background */
+    .stApp {
+        background: radial-gradient(circle at top center, #1e293b 0%, #0f172a 100%);
+        background-attachment: fixed;
+    }
+
     /* Improve readability for better user retention (indirect SEO metric) */
     .main .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+    
     .metric-card {
-        background-color: #262730;
-        border: 1px solid #464b5c;
+        background-color: rgba(30, 41, 59, 0.7);
+        border: 1px solid #334155;
         padding: 15px;
         border-radius: 8px;
         text-align: center;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        backdrop-filter: blur(5px);
     }
-    h1, h2, h3 { font-family: 'Helvetica Neue', sans-serif; }
+    
+    h1, h2, h3 { 
+        font-family: 'Helvetica Neue', sans-serif; 
+        color: #f1f5f9;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
     .stTabs [data-baseweb="tab-list"] { gap: 10px; }
     .stTabs [data-baseweb="tab"] {
         height: 50px;
         white-space: pre-wrap;
-        background-color: #0E1117;
+        background-color: rgba(15, 23, 42, 0.6);
         border-radius: 5px;
-        color: white;
+        color: #cbd5e1;
         padding: 10px 20px;
+        border: 1px solid #1e293b;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #262730;
+        background-color: rgba(30, 41, 59, 0.8);
         border-bottom: 2px solid #00CC96;
+        color: white;
     }
 </style>
 """

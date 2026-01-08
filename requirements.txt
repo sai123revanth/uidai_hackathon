@@ -1,8 +1,0 @@
-flask
-flask-cors
-pandas
-plotly
-gunicorn
-numpy
-matplotlib
-seaborn

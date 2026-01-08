@@ -6,7 +6,6 @@ import glob
 import os
 
 # --- 1. SEO & PAGE CONFIGURATION ---
-# Setting a descriptive page title and icon is the first step for SEO.
 st.set_page_config(
     page_title="India Demographic Dividend | Education & Workforce Analytics",
     page_icon="🇮🇳",
@@ -19,13 +18,11 @@ st.set_page_config(
     }
 )
 
-# --- 2. META TAGS INJECTION (For Social Sharing & Search Snippets) ---
-# Streamlit runs as a SPA, so we inject these tags to help crawlers understand the content.
+# --- 2. META TAGS & RESPONSIVE STYLING ---
 seo_meta_tags = """
 <div style="display: none;">
     <h1>India Demographic Dividend Dashboard</h1>
     <p>Analyze district-level demographic data to distinguish between young education hubs and mature workforce engines.</p>
-    <p>Keywords: Aadhar Data, India Demographics, Policy Making, Education Statistics, Workforce Analytics, Youth Index, Streamlit Dashboard.</p>
 </div>
 <style>
     /* Professional Dark Gradient Background */
@@ -34,9 +31,7 @@ seo_meta_tags = """
         background-attachment: fixed;
     }
 
-    /* Improve readability for better user retention (indirect SEO metric) */
-    .main .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-    
+    /* GLASSMORPHISM CARDS */
     .metric-card {
         background-color: rgba(30, 41, 59, 0.7);
         border: 1px solid #334155;
@@ -53,6 +48,7 @@ seo_meta_tags = """
         text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
+    /* CUSTOM TABS */
     .stTabs [data-baseweb="tab-list"] { gap: 10px; }
     .stTabs [data-baseweb="tab"] {
         height: 50px;
@@ -67,6 +63,24 @@ seo_meta_tags = """
         background-color: rgba(30, 41, 59, 0.8);
         border-bottom: 2px solid #00CC96;
         color: white;
+    }
+
+    /* --- MOBILE OPTIMIZATION --- */
+    /* Adjusts layout for screens smaller than 768px (Tablets/Phones) */
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+        h1 {
+            font-size: 1.5rem !important;
+        }
+        /* Make charts taller on mobile for better visibility */
+        .js-plotly-plot {
+            height: 400px !important;
+        }
     }
 </style>
 """
@@ -133,35 +147,28 @@ if district_df_full is None:
     st.error("No data found. Please place the CSV files in the same directory.")
     st.stop()
 
-# --- 3. DEEP LINKING (URL PARAMETERS) ---
-# This allows users to share specific views (e.g., app.url/?state=Maharashtra)
-# Use st.query_params (New Streamlit API)
+# --- 3. DEEP LINKING ---
 query_params = st.query_params
 default_states = query_params.get_all("state") if "state" in query_params else []
-
-# Filter Validation
 valid_states = sorted(district_df_full['State'].unique())
 default_states = [s for s in default_states if s in valid_states]
 
-# --- SIDEBAR: ADVANCED FILTERS ---
+# --- SIDEBAR: FILTERS ---
 st.sidebar.title("🔍 Analytic Filters")
 
-# State Filter with URL Sync
 selected_states = st.sidebar.multiselect(
     "Filter by State",
     options=valid_states,
     default=default_states,
-    help="Select one or more states. The URL will update automatically for sharing."
+    help="Select one or more states. URL updates automatically."
 )
 
-# Sync selection back to URL
 if selected_states:
     st.query_params["state"] = selected_states
 else:
     if "state" in st.query_params:
         del st.query_params["state"]
 
-# Noise Filter
 min_updates = st.sidebar.slider(
     "Minimum Data Volume (Noise Filter)",
     min_value=0,
@@ -171,7 +178,6 @@ min_updates = st.sidebar.slider(
     help="Filter out districts with insignificant data volume."
 )
 
-# Apply Filters
 filtered_df = district_df_full[district_df_full['Total_Updates'] >= min_updates]
 if selected_states:
     filtered_df = filtered_df[filtered_df['State'].isin(selected_states)]
@@ -179,11 +185,6 @@ if selected_states:
 # --- MAIN DASHBOARD CONTENT ---
 st.title("🇮🇳 National Demographic Intelligence")
 st.markdown("### Strategic Analysis: Education Hubs vs. Workforce Engines")
-st.markdown("""
-This dashboard utilizes **Aadhar update data** to categorize districts based on their demographic momentum.
-* **High Youth Index:** Indicates a need for **Education Infrastructure & Scholarships**.
-* **High Adult Index:** Indicates a need for **Banking, Upskilling & Job Creation**.
-""")
 
 # Tabs
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -205,17 +206,16 @@ with tab1:
         maturest = filtered_df.loc[filtered_df['Youth_Index'].idxmin()]
         
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Total Data Points", f"{total_vol:,.0f}", help="Total demographic updates in selection")
-        c2.metric("Avg Youth Index", f"{avg_index:.1f}%", help="% of updates from Age 5-17")
-        c3.metric("Youngest District", f"{youngest['District']}", f"{youngest['Youth_Index']:.1f}% Youth")
-        c4.metric("Most Mature District", f"{maturest['District']}", f"{100-maturest['Youth_Index']:.1f}% Adult")
+        c1.metric("Total Data Points", f"{total_vol:,.0f}")
+        c2.metric("Avg Youth Index", f"{avg_index:.1f}%")
+        c3.metric("Youngest Dist.", f"{youngest['District']}") # Shortened title for mobile
+        c4.metric("Maturest Dist.", f"{maturest['District']}") # Shortened title for mobile
     else:
         st.warning("No data meets the current filter criteria.")
 
     st.markdown("---")
     
     st.subheader("📍 The Demographic Heatmap")
-    st.caption("Size = Volume of Updates | Color = Youth Index (Yellow=Young, Purple=Mature)")
     
     fig_tree = px.treemap(
         filtered_df,
@@ -231,21 +231,23 @@ with tab1:
     st.markdown("### 🏛️ Policy Recommendations")
     ac1, ac2 = st.columns(2)
     
+    # We select specific columns to avoid horizontal scroll on mobile
+    cols_to_show = ['State', 'District', 'Youth_Index', 'Total_Updates']
+    
     with ac1:
-        st.info("🎒 **Education Priority Zones**")
-        st.markdown("Districts with **High Youth Index** require educational resource allocation.")
+        st.info("🎒 **Education Priority**")
         top_youth = filtered_df.nlargest(10, 'Youth_Index')
         st.dataframe(
-            top_youth[['State', 'District', 'Youth_Index', 'Total_Updates']].style.format({"Youth_Index": "{:.1f}%"}),
+            top_youth[cols_to_show].style.format({"Youth_Index": "{:.1f}%"}),
             use_container_width=True,
             hide_index=True
         )
 
     with ac2:
-        st.error("💼 **Workforce Priority Zones**")
-        st.markdown("Districts with **High Adult Index** require economic & credit interventions.")
+        st.error("💼 **Workforce Priority**")
         top_work = filtered_df.nsmallest(10, 'Youth_Index').copy()
         top_work['Adult_Index'] = 100 - top_work['Youth_Index']
+        # Show adult index instead of youth index for this table
         st.dataframe(
             top_work[['State', 'District', 'Adult_Index', 'Total_Updates']].style.format({"Adult_Index": "{:.1f}%"}),
             use_container_width=True,
@@ -274,11 +276,11 @@ with tab2:
             y='Youth_Index',
             color='Youth_Index',
             color_continuous_scale='RdYlGn',
-            title="Youngest to Oldest States (Avg Youth Index)",
+            title="Youngest to Oldest States",
             labels={'Youth_Index': 'Avg Youth Index (%)'},
             height=500
         )
-        fig_state.add_hline(y=state_stats['Youth_Index'].mean(), line_dash="dot", annotation_text="National Avg")
+        fig_state.add_hline(y=state_stats['Youth_Index'].mean(), line_dash="dot", annotation_text="Avg")
         st.plotly_chart(fig_state, use_container_width=True)
         
     with col_b:
@@ -288,13 +290,12 @@ with tab2:
             column_config={
                 "Youth_Index": st.column_config.ProgressColumn(
                     "Youth Index",
-                    help="Avg Youth %",
                     format="%.1f%%",
                     min_value=0,
                     max_value=100,
                 ),
                 "Total_Updates": st.column_config.NumberColumn(
-                    "Total Updates",
+                    "Volume",
                     format="%d"
                 )
             },
@@ -307,7 +308,6 @@ with tab2:
 # ==========================================
 with tab3:
     st.subheader("📅 Temporal Trends")
-    st.markdown("Analyze how the volume of updates for Youth (Education) vs Adults (Workforce) changes over time.")
     
     if trend_df_full is not None and not trend_df_full.empty:
         trend_df_full = trend_df_full.sort_values('Month_Year')
@@ -317,7 +317,7 @@ with tab3:
             x='Month_Year', 
             y=['Youth_Updates', 'Adult_Updates'],
             title="Monthly Update Volume Trends",
-            labels={'value': 'Number of Updates', 'variable': 'Demographic Segment'},
+            labels={'value': 'Updates', 'variable': 'Segment'},
             color_discrete_map={'Youth_Updates': '#00CC96', 'Adult_Updates': '#EF553B'}
         )
         st.plotly_chart(fig_trend, use_container_width=True)
@@ -334,7 +334,7 @@ with tab4:
     
     with c_search:
         st.markdown("### Find a District")
-        search_term = st.text_input("Search District Name", placeholder="e.g., Mahabubnagar")
+        search_term = st.text_input("Search Name", placeholder="e.g., Mahabubnagar")
         
         display_df = filtered_df.copy()
         if search_term:
@@ -344,7 +344,7 @@ with tab4:
             filtered_df, 
             x="Youth_Index", 
             nbins=30, 
-            title="Distribution Spectrum",
+            title="Distribution",
             color_discrete_sequence=['#636EFA']
         )
         fig_hist.update_layout(showlegend=False, height=200, margin=dict(l=0, r=0, t=30, b=0))
@@ -359,15 +359,18 @@ with tab4:
             color='State',
             hover_name='District',
             log_x=True,
-            title="Strategic Quadrants: Volume vs Youth Index",
+            title="Volume vs Youth Index",
             height=500
         )
-        fig_scatter.add_hline(y=50, line_dash="dash", line_color="white", opacity=0.5, annotation_text="Balance Point")
+        fig_scatter.add_hline(y=50, line_dash="dash", line_color="white", opacity=0.5)
         st.plotly_chart(fig_scatter, use_container_width=True)
 
     st.markdown("### 📋 Comprehensive District Data")
+    # Reduced columns for Mobile View - Removed raw counts, kept Key Metrics
+    mobile_friendly_cols = ['District', 'State', 'Total_Updates', 'Youth_Index']
+    
     st.dataframe(
-        display_df.sort_values(by='Total_Updates', ascending=False),
+        display_df[mobile_friendly_cols].sort_values(by='Total_Updates', ascending=False),
         column_config={
             "Youth_Index": st.column_config.ProgressColumn(
                 "Youth Index",
@@ -377,7 +380,7 @@ with tab4:
                 max_value=100,
             ),
             "Total_Updates": st.column_config.NumberColumn(
-                "Total Volume",
+                "Total Vol",
                 format="%d"
             )
         },

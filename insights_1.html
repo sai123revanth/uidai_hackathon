@@ -20,6 +20,9 @@
             
             --text-primary: #ffffff;
             --text-secondary: #94a3b8;
+            
+            /* Sidebar defaults */
+            --sidebar-width: 280px;
         }
 
         body {
@@ -90,8 +93,9 @@
         /* --- Layout Grid --- */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 24px;
+            /* Sidebar, Resizer Gap, Main Content */
+            grid-template-columns: var(--sidebar-width) 24px 1fr;
+            gap: 0; /* Gap is now handled by the middle column */
             padding: 24px;
             height: 100vh;
             width: 100%;
@@ -107,7 +111,36 @@
             gap: 20px;
             overflow-y: auto;
             max-height: 100%;
-            padding-right: 8px; 
+            padding-right: 8px;
+            min-width: 0; /* Updated: Allow full collapse/shrinking */
+        }
+
+        /* --- Resizer Handle --- */
+        .resizer-col {
+            width: 100%;
+            height: 100%;
+            cursor: col-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        /* Visual line inside resizer */
+        .resizer-line {
+            width: 4px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .resizer-col:hover .resizer-line,
+        .resizer-col.active .resizer-line {
+            background: var(--accent-1);
+            height: 64px;
+            box-shadow: 0 0 15px var(--accent-1);
         }
 
         /* Scrollbar styling */
@@ -142,6 +175,11 @@
             margin-top: -2px; 
             margin-left: -12px;
             margin-bottom: -40px; 
+            pointer-events: auto; /* Default state */
+        }
+
+        .iframe-pointer-none {
+            pointer-events: none !important;
         }
 
         /* Typography & Components */
@@ -433,9 +471,13 @@
         @media (max-width: 1200px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr;
+                grid-template-rows: auto auto 1fr; /* Stacked layout */
                 overflow-y: auto;
                 height: auto;
+                gap: 24px;
+            }
+            .resizer-col {
+                display: none; /* Hide resizer on mobile */
             }
             body {
                 overflow: auto;
@@ -468,10 +510,10 @@
         <div class="aura aura-2"></div>
     </div>
 
-    <div class="dashboard-grid">
+    <div class="dashboard-grid" id="dashboardGrid">
         
         <!-- PART 1: Left Sidebar (Merged Info + AI) -->
-        <div class="sidebar-left glass-panel" style="padding: 24px;">
+        <div class="sidebar-left glass-panel" id="sidebarLeft" style="padding: 24px;">
             <button class="nav-back-btn" onclick="window.location.href='index.html'">
                 <i data-lucide="arrow-left"></i> Back to Map
             </button>
@@ -564,6 +606,11 @@
             </button>
         </div>
 
+        <!-- NEW: Resizer Drag Handle -->
+        <div class="resizer-col" id="dragHandle">
+            <div class="resizer-line"></div>
+        </div>
+
         <!-- PART 2: Center (Streamlit Visualization) - Now occupies remaining space -->
         <div class="main-viz glass-panel border-beam-viz">
             <!-- Loading Overlay -->
@@ -577,6 +624,7 @@
             <iframe 
                 src="https://uidaihackathon-e2cehtuk9hddodamhb5kkv.streamlit.app/?embed=true" 
                 class="streamlit-frame" 
+                id="vizIframe"
                 title="Aadhaar Analytics"
                 onload="document.getElementById('loader').style.display='none';"
             ></iframe>
@@ -686,6 +734,44 @@
         chatSend.addEventListener('click', handleSend);
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleSend();
+        });
+
+        // --- Resizer Logic ---
+        const dragHandle = document.getElementById('dragHandle');
+        const dashboardGrid = document.getElementById('dashboardGrid');
+        const vizIframe = document.getElementById('vizIframe');
+        let isResizing = false;
+
+        dragHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            dragHandle.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            // Disable iframe interactions to prevent mouse getting stuck
+            vizIframe.classList.add('iframe-pointer-none');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            // Grid padding is 24px, so we subtract that to get actual sidebar width
+            const containerOffset = dashboardGrid.offsetLeft || 0;
+            const newWidth = e.clientX - 24; // 24px represents the left padding
+
+            // Constraints: Min 50px, Max 800px (Updated for minimal width)
+            if (newWidth > 50 && newWidth < 800) {
+                document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                dragHandle.classList.remove('active');
+                document.body.style.cursor = 'default';
+                // Re-enable iframe interactions
+                vizIframe.classList.remove('iframe-pointer-none');
+            }
         });
     </script>
 </body>

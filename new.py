@@ -42,7 +42,7 @@ seo_meta_tags = """
         backdrop-filter: blur(5px);
     }
     
-    h1, h2, h3 { 
+    h1, h2, h3, h4 { 
         font-family: 'Helvetica Neue', sans-serif; 
         color: #f1f5f9;
         text-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -152,42 +152,54 @@ valid_states = sorted(district_df_full['State'].unique())
 default_states = [s for s in default_states if s in valid_states]
 
 # --- MAIN DASHBOARD CONTENT ---
-# UPDATED HEADING AND INTRO
 st.title("🇮🇳 The Demographic Dividend: Education vs. Workforce Intelligence")
 
+# DETAILED INTRODUCTION
 st.markdown("""
-<div style='background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 10px; border-left: 5px solid #00CC96; margin-bottom: 20px;'>
-    <p style='font-size: 1.1em; margin-bottom: 5px;'>
-        <b>The Strategic Insight:</b> Not all districts age at the same pace. This module utilizes Aadhar update signals to separate 
-        <span style='color:#00CC96; font-weight:bold;'> 'Young' districts</span>—which require investment in education and scholarships—from 
-        <span style='color:#EF553B; font-weight:bold;'> 'Mature' districts</span>—which need banking infrastructure and job creation.
+<div style='background-color: rgba(30, 41, 59, 0.5); padding: 20px; border-radius: 10px; border-left: 5px solid #00CC96; margin-bottom: 25px;'>
+    <h4 style='margin-top:0;'>📌 Module Objective</h4>
+    <p style='font-size: 1.05em; color: #e2e8f0;'>
+        This module transforms raw Aadhar update logs into a <b>Policy Strategic Tool</b>. 
+        Because demographic updates (like address or biometric changes) often coincide with milestones like school enrollment or opening a bank account, 
+        we use these signals to map India's "Age Profile" by district.
     </p>
+    <div style='display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px;'>
+        <div style='flex: 1; min-width: 250px;'>
+            <b style='color:#00CC96;'>🟢 HIGH YOUTH INDEX:</b> Districts with a high ratio of updates from <b>Age 5-17</b>. 
+            <i>Policy Goal: Scholarships, Digital Classrooms, Primary Health.</i>
+        </div>
+        <div style='flex: 1; min-width: 250px;'>
+            <b style='color:#EF553B;'>🔴 LOW YOUTH INDEX:</b> Districts dominated by <b>Age 17+</b> updates. 
+            <i>Policy Goal: Banking Expansion, Skill India Centers, Micro-Credit.</i>
+        </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- FILTER BAR (MOVED FROM SIDEBAR) ---
-st.markdown("### 🔍 Analytic Filters")
+# --- FILTER BAR ---
+st.markdown("### 🔍 Dashboard Filters")
+st.caption("Customize the view to focus on specific states or remove statistical noise.")
 col_filter_1, col_filter_2 = st.columns([2, 1])
 
 with col_filter_1:
     selected_states = st.multiselect(
-        "Filter by State",
+        "Focus on Specific States",
         options=valid_states,
         default=default_states,
-        help="Select one or more states. URL updates automatically."
+        help="Analyzing specific states allows for regional benchmarking. Leave empty to see the national picture."
     )
 
 with col_filter_2:
     min_updates = st.slider(
-        "Min Data Volume (Noise Filter)",
+        "Filter Noise (Minimum Volume)",
         min_value=0,
         max_value=int(district_df_full['Total_Updates'].quantile(0.9)), 
         value=100,
         step=50,
-        help="Filter out districts with insignificant data volume."
+        help="Small districts with very few updates can skew the 'Youth Index'. We recommend a minimum of 100 for accuracy."
     )
 
-# Filter Logic & Query Param Update
+# Filter Logic
 if selected_states:
     st.query_params["state"] = selected_states
 else:
@@ -210,6 +222,9 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # TAB 1: EXECUTIVE SUMMARY
 # ==========================================
 with tab1:
+    st.markdown("#### ⚡ Real-Time Snapshot")
+    st.caption("These metrics provide an immediate sense of the scale and demographic lean of your current selection.")
+    
     total_vol = filtered_df['Total_Updates'].sum()
     avg_index = filtered_df['Youth_Index'].mean()
     
@@ -218,16 +233,22 @@ with tab1:
         maturest = filtered_df.loc[filtered_df['Youth_Index'].idxmin()]
         
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Total Data Points", f"{total_vol:,.0f}")
-        c2.metric("Avg Youth Index", f"{avg_index:.1f}%")
-        c3.metric("Youngest Dist.", f"{youngest['District']}") 
-        c4.metric("Maturest Dist.", f"{maturest['District']}") 
+        c1.metric("Total Sample Size", f"{total_vol:,.0f}", help="Total updates analyzed across all age groups.")
+        c2.metric("Avg Youth Density", f"{avg_index:.1f}%", help="The average percentage of children (5-17) in this region.")
+        c3.metric("Youngest Dist.", f"{youngest['District']}", f"{youngest['Youth_Index']:.1f}% Youth") 
+        c4.metric("Maturest Dist.", f"{maturest['District']}", f"{100-maturest['Youth_Index']:.1f}% Workforce") 
     else:
-        st.warning("No data meets the current filter criteria.")
+        st.warning("No data meets the current filter criteria. Try lowering the 'Noise Filter'.")
 
     st.markdown("---")
     
-    st.subheader("📍 The Demographic Heatmap")
+    st.subheader("📍 The National Demographic Heatmap")
+    st.markdown("**How to read this chart:**")
+    st.markdown("""
+    - **Box Size:** Larger boxes mean more people are updating their records (High Activity).
+    - **Box Color:** **Yellow/Light Green** = High Children ratio. **Dark Blue/Purple** = High Adult ratio.
+    - **Click a State:** You can click on a state to zoom into its specific districts.
+    """)
     
     fig_tree = px.treemap(
         filtered_df,
@@ -240,14 +261,16 @@ with tab1:
     )
     st.plotly_chart(fig_tree, use_container_width=True)
     
-    st.markdown("### 🏛️ Policy Recommendations")
-    ac1, ac2 = st.columns(2)
+    st.markdown("---")
+    st.markdown("### 🏛️ Targeted Policy Action Plan")
+    st.caption("Automatically generated priority lists based on the 'Youth Index'.")
     
+    ac1, ac2 = st.columns(2)
     cols_to_show = ['State', 'District', 'Youth_Index', 'Total_Updates']
     
     with ac1:
-        st.info("🎒 **Education Priority (Young Population)**")
-        st.markdown("*Action: Scholarship Disbursement, New Schools, Digital Literacy.*")
+        st.info("🎒 **Top Education Priority (Highest Youth Index)**")
+        st.markdown("*Recommended Action:* Prioritize New Primary Schools and Scholarship disbursement.")
         top_youth = filtered_df.nlargest(10, 'Youth_Index')
         st.dataframe(
             top_youth[cols_to_show].style.format({"Youth_Index": "{:.1f}%"}),
@@ -256,8 +279,8 @@ with tab1:
         )
 
     with ac2:
-        st.error("💼 **Workforce Priority (Mature Population)**")
-        st.markdown("*Action: Job Fairs, Banking Access, Upskilling Centers.*")
+        st.error("💼 **Top Workforce Priority (Lowest Youth Index)**")
+        st.markdown("*Recommended Action:* Focus on Vocational Training, Job Fairs, and Bank credit access.")
         top_work = filtered_df.nsmallest(10, 'Youth_Index').copy()
         top_work['Adult_Index'] = 100 - top_work['Youth_Index']
         st.dataframe(
@@ -270,7 +293,12 @@ with tab1:
 # TAB 2: STATE ANALYTICS
 # ==========================================
 with tab2:
-    st.subheader("State-Level Comparative Analysis")
+    st.subheader("🏢 State-Level Comparative Benchmarking")
+    st.markdown("""
+    This tab compares states as a whole. This is crucial for **Federal Fund Allocation**. 
+    States on the left of the chart are "Younger" and may require more Education Budget.
+    States on the right are "Older" and may require more Employment/Industrial support.
+    """)
     
     state_stats = filtered_df.groupby('State').agg({
         'Total_Updates': 'sum',
@@ -288,15 +316,15 @@ with tab2:
             y='Youth_Index',
             color='Youth_Index',
             color_continuous_scale='RdYlGn',
-            title="Youngest to Oldest States",
+            title="State Age Profiles (Youngest to Oldest)",
             labels={'Youth_Index': 'Avg Youth Index (%)'},
             height=500
         )
-        fig_state.add_hline(y=state_stats['Youth_Index'].mean(), line_dash="dot", annotation_text="Avg")
+        fig_state.add_hline(y=state_stats['Youth_Index'].mean(), line_dash="dot", annotation_text="National Avg")
         st.plotly_chart(fig_state, use_container_width=True)
         
     with col_b:
-        st.write("### State Statistics")
+        st.write("#### State Performance Stats")
         st.dataframe(
             state_stats[['State', 'Total_Updates', 'Youth_Index']],
             column_config={
@@ -307,7 +335,7 @@ with tab2:
                     max_value=100,
                 ),
                 "Total_Updates": st.column_config.NumberColumn(
-                    "Volume",
+                    "Update Volume",
                     format="%d"
                 )
             },
@@ -319,7 +347,12 @@ with tab2:
 # TAB 3: TREND ANALYSIS
 # ==========================================
 with tab3:
-    st.subheader("📅 Temporal Trends")
+    st.subheader("📅 Temporal Demographic Momentum")
+    st.markdown("""
+    **The Insight:** This chart shows how the demographic profile shifts over the months. 
+    A sudden spike in **Youth Updates** (Green) might indicate a school enrollment season, while a rise in **Adult Updates** (Red) 
+    could signal a migration for work or a new welfare scheme launch.
+    """)
     
     if trend_df_full is not None and not trend_df_full.empty:
         trend_df_full = trend_df_full.sort_values('Month_Year')
@@ -328,8 +361,8 @@ with tab3:
             trend_df_full, 
             x='Month_Year', 
             y=['Youth_Updates', 'Adult_Updates'],
-            title="Monthly Update Volume Trends",
-            labels={'value': 'Updates', 'variable': 'Segment'},
+            title="National Update Volume Trends: Youth vs Workforce Segment",
+            labels={'value': 'Monthly Updates', 'variable': 'Demographic Segment'},
             color_discrete_map={'Youth_Updates': '#00CC96', 'Adult_Updates': '#EF553B'}
         )
         st.plotly_chart(fig_trend, use_container_width=True)
@@ -340,13 +373,14 @@ with tab3:
 # TAB 4: DISTRICT EXPLORER
 # ==========================================
 with tab4:
-    st.subheader("🔎 District Deep Dive")
+    st.subheader("🔎 Granular District Intelligence")
+    st.markdown("Use this tab to search for specific districts and see exactly where they sit in the national ecosystem.")
     
     c_search, c_chart = st.columns([1, 2])
     
     with c_search:
-        st.markdown("### Find a District")
-        search_term = st.text_input("Search Name", placeholder="e.g., Mahabubnagar")
+        st.markdown("#### Search & Distribution")
+        search_term = st.text_input("Enter District Name", placeholder="e.g., Mahabubnagar")
         
         display_df = filtered_df.copy()
         if search_term:
@@ -356,11 +390,12 @@ with tab4:
             filtered_df, 
             x="Youth_Index", 
             nbins=30, 
-            title="Distribution",
+            title="Statistical Bell Curve of Districts",
             color_discrete_sequence=['#636EFA']
         )
         fig_hist.update_layout(showlegend=False, height=200, margin=dict(l=0, r=0, t=30, b=0))
         st.plotly_chart(fig_hist, use_container_width=True)
+        st.caption("Shows how many districts fall into which 'Youth Index' percentage.")
 
     with c_chart:
         fig_scatter = px.scatter(
@@ -371,13 +406,15 @@ with tab4:
             color='State',
             hover_name='District',
             log_x=True,
-            title="Volume vs Youth Index",
+            title="Strategic Quadrants (Volume vs Demographic Profile)",
             height=500
         )
-        fig_scatter.add_hline(y=50, line_dash="dash", line_color="white", opacity=0.5)
+        fig_scatter.add_hline(y=50, line_dash="dash", line_color="white", opacity=0.5, annotation_text="Balance Line")
         st.plotly_chart(fig_scatter, use_container_width=True)
+        st.caption("**X-Axis (Log Scale):** Shows the activity volume. **Y-Axis:** Shows the Youth vs Workforce balance.")
 
-    st.markdown("### 📋 Comprehensive District Data")
+    st.markdown("### 📋 Full Analytic Table")
+    st.caption("Scroll or search to see the full data for all districts.")
     
     mobile_friendly_cols = ['District', 'State', 'Total_Updates', 'Youth_Index']
     
@@ -385,14 +422,14 @@ with tab4:
         display_df[mobile_friendly_cols].sort_values(by='Total_Updates', ascending=False),
         column_config={
             "Youth_Index": st.column_config.ProgressColumn(
-                "Youth Index",
-                help="Percentage of updates from Age 5-17",
+                "Youth Index (%)",
+                help="Higher = Needs Schools. Lower = Needs Jobs.",
                 format="%.1f%%",
                 min_value=0,
                 max_value=100,
             ),
             "Total_Updates": st.column_config.NumberColumn(
-                "Total Vol",
+                "Activity Volume",
                 format="%d"
             )
         },

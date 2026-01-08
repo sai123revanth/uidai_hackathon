@@ -7,7 +7,7 @@ import os
 
 # --- 1. SEO & PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="India Demographic Dividend | Education & Workforce Analytics",
+    page_title="Demographic Dividend | Education vs Workforce",
     page_icon="🇮🇳",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -66,7 +66,6 @@ seo_meta_tags = """
     }
 
     /* --- MOBILE OPTIMIZATION --- */
-    /* Adjusts layout for screens smaller than 768px (Tablets/Phones) */
     @media (max-width: 768px) {
         .block-container {
             padding-top: 1rem !important;
@@ -77,7 +76,6 @@ seo_meta_tags = """
         h1 {
             font-size: 1.5rem !important;
         }
-        /* Make charts taller on mobile for better visibility */
         .js-plotly-plot {
             height: 400px !important;
         }
@@ -147,46 +145,60 @@ if district_df_full is None:
     st.error("No data found. Please place the CSV files in the same directory.")
     st.stop()
 
-# --- 3. DEEP LINKING ---
+# --- 3. DEEP LINKING SETUP ---
 query_params = st.query_params
 default_states = query_params.get_all("state") if "state" in query_params else []
 valid_states = sorted(district_df_full['State'].unique())
 default_states = [s for s in default_states if s in valid_states]
 
-# --- SIDEBAR: FILTERS ---
-st.sidebar.title("🔍 Analytic Filters")
+# --- MAIN DASHBOARD CONTENT ---
+# UPDATED HEADING AND INTRO
+st.title("🇮🇳 The Demographic Dividend: Education vs. Workforce Intelligence")
 
-selected_states = st.sidebar.multiselect(
-    "Filter by State",
-    options=valid_states,
-    default=default_states,
-    help="Select one or more states. URL updates automatically."
-)
+st.markdown("""
+<div style='background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 10px; border-left: 5px solid #00CC96; margin-bottom: 20px;'>
+    <p style='font-size: 1.1em; margin-bottom: 5px;'>
+        <b>The Strategic Insight:</b> Not all districts age at the same pace. This module utilizes Aadhar update signals to separate 
+        <span style='color:#00CC96; font-weight:bold;'> 'Young' districts</span>—which require investment in education and scholarships—from 
+        <span style='color:#EF553B; font-weight:bold;'> 'Mature' districts</span>—which need banking infrastructure and job creation.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
+# --- FILTER BAR (MOVED FROM SIDEBAR) ---
+st.markdown("### 🔍 Analytic Filters")
+col_filter_1, col_filter_2 = st.columns([2, 1])
+
+with col_filter_1:
+    selected_states = st.multiselect(
+        "Filter by State",
+        options=valid_states,
+        default=default_states,
+        help="Select one or more states. URL updates automatically."
+    )
+
+with col_filter_2:
+    min_updates = st.slider(
+        "Min Data Volume (Noise Filter)",
+        min_value=0,
+        max_value=int(district_df_full['Total_Updates'].quantile(0.9)), 
+        value=100,
+        step=50,
+        help="Filter out districts with insignificant data volume."
+    )
+
+# Filter Logic & Query Param Update
 if selected_states:
     st.query_params["state"] = selected_states
 else:
     if "state" in st.query_params:
         del st.query_params["state"]
 
-min_updates = st.sidebar.slider(
-    "Minimum Data Volume (Noise Filter)",
-    min_value=0,
-    max_value=int(district_df_full['Total_Updates'].quantile(0.9)), 
-    value=100,
-    step=50,
-    help="Filter out districts with insignificant data volume."
-)
-
 filtered_df = district_df_full[district_df_full['Total_Updates'] >= min_updates]
 if selected_states:
     filtered_df = filtered_df[filtered_df['State'].isin(selected_states)]
 
-# --- MAIN DASHBOARD CONTENT ---
-st.title("🇮🇳 National Demographic Intelligence")
-st.markdown("### Strategic Analysis: Education Hubs vs. Workforce Engines")
-
-# Tabs
+# --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Executive Summary", 
     "🗺️ State Analytics", 
@@ -208,8 +220,8 @@ with tab1:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Total Data Points", f"{total_vol:,.0f}")
         c2.metric("Avg Youth Index", f"{avg_index:.1f}%")
-        c3.metric("Youngest Dist.", f"{youngest['District']}") # Shortened title for mobile
-        c4.metric("Maturest Dist.", f"{maturest['District']}") # Shortened title for mobile
+        c3.metric("Youngest Dist.", f"{youngest['District']}") 
+        c4.metric("Maturest Dist.", f"{maturest['District']}") 
     else:
         st.warning("No data meets the current filter criteria.")
 
@@ -231,11 +243,11 @@ with tab1:
     st.markdown("### 🏛️ Policy Recommendations")
     ac1, ac2 = st.columns(2)
     
-    # We select specific columns to avoid horizontal scroll on mobile
     cols_to_show = ['State', 'District', 'Youth_Index', 'Total_Updates']
     
     with ac1:
-        st.info("🎒 **Education Priority**")
+        st.info("🎒 **Education Priority (Young Population)**")
+        st.markdown("*Action: Scholarship Disbursement, New Schools, Digital Literacy.*")
         top_youth = filtered_df.nlargest(10, 'Youth_Index')
         st.dataframe(
             top_youth[cols_to_show].style.format({"Youth_Index": "{:.1f}%"}),
@@ -244,10 +256,10 @@ with tab1:
         )
 
     with ac2:
-        st.error("💼 **Workforce Priority**")
+        st.error("💼 **Workforce Priority (Mature Population)**")
+        st.markdown("*Action: Job Fairs, Banking Access, Upskilling Centers.*")
         top_work = filtered_df.nsmallest(10, 'Youth_Index').copy()
         top_work['Adult_Index'] = 100 - top_work['Youth_Index']
-        # Show adult index instead of youth index for this table
         st.dataframe(
             top_work[['State', 'District', 'Adult_Index', 'Total_Updates']].style.format({"Adult_Index": "{:.1f}%"}),
             use_container_width=True,
@@ -366,7 +378,7 @@ with tab4:
         st.plotly_chart(fig_scatter, use_container_width=True)
 
     st.markdown("### 📋 Comprehensive District Data")
-    # Reduced columns for Mobile View - Removed raw counts, kept Key Metrics
+    
     mobile_friendly_cols = ['District', 'State', 'Total_Updates', 'Youth_Index']
     
     st.dataframe(

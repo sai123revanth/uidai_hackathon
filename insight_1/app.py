@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.io as pio
 import os
 
-# Setting template_folder to '.' tells Flask to look for index.html in the root directory
+# Setting template_folder to '.' tells Flask to look for slum.html in the root directory
 app = Flask(__name__, template_folder='.')
 CORS(app)
 
@@ -45,17 +45,17 @@ def load_and_clean_data():
 @app.route('/')
 def home():
     """
-    Renders index.html from the root directory.
+    Renders slum.html from the root directory.
     """
     try:
-        # Since template_folder is set to '.', this looks for index.html in root
-        return render_template('index.html')
+        # Since template_folder is set to '.', this looks for slum.html in root
+        return render_template('slum.html')
     except Exception as e:
         # Fallback if render_template fails to find it in root
         base_path = os.path.dirname(os.path.abspath(__file__))
-        if os.path.exists(os.path.join(base_path, 'index.html')):
-            return send_from_directory(base_path, 'index.html')
-        return f"File Error: 'index.html' not found in root directory. Error: {str(e)}", 500
+        if os.path.exists(os.path.join(base_path, 'slum.html')):
+            return send_from_directory(base_path, 'slum.html')
+        return f"File Error: 'slum.html' not found in root directory. Error: {str(e)}", 500
 
 @app.route('/visual/treemap')
 def visual_treemap():

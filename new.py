@@ -94,7 +94,7 @@ def load_data():
         files = glob.glob("*.csv")
     
     if not files:
-        return None, None
+        return None
 
     df_list = []
     for file in files:
@@ -106,7 +106,7 @@ def load_data():
             continue
             
     if not df_list:
-        return None, None
+        return None
         
     raw_df = pd.concat(df_list, ignore_index=True)
     
@@ -126,29 +126,20 @@ def load_data():
     raw_df['Youth_Updates'] = pd.to_numeric(raw_df['Youth_Updates'], errors='coerce').fillna(0)
     raw_df['Adult_Updates'] = pd.to_numeric(raw_df['Adult_Updates'], errors='coerce').fillna(0)
     raw_df['Date'] = pd.to_datetime(raw_df['Date'], format='%d-%m-%Y', errors='coerce')
-
-    # Aggregations
-    district_df = raw_df.groupby(['State', 'District'])[['Youth_Updates', 'Adult_Updates']].sum().reset_index()
-    district_df['Total_Updates'] = district_df['Youth_Updates'] + district_df['Adult_Updates']
-    district_df['Youth_Index'] = (district_df['Youth_Updates'] / district_df['Total_Updates']) * 100
     
-    raw_df['Month_Year'] = raw_df['Date'].dt.to_period('M').astype(str)
-    trend_df = raw_df.groupby(['Month_Year'])[['Youth_Updates', 'Adult_Updates']].sum().reset_index()
-    trend_df['Total_Updates'] = trend_df['Youth_Updates'] + trend_df['Adult_Updates']
-    
-    return district_df, trend_df
+    return raw_df
 
-# Load Data
-district_df_full, trend_df_full = load_data()
+# Load raw Data
+raw_df_full = load_data()
 
-if district_df_full is None:
+if raw_df_full is None:
     st.error("No data found. Please place the CSV files in the same directory.")
     st.stop()
 
 # --- 3. DEEP LINKING SETUP ---
 query_params = st.query_params
 default_states = query_params.get_all("state") if "state" in query_params else []
-valid_states = sorted(district_df_full['State'].unique())
+valid_states = sorted(raw_df_full['State'].unique())
 default_states = [s for s in default_states if s in valid_states]
 
 # --- MAIN DASHBOARD CONTENT ---
@@ -178,37 +169,70 @@ st.markdown("""
 
 # --- FILTER BAR ---
 st.markdown("### 🔍 Dashboard Filters")
-st.caption("Customize the view to focus on specific states or remove statistical noise.")
-col_filter_1, col_filter_2 = st.columns([2, 1])
+st.caption("Customize the view to focus on specific states, timelines, or remove statistical noise.")
+col_filter_1, col_filter_2, col_filter_3 = st.columns([1, 1, 1])
 
 with col_filter_1:
     selected_states = st.multiselect(
         "Focus on Specific States",
         options=valid_states,
         default=default_states,
-        help="Analyzing specific states allows for regional benchmarking. Leave empty to see the national picture."
+        help="Analyzing specific states allows for regional benchmarking."
     )
 
 with col_filter_2:
+    # Timeline Selection
+    min_date = raw_df_full['Date'].min().date()
+    max_date = raw_df_full['Date'].max().date()
+    
+    selected_date_range = st.date_input(
+        "Select Timeline",
+        value=(min_date, max_date),
+        min_value=min_date,
+        max_value=max_date,
+        help="Filter data by a specific period to see demographic shifts over time."
+    )
+
+with col_filter_3:
     min_updates = st.slider(
         "Filter Noise (Minimum Volume)",
         min_value=0,
-        max_value=int(district_df_full['Total_Updates'].quantile(0.9)), 
+        max_value=int(raw_df_full.groupby(['State', 'District'])['Youth_Updates'].sum().quantile(0.9)), 
         value=100,
         step=50,
-        help="Small districts with very few updates can skew the 'Youth Index'. We recommend a minimum of 100 for accuracy."
+        help="We recommend a minimum of 100 for statistical accuracy."
     )
 
-# Filter Logic
+# --- DATA FILTERING & AGGREGATION ---
+# 1. Timeline Filter
+if isinstance(selected_date_range, tuple) and len(selected_date_range) == 2:
+    start_date, end_date = selected_date_range
+    filtered_raw = raw_df_full[
+        (raw_df_full['Date'].dt.date >= start_date) & 
+        (raw_df_full['Date'].dt.date <= end_date)
+    ]
+else:
+    filtered_raw = raw_df_full
+
+# 2. State Filter Logic & Query Param Update
 if selected_states:
     st.query_params["state"] = selected_states
+    filtered_raw = filtered_raw[filtered_raw['State'].isin(selected_states)]
 else:
     if "state" in st.query_params:
         del st.query_params["state"]
 
-filtered_df = district_df_full[district_df_full['Total_Updates'] >= min_updates]
-if selected_states:
-    filtered_df = filtered_df[filtered_df['State'].isin(selected_states)]
+# 3. Aggregations based on Timeline/State
+district_df = filtered_raw.groupby(['State', 'District'])[['Youth_Updates', 'Adult_Updates']].sum().reset_index()
+district_df['Total_Updates'] = district_df['Youth_Updates'] + district_df['Adult_Updates']
+district_df['Youth_Index'] = (district_df['Youth_Updates'] / district_df['Total_Updates']) * 100
+
+filtered_raw['Month_Year'] = filtered_raw['Date'].dt.to_period('M').astype(str)
+trend_df = filtered_raw.groupby(['Month_Year'])[['Youth_Updates', 'Adult_Updates']].sum().reset_index()
+trend_df['Total_Updates'] = trend_df['Youth_Updates'] + trend_df['Adult_Updates']
+
+# 4. Noise Filter
+filtered_df = district_df[district_df['Total_Updates'] >= min_updates]
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -238,7 +262,7 @@ with tab1:
         c3.metric("Youngest Dist.", f"{youngest['District']}", f"{youngest['Youth_Index']:.1f}% Youth") 
         c4.metric("Maturest Dist.", f"{maturest['District']}", f"{100-maturest['Youth_Index']:.1f}% Workforce") 
     else:
-        st.warning("No data meets the current filter criteria. Try lowering the 'Noise Filter'.")
+        st.warning("No data meets the current filter criteria. Try adjusting the 'Timeline' or 'Noise Filter'.")
 
     st.markdown("---")
     
@@ -354,14 +378,14 @@ with tab3:
     could signal a migration for work or a new welfare scheme launch.
     """)
     
-    if trend_df_full is not None and not trend_df_full.empty:
-        trend_df_full = trend_df_full.sort_values('Month_Year')
+    if trend_df is not None and not trend_df.empty:
+        trend_df = trend_df.sort_values('Month_Year')
         
         fig_trend = px.area(
-            trend_df_full, 
+            trend_df, 
             x='Month_Year', 
             y=['Youth_Updates', 'Adult_Updates'],
-            title="National Update Volume Trends: Youth vs Workforce Segment",
+            title="Update Volume Trends (Selected Period): Youth vs Workforce Segment",
             labels={'value': 'Monthly Updates', 'variable': 'Demographic Segment'},
             color_discrete_map={'Youth_Updates': '#00CC96', 'Adult_Updates': '#EF553B'}
         )

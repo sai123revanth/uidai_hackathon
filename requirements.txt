@@ -4,3 +4,5 @@ pandas
 plotly
 gunicorn
 numpy
+matplotlib
+seaborn

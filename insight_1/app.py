@@ -1,125 +1,105 @@
-from flask import Flask, jsonify, render_template, send_from_directory
-from flask_cors import CORS
 import pandas as pd
-import plotly.express as px
-import plotly.io as pio
+import numpy as np
+from flask import Flask, render_template
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
+import base64
 import os
 
-# Setting template_folder to '.' tells Flask to look for slum.html in the root directory
-app = Flask(__name__, template_folder='.')
-CORS(app)
+# BASE_DIR is .../UIDAI_HACKATHON/insight_1
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# TEMPLATE_DIR is .../UIDAI_HACKATHON/
+TEMPLATE_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
+# DATA_PATH is .../UIDAI_HACKATHON/api_data_aadhar_enrolment_0_500000.csv
+DATA_PATH = os.path.join(TEMPLATE_DIR, 'api_data_aadhar_enrolment_0_500000.csv')
 
-# --- CONFIGURATION ---
-CSV_FILE = 'api_data_aadhar_enrolment_500000_1000000.csv'
+# Initialize Flask pointing to the root for templates
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
-def load_and_clean_data():
-    """
-    Loads data with robust error handling for the root directory.
-    """
-    try:
-        # Get the absolute path to the directory where app.py resides
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(base_path, CSV_FILE)
-        
-        if not os.path.exists(file_path):
-            print(f"CRITICAL ERROR: {CSV_FILE} not found at {file_path}")
-            return None
-        
-        df = pd.read_csv(file_path, low_memory=False)
-        df.columns = df.columns.str.strip()
-        
-        # Date conversion and cleaning
-        df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y', errors='coerce')
-        df = df.dropna(subset=['date'])
-        
-        numeric_cols = ['age_0_5', 'age_5_17', 'age_18_greater']
-        for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
-        
-        df['month_year'] = df['date'].dt.to_period('M').astype(str)
-        return df
-    except Exception as e:
-        print(f"Data loading error: {e}")
-        return None
+def get_plot_url():
+    """Helper to convert matplotlib plots to base64 strings."""
+    img = io.BytesIO()
+    plt.savefig(img, format='png', bbox_inches='tight')
+    img.seek(0)
+    return base64.b64encode(img.getvalue()).decode('utf8')
+
+def process_insights():
+    """Core analysis logic."""
+    if not os.path.exists(DATA_PATH):
+        print(f"Error: File not found at {DATA_PATH}")
+        return None, None, None
+
+    df = pd.read_csv(DATA_PATH)
+    df['date'] = pd.to_datetime(df['date'], dayfirst=True)
+    df['total_enrolments'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
+    
+    # 1. State Metrics
+    state_metrics = df.groupby('state').agg({
+        'age_0_5': 'sum',
+        'age_5_17': 'sum',
+        'age_18_greater': 'sum',
+        'total_enrolments': 'sum'
+    }).reset_index()
+    
+    state_metrics['saturation_index'] = state_metrics['age_18_greater'] / (state_metrics['age_0_5'] + state_metrics['age_5_17'] + 1)
+    state_metrics['bap_score'] = (state_metrics['age_0_5'] / state_metrics['total_enrolments']) * 100
+    
+    # 2. Temporal Data
+    df['month'] = df['date'].dt.month_name()
+    monthly_trend = df.groupby('month')['total_enrolments'].sum().reindex([
+        'January', 'February', 'March', 'April', 'May', 'June', 
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ]).dropna()
+
+    # 3. Pincode Hotspots
+    pincode_analysis = df.groupby(['state', 'pincode']).agg({
+        'total_enrolments': 'sum'
+    }).reset_index()
+    top_pincodes = pincode_analysis.sort_values(by='total_enrolments', ascending=False).head(12)
+
+    return state_metrics, monthly_trend, top_pincodes
 
 @app.route('/')
-def home():
-    """
-    Renders slum.html from the root directory.
-    """
-    try:
-        # Since template_folder is set to '.', this looks for slum.html in root
-        return render_template('slum.html')
-    except Exception as e:
-        # Fallback if render_template fails to find it in root
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        if os.path.exists(os.path.join(base_path, 'slum.html')):
-            return send_from_directory(base_path, 'slum.html')
-        return f"File Error: 'slum.html' not found in root directory. Error: {str(e)}", 500
-
-@app.route('/visual/treemap')
-def visual_treemap():
-    df = load_and_clean_data()
-    if df is None: return "CSV file missing or corrupted", 404
+def index():
+    state_metrics, monthly_trend, top_pincodes = process_insights()
     
-    df_treemap = df[df['age_0_5'] > 0].copy()
-    if df_treemap.empty:
-        return "No data available for Treemap", 200
+    if state_metrics is None:
+        return f"Error: Data file not found at {DATA_PATH}. Please check your folder structure."
 
-    fig = px.treemap(
-        df_treemap,
-        path=[px.Constant("India"), 'state', 'district'],
-        values='age_0_5',
-        color='age_0_5',
-        color_continuous_scale='RdYlGn',
-        title='Early-Child Enrolment Density',
-        template="plotly_white"
+    champions = state_metrics.sort_values(by='bap_score', ascending=False).head(5).to_dict('records')
+    
+    # Visual 1: Velocity
+    plt.figure(figsize=(10, 4), facecolor='#0f172a')
+    ax1 = sns.lineplot(x=monthly_trend.index, y=monthly_trend.values, marker='o', color='#38bdf8', linewidth=3)
+    ax1.set_facecolor('#0f172a')
+    plt.title('National Enrolment Velocity', color='white', fontsize=14)
+    plt.xticks(rotation=45, color='#94a3b8')
+    plt.yticks(color='#94a3b8')
+    plt.tight_layout()
+    plot_velocity = get_plot_url()
+    plt.close()
+
+    # Visual 2: Saturation
+    plt.figure(figsize=(10, 4), facecolor='#0f172a')
+    top_vol = state_metrics.sort_values(by='total_enrolments', ascending=False).head(10)
+    ax2 = sns.barplot(data=top_vol, x='state', y='saturation_index', palette='Blues_d')
+    ax2.set_facecolor('#0f172a')
+    plt.title('Saturation Index (High-Volume States)', color='white', fontsize=14)
+    plt.xticks(rotation=45, color='#94a3b8')
+    plt.yticks(color='#94a3b8')
+    plt.tight_layout()
+    plot_saturation = get_plot_url()
+    plt.close()
+
+    return render_template(
+        'insight_1.html', 
+        champions=champions, 
+        plot_v=plot_velocity,
+        plot_s=plot_saturation,
+        pincodes=top_pincodes.to_dict('records')
     )
-    fig.update_layout(margin=dict(t=30, l=10, r=10, b=10))
-    return pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
-
-@app.route('/visual/trend')
-def visual_trend():
-    df = load_and_clean_data()
-    if df is None: return "CSV file missing or corrupted", 404
-    
-    summary = df.groupby('district')['age_0_5'].sum().sort_values()
-    if summary.empty:
-        return "No data available for Trend", 200
-
-    focus_districts = list(summary.head(3).index) + list(summary.tail(3).index)
-    trend_data = df[df['district'].isin(focus_districts)]
-    trend_agg = trend_data.groupby(['month_year', 'district'])['age_0_5'].sum().reset_index()
-    
-    fig = px.line(
-        trend_agg,
-        x='month_year',
-        y='age_0_5',
-        color='district',
-        markers=True,
-        title='Growth Slope: Lagging vs. Leading Districts',
-        template="plotly_white"
-    )
-    fig.update_layout(margin=dict(t=30, l=10, r=10, b=10))
-    return pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
-
-@app.route('/api/summary')
-def api_summary():
-    df = load_and_clean_data()
-    if df is None: return jsonify({"error": "Data not found"}), 404
-    summary = df.groupby('state')[['age_0_5', 'age_5_17', 'age_18_greater']].sum().to_dict(orient='index')
-    return jsonify(summary)
-
-@app.route('/api/inequality')
-def api_inequality():
-    df = load_and_clean_data()
-    if df is None: return jsonify({"error": "Data not found"}), 404
-    state_variance = df.groupby('state')['age_0_5'].std().reset_index()
-    state_variance.columns = ['state', 'variance_std']
-    top_5 = state_variance.sort_values(by='variance_std', ascending=False).head(5)
-    return jsonify(top_5.to_dict(orient='records'))
 
 if __name__ == '__main__':
-    # Use environment port for Render
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port)

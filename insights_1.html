@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UDAAN - Aadhaar Insights</title>
+    <title>UDAAN - The Demographic Dividend</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <!-- Import Plus Jakarta Sans and Rajdhani -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
@@ -191,7 +191,7 @@
 
         .section-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
             margin-bottom: 16px;
             padding-bottom: 16px;
@@ -206,6 +206,7 @@
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            line-height: 1;
         }
 
         .info-card {
@@ -281,28 +282,6 @@
 
         .nav-back-btn:hover {
             color: var(--accent-1);
-        }
-
-        /* Border Beam Animation */
-        .border-beam-viz::before {
-            content: "";
-            position: absolute;
-            inset: -1px;
-            border-radius: 24px;
-            padding: 1px;
-            background: conic-gradient(from 0deg, transparent 60%, var(--accent-1), var(--accent-2), transparent);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: destination-out;
-            mask-composite: exclude;
-            animation: spin-beam 6s linear infinite;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        @keyframes spin-beam {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
 
         /* --- Chatbot Floating Widget --- */
@@ -512,98 +491,64 @@
 
     <div class="dashboard-grid" id="dashboardGrid">
         
-        <!-- PART 1: Left Sidebar (Merged Info + AI) -->
+        <!-- PART 1: Left Sidebar (UPDATED CONTENT) -->
         <div class="sidebar-left glass-panel" id="sidebarLeft" style="padding: 24px;">
             <button class="nav-back-btn" onclick="window.location.href='index.html'">
                 <i data-lucide="arrow-left"></i> Back to Map
             </button>
 
-            <!-- Original Top Section -->
+            <!-- New Section Header -->
             <div class="section-header">
-                <i data-lucide="fingerprint" style="color: var(--accent-3); width: 28px; height: 28px;"></i>
-                <h1 class="section-title">Aadhaar Insights</h1>
+                <i data-lucide="users" style="color: var(--accent-3); width: 28px; height: 28px; margin-top: 4px;"></i>
+                <div>
+                    <h1 class="section-title" style="font-size: 1.25rem;">The Demographic Dividend</h1>
+                    <div style="font-size: 0.8rem; color: var(--accent-1); margin-top: 4px;">Education vs. Workforce Intelligence System</div>
+                </div>
             </div>
 
-            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 24px;">
-                Advanced analytics module leveraging the Unified Data Analysis for Aadhaar Network (UDAAN). This dashboard provides granular visibility into enrolment saturation, biometric update trends, and service delivery latency across jurisdictions.
+            <!-- Core Motive Section -->
+            <h3 style="color: white; font-size: 1rem; margin-top: 8px; margin-bottom: 8px;">1. The Core Motive (The "Why")</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                Traditional census data is static and often outdated by the time it is published. This module solves that problem by using high-frequency Aadhar update data as a real-time proxy for demographic shifts.
             </p>
 
-            <div class="info-card">
-                <span class="info-label">Current Data Epoch</span>
-                <span class="info-value">2024-Q3 (Live)</span>
-            </div>
-
-            <div class="info-card">
-                <span class="info-label">Active Nodes</span>
-                <span class="info-value">1.4 Billion+ Records</span>
-            </div>
-
-            <div class="info-card">
-                <span class="info-label">Primary Metric</span>
-                <span class="info-value" style="color: var(--accent-1);">Saturation Density</span>
-            </div>
-
-            <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border); flex-shrink: 0;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <i data-lucide="shield-check" style="color: #34d399; width: 16px;"></i>
-                    <span style="font-weight: 600; font-size: 0.85rem;">Secure Connection</span>
+            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; margin-bottom: 24px; border: 1px solid var(--border);">
+                <div style="margin-bottom: 8px; line-height: 1.4;">
+                    <strong style="color: var(--accent-3); display:block; font-size: 0.8rem; text-transform:uppercase;">The Problem</strong> 
+                    <span style="color: #ccc; font-size: 0.85rem;">Policymakers often treat all districts the same.</span>
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                    AES-256 Encrypted Stream via UIDAI Gateway.
+                <div style="margin-bottom: 8px; line-height: 1.4;">
+                    <strong style="color: var(--accent-1); display:block; font-size: 0.8rem; text-transform:uppercase;">The Reality</strong> 
+                    <span style="color: #ccc; font-size: 0.85rem;">India’s districts are aging at different speeds. Some are "Young" (filled with school-age children), while others are "Mature" (dominated by the workforce).</span>
+                </div>
+                <div style="line-height: 1.4;">
+                    <strong style="color: var(--accent-2); display:block; font-size: 0.8rem; text-transform:uppercase;">The Solution</strong> 
+                    <span style="color: #ccc; font-size: 0.85rem;">This dashboard dynamically separates these two groups to ensure the right resources go to the right places.</span>
                 </div>
             </div>
 
             <!-- Separator -->
-            <div style="width: 100%; height: 1px; background: var(--border); margin: 8px 0 24px 0;"></div>
+            <div style="width: 100%; height: 1px; background: var(--border); margin: 0 0 24px 0;"></div>
 
-            <!-- Merged AI Section -->
-            <div class="section-header">
-                <i data-lucide="brain-circuit" style="color: var(--accent-2); width: 28px; height: 28px;"></i>
-                <h1 class="section-title">AI Neural Core</h1>
+            <!-- Strategic Insight Section -->
+            <h3 style="color: white; font-size: 1rem; margin-bottom: 8px;">2. The Strategic Insight</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 16px;">
+                The module operates on a simple but powerful premise: The age of the people updating their Aadhar profiles reflects the dominant needs of that district.
+            </p>
+
+            <div class="info-card">
+                <span class="info-label" style="color: var(--accent-1); font-size: 0.8rem;">Young Districts (High Youth Index)</span>
+                <p style="font-size: 0.85rem; color: #ddd; margin-top: 6px; line-height: 1.4;">
+                    These are future talent hubs. They don't need job fairs yet; they need schools, scholarships, and digital literacy programs.
+                </p>
             </div>
 
-            <div class="ai-status-row">
-                <span style="font-size: 0.85rem; font-weight: 600; color: var(--accent-1);">System Online</span>
-                <div class="status-dot"></div>
+            <div class="info-card">
+                <span class="info-label" style="color: var(--accent-2); font-size: 0.8rem;">Mature Districts (High Adult Index)</span>
+                <p style="font-size: 0.85rem; color: #ddd; margin-top: 6px; line-height: 1.4;">
+                    These are economic engines. They don't need more primary schools; they need banking infrastructure, credit access, and employment exchanges.
+                </p>
             </div>
-
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
-                <div class="info-card">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span class="info-label">Anomaly Detection</span>
-                        <i data-lucide="activity" style="width: 14px; color: var(--accent-3);"></i>
-                    </div>
-                    <div class="info-value">0.04% Variance</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">Within expected tolerances.</div>
-                </div>
-
-                <div class="info-card">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span class="info-label">Predictive Model</span>
-                        <i data-lucide="trending-up" style="width: 14px; color: var(--accent-2);"></i>
-                    </div>
-                    <div class="info-value">High Confidence</div>
-                    <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 8px;">
-                        <div style="width: 92%; height: 100%; background: var(--accent-2); border-radius: 2px;"></div>
-                    </div>
-                </div>
-
-                <div class="info-card" style="flex: 1; display: flex; flex-direction: column;">
-                    <span class="info-label" style="margin-bottom: 12px;">Real-time Insights</span>
-                    <div style="flex: 1; overflow-y: auto; font-size: 0.8rem; color: #ccc; line-height: 1.5;">
-                        <ul style="padding-left: 20px; margin: 0;">
-                            <li style="margin-bottom: 8px;">Spike in address updates detected in Northern Sector.</li>
-                            <li style="margin-bottom: 8px;">Biometric saturation reaching 99% in urban clusters.</li>
-                            <li>Migration patterns correlate with seasonal agricultural shifts.</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <button style="width: 100%; padding: 12px; margin-top: 20px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); border-radius: 12px; color: white; cursor: pointer; transition: all 0.2s; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0;">
-                <i data-lucide="file-down" style="width: 16px;"></i>
-                Export Report
-            </button>
         </div>
 
         <!-- NEW: Resizer Drag Handle -->
@@ -612,7 +557,7 @@
         </div>
 
         <!-- PART 2: Center (Streamlit Visualization) - Now occupies remaining space -->
-        <div class="main-viz glass-panel border-beam-viz">
+        <div class="main-viz glass-panel">
             <!-- Loading Overlay -->
             <div id="loader" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 5;">
                 <div style="text-align: center;">

@@ -26,7 +26,6 @@
 
         h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
 
-        /* Highly Modern Background Effect */
         .bg-mesh {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -42,39 +41,26 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .hero-glow {
-            position: relative;
-        }
-        .hero-glow::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px; height: 300px;
-            background: var(--primary);
-            filter: blur(150px);
-            opacity: 0.2;
-            z-index: -1;
-        }
-
-        /* Immersive Iframe */
+        /* Immersive Iframe: No borders, seamless integration */
         .dashboard-canvas {
             width: 100%;
             height: 95vh;
             border-radius: 2rem;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            background: var(--card-bg);
+            background: #0f172a; /* Exact background of Streamlit app */
             box-shadow: 0 0 80px rgba(0, 0, 0, 0.5);
             overflow: hidden;
+            position: relative;
         }
 
         iframe {
             width: 100%;
             height: 100%;
             border: none;
+            /* Scale out the potential scrollbar padding from Streamlit */
+            transform: scale(1.01); 
         }
 
-        /* Bento Grid Style */
         .bento-card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -92,12 +78,7 @@
             box-shadow: 0 10px 20px -5px rgba(56, 189, 248, 0.5);
             transition: all 0.3s ease;
         }
-        .btn-premium:hover {
-            transform: scale(1.05);
-            box-shadow: 0 15px 25px -5px rgba(56, 189, 248, 0.6);
-        }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
         ::-webkit-scrollbar-thumb {
@@ -136,7 +117,7 @@
     </nav>
 
     <!-- Hero -->
-    <section id="hero" class="relative pt-24 pb-20 px-8 hero-glow">
+    <section id="hero" class="relative pt-24 pb-20 px-8">
         <div class="max-w-screen-xl mx-auto text-center">
             <div class="inline-block px-4 py-1.5 mb-8 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-black tracking-widest uppercase">
                 Next-Gen Identity Analytics
@@ -145,43 +126,12 @@
                 Identity, <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">Decoded.</span>
             </h1>
             <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-                Harnessing high-fidelity data streams from 500,000+ Aadhar records to drive regional growth and demographic precision.
+                Harnessing high-fidelity data streams from 500,000+ Aadhar records. White-labeled and seamlessly integrated.
             </p>
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-6">
-                <a href="#explore" class="btn-premium px-10 py-4 rounded-2xl text-white font-bold text-lg flex items-center">
-                    Analyze Data <i class="fas fa-chevron-right ml-3 text-sm"></i>
+            <div class="flex justify-center">
+                <a href="#explore" class="btn-premium px-10 py-4 rounded-2xl text-white font-bold text-lg flex items-center transition-all">
+                    Launch Engine <i class="fas fa-chevron-right ml-3 text-sm"></i>
                 </a>
-                <div class="flex items-center space-x-4 text-slate-500">
-                    <div class="flex -space-x-3">
-                        <div class="w-10 h-10 rounded-full border-2 border-slate-900 bg-sky-900"></div>
-                        <div class="w-10 h-10 rounded-full border-2 border-slate-900 bg-indigo-900"></div>
-                        <div class="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold">+500k</div>
-                    </div>
-                    <span class="text-sm font-medium">Recordings Processed</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Bento -->
-    <section class="py-20 px-8">
-        <div class="max-w-screen-xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bento-card p-10 rounded-[2.5rem] md:col-span-2 flex flex-col justify-between">
-                <div>
-                    <h3 class="text-3xl font-bold mb-4">Regional Velocity</h3>
-                    <p class="text-slate-400 max-w-md">Our algorithm monitors registration density across every district in India, pinpointing infrastructure requirements in real-time.</p>
-                </div>
-                <div class="mt-8 flex gap-4">
-                    <span class="px-4 py-2 bg-slate-800/50 rounded-xl text-xs font-bold border border-white/5">HEATMAPS</span>
-                    <span class="px-4 py-2 bg-slate-800/50 rounded-xl text-xs font-bold border border-white/5">LATENCY TRACKING</span>
-                </div>
-            </div>
-            <div class="bento-card p-10 rounded-[2.5rem] bg-gradient-to-br from-indigo-500/10 to-transparent">
-                <div class="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 text-indigo-400">
-                    <i class="fas fa-users-viewfinder text-2xl"></i>
-                </div>
-                <h3 class="text-2xl font-bold mb-4">Demographics</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">Granular age-clustering for Children (0-5), Youth (5-17), and Adults (18+).</p>
             </div>
         </div>
     </section>
@@ -192,15 +142,16 @@
             <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                 <div class="text-left">
                     <h2 class="text-4xl font-extrabold text-white tracking-tight">Intelligence Canvas</h2>
-                    <p class="text-slate-500 mt-2">Interact with the core data engine below.</p>
+                    <p class="text-slate-500 mt-2">Zero-branding data visualization core.</p>
                 </div>
                 <div class="flex items-center space-x-3 bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
                     <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                    <span class="text-xs font-bold text-slate-300 tracking-widest uppercase">Engine Responsive</span>
+                    <span class="text-xs font-bold text-slate-300 tracking-widest uppercase">Stealth Mode Active</span>
                 </div>
             </div>
 
             <div class="dashboard-canvas">
+                <!-- IMPORTANT: Using ?embed=true and the stealth app.py removes all streamlit branding -->
                 <iframe 
                     src="https://uidaihackathon-seetvayh8z5deshsao7wpg.streamlit.app/?embed=true" 
                     title="Aadhar Analytics Dashboard">
@@ -223,7 +174,7 @@
                 </div>
                 <div>
                     <div class="text-3xl font-black text-white mb-2">CORE ENGINE</div>
-                    <div class="text-[10px] text-purple-400 font-bold tracking-widest">INTERFACE LAYER</div>
+                    <div class="text-[10px] text-purple-400 font-bold tracking-widest">VISUAL LAYER</div>
                 </div>
                 <div>
                     <div class="text-3xl font-black text-white mb-2">PLOTLY</div>
@@ -233,12 +184,7 @@
 
             <div class="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
                 <div class="text-slate-500 text-xs font-medium">
-                    &copy; 2024 UIDAI ANALYTICS HUB. ARCHITECTED FOR THE FUTURE.
-                </div>
-                <div class="flex space-x-8 text-[10px] font-black tracking-widest text-slate-400 uppercase">
-                    <a href="#" class="hover:text-white transition">Privacy</a>
-                    <a href="#" class="hover:text-white transition">Network Status</a>
-                    <a href="#" class="hover:text-white transition">API Docs</a>
+                    &copy; 2024 UIDAI ANALYTICS HUB. ZERO BRANDING INTEGRATION.
                 </div>
             </div>
         </div>

@@ -90,7 +90,6 @@
         /* --- Layout Grid --- */
         .dashboard-grid {
             display: grid;
-            /* Updated to 2 columns: Sidebar (350px) + Main Viz (1fr) */
             grid-template-columns: 350px 1fr;
             gap: 24px;
             padding: 24px;
@@ -101,14 +100,14 @@
             z-index: 10;
         }
 
-        /* --- Section Styling --- */
+        /* --- Sidebar Structure --- */
         .sidebar-left {
             display: flex;
             flex-direction: column;
             gap: 20px;
-            overflow-y: auto; /* Allow individual scrolling */
+            overflow-y: auto;
             max-height: 100%;
-            padding-right: 8px; /* Avoid scrollbar covering content */
+            padding-right: 8px; 
         }
 
         /* Scrollbar styling */
@@ -128,22 +127,18 @@
 
         .main-viz {
             position: relative;
-            overflow: hidden; /* Iframe handles internal scroll */
+            overflow: hidden;
             border: 1px solid var(--border);
-            /* Border Beam Effect Wrapper */
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
             border-radius: 24px;
         }
 
         /* Iframe styling */
         .streamlit-frame {
-            /* Wider to push vertical scrollbars/borders out of view */
             width: calc(100% + 24px);
-            /* Extended height to clip the "Made with Streamlit" footer */
             height: calc(100% + 40px);
             border: none;
             background: transparent;
-            /* Negative margins to center the zoomed content and crop edges */
             margin-top: -2px; 
             margin-left: -12px;
             margin-bottom: -40px; 
@@ -205,7 +200,6 @@
             font-weight: 500;
         }
 
-        /* AI Chat/Info Area */
         .ai-status-row {
             display: flex;
             align-items: center;
@@ -251,7 +245,7 @@
             color: var(--accent-1);
         }
 
-        /* Border Beam Animation for Main Viz */
+        /* Border Beam Animation */
         .border-beam-viz::before {
             content: "";
             position: absolute;
@@ -273,12 +267,174 @@
             to { transform: rotate(360deg); }
         }
 
+        /* --- Chatbot Floating Widget --- */
+        .chatbot-float {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 2000;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .chatbot-float:hover {
+            transform: scale(1.1) rotate(-5deg);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.6);
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 100px; /* Above the button */
+            left: 30px;
+            width: 340px;
+            height: 480px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform-origin: bottom left;
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2000;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        .chat-window.active {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .chat-header-embedded {
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-messages-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-bubble {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            max-width: 90%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bubble-ai {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            color: #e2e8f0;
+        }
+
+        .bubble-user {
+            background: var(--accent-1);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .chat-input-wrapper {
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-field {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input-field:focus {
+            border-color: var(--accent-1);
+        }
+
+        .chat-send-button {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: var(--accent-1);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-send-button:hover {
+            background: var(--accent-2);
+            transform: scale(1.05);
+        }
+
+        .chat-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            transition: all 0.2s;
+        }
+
+        .chat-close-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
         /* Responsive */
         @media (max-width: 1200px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto 1fr;
-                overflow-y: auto; /* Enable scroll on mobile */
+                overflow-y: auto;
                 height: auto;
             }
             body {
@@ -286,10 +442,19 @@
             }
             .sidebar-left {
                 height: auto;
-                overflow-y: visible; /* Let global scroll handle it on mobile */
+                overflow-y: visible;
             }
             .main-viz {
                 height: 60vh;
+            }
+            .chatbot-float {
+                bottom: 20px;
+                left: 20px;
+            }
+            .chat-window {
+                bottom: 90px;
+                left: 20px;
+                width: calc(100vw - 40px);
             }
         }
     </style>
@@ -418,9 +583,110 @@
         </div>
 
     </div>
+    
+    <!-- Floating Chatbot Widget -->
+    <div class="chatbot-float" id="chatbotTrigger">
+        <i data-lucide="bot" style="color: white; width: 28px; height: 28px;"></i>
+    </div>
+
+    <!-- Chat Window Popup -->
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header-embedded">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="sparkles" style="color: var(--accent-2); width: 20px;"></i>
+                <span class="section-title" style="font-size: 1.1rem; margin: 0;">AI Insight Chat</span>
+            </div>
+            <button class="chat-close-btn" id="chatClose">
+                <i data-lucide="x" style="width: 20px;"></i>
+            </button>
+        </div>
+
+        <div class="chat-messages-area" id="chatMessages">
+            <div class="chat-bubble bubble-ai">
+                Hello! I am your Aadhaar Insight Agent. Ask me about specific state metrics, anomalies, or saturation trends shown in the visualization.
+            </div>
+        </div>
+
+        <div class="chat-input-wrapper">
+            <input type="text" id="chatInput" class="chat-input-field" placeholder="Ask about anomalies..." autocomplete="off">
+            <button id="chatSend" class="chat-send-button">
+                <i data-lucide="send" style="width: 20px;"></i>
+            </button>
+        </div>
+    </div>
 
     <script>
         lucide.createIcons();
+        
+        // Chat Functionality
+        const chatbotTrigger = document.getElementById('chatbotTrigger');
+        const chatWindow = document.getElementById('chatWindow');
+        const chatClose = document.getElementById('chatClose');
+        const chatInput = document.getElementById('chatInput');
+        const chatSend = document.getElementById('chatSend');
+        const chatMessages = document.getElementById('chatMessages');
+
+        // Toggle Chat Window
+        chatbotTrigger.addEventListener('click', () => {
+            if (chatWindow.classList.contains('active')) {
+                chatWindow.classList.remove('active');
+            } else {
+                chatWindow.classList.add('active');
+                setTimeout(() => chatInput.focus(), 100);
+            }
+        });
+
+        chatClose.addEventListener('click', () => {
+            chatWindow.classList.remove('active');
+        });
+
+        function addMessage(text, isUser) {
+            const div = document.createElement('div');
+            div.className = `chat-bubble ${isUser ? 'bubble-user' : 'bubble-ai'}`;
+            div.textContent = text;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function handleSend() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            // 1. Add User Message
+            addMessage(text, true);
+            chatInput.value = '';
+
+            // 2. Simulate AI Thinking
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'chat-bubble bubble-ai';
+            loadingDiv.innerHTML = '<i data-lucide="loader-2" class="animate-spin" style="width: 14px;"></i> analyzing...';
+            chatMessages.appendChild(loadingDiv);
+            lucide.createIcons();
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // 3. Mock API Response (Replace with real backend if needed)
+            setTimeout(() => {
+                loadingDiv.remove();
+                // Simple keyword matching for demo
+                let reply = "I'm analyzing the current dataset. Could you specify which state you are interested in?";
+                const lowerText = text.toLowerCase();
+                
+                if (lowerText.includes('anomaly') || lowerText.includes('error')) {
+                    reply = "I've detected a 0.04% variance in biometric updates in the Northern sector. This is within standard operational tolerances.";
+                } else if (lowerText.includes('trend') || lowerText.includes('growth')) {
+                    reply = "Enrolment saturation has increased by 1.2% this quarter, primarily driven by the 0-5 age demographic updates.";
+                } else if (lowerText.includes('state')) {
+                    reply = "Please select a specific state from the visualization to get granular details. I am currently monitoring all 36 jurisdictions.";
+                }
+
+                addMessage(reply, false);
+            }, 1500);
+        }
+
+        chatSend.addEventListener('click', handleSend);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
+        });
     </script>
 </body>
 </html>

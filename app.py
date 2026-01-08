@@ -11,8 +11,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- STEALTH CSS INJECTION ---
-# This removes the white borders, the "Made with Streamlit" footer, and the top header.
+# --- ULTIMATE STEALTH CSS INJECTION ---
+# This uses more aggressive selectors to ensure all Streamlit-specific UI elements are hidden.
 st.markdown("""
     <style>
     /* Remove the white/gray border and padding around the main content */
@@ -24,13 +24,16 @@ st.markdown("""
     }
     
     /* Hide the Streamlit Header (the top bar) */
-    header { visibility: hidden; height: 0px !important; }
+    header { visibility: hidden !important; height: 0px !important; }
     
-    /* Hide the "Made with Streamlit" Footer at the bottom */
+    /* Hide the "Made with Streamlit" Footer and Watermark */
     footer { visibility: hidden !important; height: 0px !important; }
+    div[data-testid="stStatusWidget"] { visibility: hidden !important; }
+    #MainMenu { visibility: hidden !important; }
     
-    /* Hide the Main Menu (Hamburger) */
-    #MainMenu { visibility: hidden; }
+    /* Hide the 'Built with Streamlit' link specifically if footer hiding isn't enough */
+    .viewerBadge_container__1QSob { display: none !important; }
+    .stDeployButton { display: none !important; }
 
     /* Match the background to your portal's dark theme */
     .stApp {
@@ -43,6 +46,11 @@ st.markdown("""
         font-size: 2rem !important;
         color: #38bdf8 !important;
     }
+    
+    /* Ensure the app takes the full height of the iframe without extra spacing */
+    .main .block-container {
+        max-width: 100%;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -50,13 +58,16 @@ st.markdown("""
 @st.cache_data(show_spinner=False)
 def load_data(file_path):
     if not os.path.exists(file_path): return None
-    df = pd.read_csv(file_path, low_memory=False)
-    df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y', errors='coerce')
-    cols = ['age_0_5', 'age_5_17', 'age_18_greater']
-    for col in cols:
-        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    df['total'] = df[cols].sum(axis=1)
-    return df
+    try:
+        df = pd.read_csv(file_path, low_memory=False)
+        df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y', errors='coerce')
+        cols = ['age_0_5', 'age_5_17', 'age_18_greater']
+        for col in cols:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+        df['total'] = df[cols].sum(axis=1)
+        return df
+    except Exception:
+        return None
 
 # --- Application Logic ---
 FILE_NAME = "api_data_aadhar_enrolment_0_500000.csv"

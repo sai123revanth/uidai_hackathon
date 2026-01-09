@@ -186,6 +186,20 @@ st.markdown("""
         padding: 0 !important;
         backdrop-filter: blur(10px);
     }
+    
+    /* Analytical Badges */
+    .stat-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        margin-right: 5px;
+    }
+    .badge-uni { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+    .badge-bi { background-color: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
+    .badge-tri { background-color: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid #ec4899; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -303,6 +317,19 @@ if df is not None:
     </div>
     """, unsafe_allow_html=True)
 
+    # --- EDUCATIONAL INSIGHT BOX (ADDED) ---
+    st.markdown("""
+    <div class='explanation-box'>
+        <h4>📊 Understanding the Analytics Methodology</h4>
+        <p>This dashboard uses three levels of statistical analysis to derive insights:</p>
+        <ul>
+            <li><span class="stat-badge badge-uni">Univariate Analysis</span> <b>(One Variable):</b> Analyzing a single variable, such as "Total Enrolments" or "Age Group," in isolation. Example: The Histogram below showing the distribution of enrolments across districts.</li>
+            <li><span class="stat-badge badge-bi">Bivariate Analysis</span> <b>(Two Variables):</b> Exploring the relationship between two variables. Example: Comparing "Time" vs. "Volume" (Trend Analysis) or "State" vs. "Efficiency Growth".</li>
+            <li><span class="stat-badge badge-tri">Trivariate Analysis</span> <b>(Three Variables):</b> Visualizing the interaction between three distinct variables. Example: The Sunburst chart showing "State" -> "District" -> "Age Group".</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
     # --- CONTROLS ---
     st.markdown("### 🎛️ Strategic Filters")
     col_filter_1, col_filter_2 = st.columns(2)
@@ -353,10 +380,11 @@ if df is not None:
         </div>
         """, unsafe_allow_html=True)
 
-    # --- SECTION 1: CORE INSIGHT ---
+    # --- SECTION 1: CORE INSIGHT (Bivariate) ---
     st.markdown("### 1. The Operational Shift")
     st.markdown("""
     <div class='explanation-box'>
+        <span class="stat-badge badge-bi">Bivariate Analysis</span>
         <b>The Insight:</b> The visual divergence below proves the system didn't crash; it evolved.
         <ul>
             <li><b>Red Area (Volume):</b> Drops because we stopped uploading massive monthly batches.</li>
@@ -384,10 +412,11 @@ if df is not None:
     st.plotly_chart(fig_combo, use_container_width=True)
 
     # --- SECTION 2: TABS ---
-    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Hierarchy", "🏭 Growth Engines", "🗓️ Heatmap", "🚨 Anomalies"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗺️ Hierarchy", "🏭 Growth Engines", "🗓️ Heatmap", "🚨 Anomalies", "📈 Statistical Breakdown"])
     
     with tab1:
-        st.caption("Drill Down: State > District > Age Group")
+        st.markdown('<span class="stat-badge badge-tri">Trivariate Analysis</span>', unsafe_allow_html=True)
+        st.caption("Drill Down: State > District > Age Group. This visualizes three variables simultaneously.")
         df_melted = df_filtered.melt(id_vars=['state', 'district'], value_vars=['age_0_5', 'age_5_17', 'age_18_greater'], var_name='Age_Group', value_name='Count')
         sunburst_data = df_melted.groupby(['state', 'district', 'Age_Group'])['Count'].sum().reset_index()
         sunburst_data = sunburst_data[sunburst_data['Count'] > 0]
@@ -396,7 +425,8 @@ if df is not None:
         st.plotly_chart(fig_sun, use_container_width=True)
 
     with tab2:
-        st.caption("Top 10 High-Velocity Districts (Real-Time Era Only)")
+        st.markdown('<span class="stat-badge badge-bi">Bivariate Analysis</span>', unsafe_allow_html=True)
+        st.caption("Top 10 High-Velocity Districts (Real-Time Era Only). Compares 'District' vs 'Total Enrolment'.")
         rt_df = df[df['Era'] == 'Real-Time Era (Sept+)']
         if not rt_df.empty:
             district_growth = rt_df.groupby(['state', 'district'])['total_enrolment'].sum().reset_index().sort_values('total_enrolment', ascending=False).head(10)
@@ -407,7 +437,8 @@ if df is not None:
             st.warning("Enable 'Real-Time Era' filter to see this.")
 
     with tab3:
-        st.caption("Operational Rhythm: Day vs State")
+        st.markdown('<span class="stat-badge badge-tri">Trivariate Analysis</span>', unsafe_allow_html=True)
+        st.caption("Operational Rhythm: Day vs State vs Volume. A three-variable correlation matrix.")
         heatmap_data = df_filtered.groupby(['state', 'DayOfWeek'])['total_enrolment'].sum().reset_index()
         days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         fig_heat = px.density_heatmap(heatmap_data, x='DayOfWeek', y='state', z='total_enrolment', category_orders={'DayOfWeek': days_order}, color_continuous_scale='Hot')
@@ -415,7 +446,8 @@ if df is not None:
         st.plotly_chart(fig_heat, use_container_width=True)
 
     with tab4:
-        st.caption("Strategic Outlier: Meghalaya (High Adult Enrolment)")
+        st.markdown('<span class="stat-badge badge-bi">Bivariate Analysis</span>', unsafe_allow_html=True)
+        st.caption("Strategic Outlier: Meghalaya (High Adult Enrolment). Compares 'State' vs '% Adult'.")
         state_stats = df.groupby('state')[['age_0_5', 'age_5_17', 'age_18_greater', 'total_enrolment']].sum()
         state_stats['pct_18_plus'] = (state_stats['age_18_greater'] / state_stats['total_enrolment']) * 100
         state_stats = state_stats.sort_values('pct_18_plus', ascending=False).head(10).reset_index()
@@ -424,6 +456,24 @@ if df is not None:
         fig_ano.update_traces(marker_color=colors, texttemplate='%{text:.1f}%')
         fig_ano.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_ano, use_container_width=True)
+
+    with tab5:
+        st.markdown('<span class="stat-badge badge-uni">Univariate Analysis</span>', unsafe_allow_html=True)
+        st.markdown("#### Statistical Distribution of Enrolment")
+        st.caption("Analyzing the distribution of a single variable: 'Total Enrolment per District'. This histogram helps identify the most common enrolment volumes.")
+        
+        # Aggregate data by district for the histogram
+        dist_agg = df_filtered.groupby('district')['total_enrolment'].sum().reset_index()
+        
+        fig_hist = px.histogram(
+            dist_agg, 
+            x="total_enrolment",
+            nbins=30,
+            title="Distribution of Total Enrolments across Districts",
+            color_discrete_sequence=['#636EFA']
+        )
+        fig_hist.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig_hist, use_container_width=True)
 
     # --- 7. FLOATING AI CHATBOT (FAB) ---
     if groq_available:

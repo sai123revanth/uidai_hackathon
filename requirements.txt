@@ -2,3 +2,6 @@ streamlit
 pandas
 plotly
 matplotlib
+langchain
+langchain-experimental
+langchain-groq

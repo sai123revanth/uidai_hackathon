@@ -66,6 +66,41 @@ seo_meta_tags = """
         color: white;
     }
 
+    /* --- FLOATING CHATBOT BUTTON (FAB) --- */
+    /* Target the specific primary button we use for the chatbot */
+    div.stButton > button[kind="primary"] {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%);
+        box-shadow: 0 4px 15px rgba(0,204,150, 0.4);
+        border: none;
+        z-index: 9999;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+        padding: 0 !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0,204,150, 0.6);
+        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%);
+        color: white;
+    }
+    div.stButton > button[kind="primary"]:active {
+        transform: scale(0.95);
+    }
+    div.stButton > button[kind="primary"] p {
+        font-size: 28px; /* Ensure emoji size */
+        margin: 0;
+        line-height: 1;
+    }
+
     /* --- MOBILE OPTIMIZATION --- */
     @media (max-width: 768px) {
         .block-container {
@@ -79,6 +114,13 @@ seo_meta_tags = """
         }
         .js-plotly-plot {
             height: 400px !important;
+        }
+        div.stButton > button[kind="primary"] {
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
         }
     }
 </style>
@@ -335,39 +377,33 @@ def open_ai_modal(context_df, context_states):
             response = get_ai_response(full_messages)
         st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-    # Display Chat History
-    for message in st.session_state.chat_history:
-        if message["role"] != "system": # Skip system prompt
-            if message["content"] == "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation.":
-                    with st.chat_message("user"):
-                        st.write("🔍 *Auto-Analysis Request*")
-            else:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
+    # FIXED SIZE CONTAINER FOR CHAT HISTORY
+    # This creates a scrollable area of fixed height (500px)
+    with st.container(height=500, border=False):
+        # Display Chat History
+        for message in st.session_state.chat_history:
+            if message["role"] != "system": # Skip system prompt
+                if message["content"] == "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation.":
+                        with st.chat_message("user"):
+                            st.write("🔍 *Auto-Analysis Request*")
+                else:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
 
     # Chat Input
     if prompt := st.chat_input("Ask about specific districts or policy strategies..."):
         st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
+        
+        # We don't display the new message immediately here because st.chat_input triggers a rerun
+        # The loop above will display it on the rerun.
+        
         full_messages = [system_prompt] + st.session_state.chat_history
         
-        with st.chat_message("assistant"):
-            with st.spinner("Consulting policy database..."):
-                response = get_ai_response(full_messages)
-                st.markdown(response)
-        
+        # Note: We can't use st.spinner inside the rerun flow easily before the loop update
+        # But st.chat_input handles the UI state well.
+        response = get_ai_response(full_messages)
         st.session_state.chat_history.append({"role": "assistant", "content": response})
-
-# --- RENDER CHATBOT BUTTON IN HEADER ---
-# We render this into the col_head_2 container defined at the top
-if client:
-    with col_head_2:
-        st.write("") # Spacer
-        st.write("") # Spacer
-        if st.button("🤖 AI Policy Advisor", type="primary", use_container_width=True):
-            open_ai_modal(filtered_df, selected_states)
+        st.rerun()
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -595,3 +631,9 @@ with tab4:
         use_container_width=True,
         hide_index=True
     )
+
+# --- RENDER FLOATING CHATBOT BUTTON (FAB) ---
+if client:
+    # We place this at the end, but the CSS makes it fixed at bottom-right
+    if st.button("💬", type="primary", use_container_width=False):
+        open_ai_modal(filtered_df, selected_states)

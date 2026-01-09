@@ -9,7 +9,7 @@ from groq import Groq  # Import Groq Client
 # --- 1. SEO & PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="Demographic Dividend | Education vs Workforce",
-    page_icon="🤖",  # Updated to Chatbot Logo
+    page_icon="🇮🇳",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -213,7 +213,7 @@ default_states = [s for s in default_states if s in valid_states]
 # --- MAIN DASHBOARD HEADER ---
 col_head_1, col_head_2 = st.columns([4, 1])
 with col_head_1:
-    st.title("🤖 The Demographic Dividend: Education vs. Workforce Intelligence")
+    st.title("🇮🇳 The Demographic Dividend: Education vs. Workforce Intelligence")
 
 # DETAILED INTRODUCTION
 st.markdown("""

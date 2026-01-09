@@ -4,11 +4,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 import glob
 import os
+import numpy as np
+from datetime import timedelta
 from groq import Groq  # Import Groq Client
 
 # --- 1. SEO & PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="Demographic Dividend | Education vs Workforce",
+    page_title="Demographic Dividend | Predictive Intelligence",
     page_icon="🇮🇳",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -160,6 +162,20 @@ seo_meta_tags = """
         padding: 0 !important;
         backdrop-filter: blur(10px);
     }
+    
+    /* Analytical Badges */
+    .stat-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    .badge-uni { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+    .badge-bi { background-color: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
+    .badge-tri { background-color: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid #ec4899; }
+    .badge-pred { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
 
     /* --- MOBILE OPTIMIZATION --- */
     @media (max-width: 768px) {
@@ -266,11 +282,10 @@ with col_head_1:
 # DETAILED INTRODUCTION
 st.markdown("""
 <div style='background-color: rgba(30, 41, 59, 0.5); padding: 20px; border-radius: 10px; border-left: 5px solid #00CC96; margin-bottom: 25px;'>
-    <h4 style='margin-top:0;'>📌 Module Objective</h4>
+    <h4 style='margin-top:0;'>📌 Module Objective & Predictive Scope</h4>
     <p style='font-size: 1.05em; color: #e2e8f0;'>
         This module transforms raw Aadhar update logs into a <b>Policy Strategic Tool</b>. 
-        Because demographic updates (like address or biometric changes) often coincide with milestones like school enrollment or opening a bank account, 
-        we use these signals to map India's "Age Profile" by district.
+        It utilizes Univariate and Bivariate analysis to forecast districts shifting from education hubs to workforce engines.
     </p>
     <div style='display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px;'>
         <div style='flex: 1; min-width: 250px;'>
@@ -353,6 +368,55 @@ trend_df['Total_Updates'] = trend_df['Youth_Updates'] + trend_df['Adult_Updates'
 filtered_df = district_df[district_df['Total_Updates'] >= min_updates]
 
 # ==========================================
+# 📈 PREDICTIVE ANALYTICS FUNCTIONS
+# ==========================================
+def calculate_trend_forecast(df):
+    """
+    Performs Linear Regression to forecast the next month's volume.
+    Type: Bivariate Analysis (Time vs Volume)
+    """
+    if df is None or len(df) < 2:
+        return None, 0
+    
+    # Prepare data for regression
+    df = df.sort_values('Month_Year')
+    df['Time_Index'] = np.arange(len(df))
+    
+    # Linear Regression (Polyfit degree 1)
+    # y = mx + c
+    x = df['Time_Index'].values
+    y = df['Total_Updates'].values
+    
+    slope, intercept = np.polyfit(x, y, 1)
+    
+    # Predict next month (x + 1)
+    next_x = x[-1] + 1
+    predicted_val = slope * next_x + intercept
+    
+    return max(0, predicted_val), slope
+
+def detect_anomalies(df):
+    """
+    Uses Z-Score to detect statistical outliers in Update Volume.
+    Type: Univariate Analysis (Distribution of Total_Updates)
+    """
+    if df.empty:
+        return df
+    
+    mean_val = df['Total_Updates'].mean()
+    std_val = df['Total_Updates'].std()
+    
+    # Calculate Z-Score: (Value - Mean) / StdDev
+    # A Z-score > 2 usually indicates an anomaly (top 5% of distribution)
+    df['Z_Score'] = (df['Total_Updates'] - mean_val) / std_val
+    df['Is_Anomaly'] = df['Z_Score'] > 2
+    
+    return df
+
+# Apply Anomaly Detection
+filtered_df = detect_anomalies(filtered_df)
+
+# ==========================================
 # 🤖 AI CHATBOT LOGIC HELPERS
 # ==========================================
 def prepare_data_context(df, state_selection):
@@ -393,11 +457,12 @@ def get_ai_response(messages):
         return f"AI Error: {str(e)}"
 
 # --- TABS ---
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Executive Summary", 
     "🗺️ State Analytics", 
-    "📈 Trend Analysis", 
-    "🔎 District Explorer"
+    "📈 Trend & Forecast", 
+    "🔎 District Explorer",
+    "🧠 Predictive Intelligence"
 ])
 
 # ==========================================
@@ -424,8 +489,9 @@ with tab1:
 
     st.markdown("---")
     
+    st.markdown('<span class="stat-badge badge-tri">Trivariate Analysis</span>', unsafe_allow_html=True)
     st.subheader("📍 The National Demographic Heatmap")
-    st.markdown("**How to read this chart:**")
+    st.markdown("**Variables Analyzed:** 1. State/District (Nominal), 2. Update Volume (Quantitative), 3. Youth Index (Quantitative - Color)")
     st.markdown("""
     - **Box Size:** Larger boxes mean more people are updating their records (High Activity).
     - **Box Color:** **Yellow/Light Green** = High Children ratio. **Dark Blue/Purple** = High Adult ratio.
@@ -475,9 +541,12 @@ with tab1:
 # TAB 2: STATE ANALYTICS
 # ==========================================
 with tab2:
+    st.markdown('<span class="stat-badge badge-bi">Bivariate Analysis</span>', unsafe_allow_html=True)
     st.subheader("🏢 State-Level Comparative Benchmarking")
     st.markdown("""
-    This tab compares states as a whole. This is crucial for **Federal Fund Allocation**. 
+    **Analysis Type:** Bivariate (Independent Variable: State, Dependent Variable: Youth Index).
+    
+    This comparison is crucial for **Federal Fund Allocation**. 
     States on the left of the chart are "Younger" and may require more Education Budget.
     States on the right are "Older" and may require more Employment/Industrial support.
     """)
@@ -526,28 +595,50 @@ with tab2:
         )
 
 # ==========================================
-# TAB 3: TREND ANALYSIS
+# TAB 3: TREND ANALYSIS & FORECASTING
 # ==========================================
 with tab3:
-    st.subheader("📅 Temporal Demographic Momentum")
+    st.markdown('<span class="stat-badge badge-bi">Bivariate Analysis</span> <span class="stat-badge badge-pred">Predictive</span>', unsafe_allow_html=True)
+    st.subheader("📅 Temporal Demographic Momentum & Forecasting")
     st.markdown("""
     **The Insight:** This chart shows how the demographic profile shifts over the months. 
-    A sudden spike in **Youth Updates** (Green) might indicate a school enrollment season, while a rise in **Adult Updates** (Red) 
-    could signal a migration for work or a new welfare scheme launch.
+    A sudden spike in **Youth Updates** (Green) might indicate a school enrollment season.
     """)
     
     if trend_df is not None and not trend_df.empty:
         trend_df = trend_df.sort_values('Month_Year')
         
-        fig_trend = px.area(
-            trend_df, 
-            x='Month_Year', 
-            y=['Youth_Updates', 'Adult_Updates'],
-            title="Update Volume Trends (Selected Period): Youth vs Workforce Segment",
-            labels={'value': 'Monthly Updates', 'variable': 'Demographic Segment'},
-            color_discrete_map={'Youth_Updates': '#00CC96', 'Adult_Updates': '#EF553B'}
-        )
-        st.plotly_chart(fig_trend, use_container_width=True)
+        # --- PREDICTIVE COMPONENT ---
+        predicted_vol, slope = calculate_trend_forecast(trend_df)
+        
+        if predicted_vol > 0:
+            trend_col1, trend_col2 = st.columns([3, 1])
+            with trend_col2:
+                st.markdown("#### 🔮 AI Forecast")
+                st.metric(
+                    "Projected Next Month Load", 
+                    f"{predicted_vol:,.0f}", 
+                    delta=f"{slope:.2f} / month",
+                    help="Linear Regression projection based on current trend slope."
+                )
+                if slope > 0:
+                    st.success("Trend is Increasing")
+                else:
+                    st.warning("Trend is Decreasing")
+        else:
+            trend_col1 = st.container()
+
+        with trend_col1:
+            fig_trend = px.area(
+                trend_df, 
+                x='Month_Year', 
+                y=['Youth_Updates', 'Adult_Updates'],
+                title="Update Volume Trends (Selected Period): Youth vs Workforce Segment",
+                labels={'value': 'Monthly Updates', 'variable': 'Demographic Segment'},
+                color_discrete_map={'Youth_Updates': '#00CC96', 'Adult_Updates': '#EF553B'}
+            )
+            # Add trend line if possible
+            st.plotly_chart(fig_trend, use_container_width=True)
     else:
         st.warning("Not enough temporal data available to show trends.")
 
@@ -555,6 +646,7 @@ with tab3:
 # TAB 4: DISTRICT EXPLORER
 # ==========================================
 with tab4:
+    st.markdown('<span class="stat-badge badge-uni">Univariate Analysis</span> <span class="stat-badge badge-tri">Trivariate Analysis</span>', unsafe_allow_html=True)
     st.subheader("🔎 Granular District Intelligence")
     st.markdown("Use this tab to search for specific districts and see exactly where they sit in the national ecosystem.")
     
@@ -562,6 +654,7 @@ with tab4:
     
     with c_search:
         st.markdown("#### Search & Distribution")
+        st.caption("Statistical Analysis: Univariate (Youth Index Distribution)")
         search_term = st.text_input("Enter District Name", placeholder="e.g., Mahabubnagar")
         
         display_df = filtered_df.copy()
@@ -580,6 +673,7 @@ with tab4:
         st.caption("Shows how many districts fall into which 'Youth Index' percentage.")
 
     with c_chart:
+        st.caption("Statistical Analysis: Trivariate (Volume vs Index vs State)")
         fig_scatter = px.scatter(
             display_df,
             x='Total_Updates',
@@ -598,7 +692,7 @@ with tab4:
     st.markdown("### 📋 Full Analytic Table")
     st.caption("Scroll or search to see the full data for all districts.")
     
-    mobile_friendly_cols = ['District', 'State', 'Total_Updates', 'Youth_Index']
+    mobile_friendly_cols = ['District', 'State', 'Total_Updates', 'Youth_Index', 'Is_Anomaly']
     
     st.dataframe(
         display_df[mobile_friendly_cols].sort_values(by='Total_Updates', ascending=False),
@@ -613,11 +707,56 @@ with tab4:
             "Total_Updates": st.column_config.NumberColumn(
                 "Activity Volume",
                 format="%d"
+            ),
+            "Is_Anomaly": st.column_config.CheckboxColumn(
+                "High Vol Anomaly?",
+                help="True if volume is > 2 Standard Deviations from mean."
             )
         },
         use_container_width=True,
         hide_index=True
     )
+
+# ==========================================
+# TAB 5: PREDICTIVE INTELLIGENCE (NEW)
+# ==========================================
+with tab5:
+    st.subheader("🧠 Predictive & Statistical Anomalies")
+    st.markdown("""
+    This section uses statistical algorithms (Z-Score and Standard Deviation) to identify outliers that require immediate attention.
+    These districts deviate significantly from the normal patterns.
+    """)
+
+    col_anom_1, col_anom_2 = st.columns(2)
+
+    with col_anom_1:
+        st.markdown('<span class="stat-badge badge-uni">Univariate Anomaly Detection</span>', unsafe_allow_html=True)
+        st.warning("⚠️ High Volume Anomalies (Potential Fraud/Mass Migration)")
+        st.caption("Districts with Update Volume > 2 Standard Deviations from the Mean (Z-Score > 2).")
+        
+        anomalies = filtered_df[filtered_df['Is_Anomaly'] == True]
+        if not anomalies.empty:
+            st.dataframe(
+                anomalies[['District', 'State', 'Total_Updates', 'Z_Score']].sort_values('Z_Score', ascending=False),
+                use_container_width=True
+            )
+        else:
+            st.success("No statistical anomalies detected in the current dataset.")
+
+    with col_anom_2:
+        st.markdown('<span class="stat-badge badge-bi">Bivariate Correlation</span>', unsafe_allow_html=True)
+        st.info("📊 Correlation Matrix")
+        st.caption("Understanding the relationship between Youth and Adult update volumes.")
+        
+        corr = filtered_df[['Youth_Updates', 'Adult_Updates']].corr()
+        fig_corr = px.imshow(
+            corr, 
+            text_auto=True, 
+            color_continuous_scale='RdBu_r',
+            title="Correlation Heatmap"
+        )
+        st.plotly_chart(fig_corr, use_container_width=True)
+
 
 # --- RENDER FLOATING CHATBOT BUTTON (FAB) ---
 if client:

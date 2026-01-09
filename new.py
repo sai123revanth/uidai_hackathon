@@ -66,39 +66,47 @@ seo_meta_tags = """
         color: white;
     }
 
-    /* --- FLOATING CHATBOT BUTTON (FAB) --- */
-    /* Target the specific primary button we use for the chatbot */
-    div.stButton > button[kind="primary"] {
+    /* --- FLOATING CHATBOT BUTTON (POPOVER VERSION) --- */
+    /* Target the popover container to fix it to bottom right */
+    div[data-testid="stPopover"] {
         position: fixed;
         bottom: 30px;
         right: 30px;
+        z-index: 9999;
+    }
+    
+    /* Style the button inside the popover to look like a FAB */
+    div[data-testid="stPopover"] > button {
         width: 60px;
         height: 60px;
         border-radius: 50%;
         background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%);
         box-shadow: 0 4px 15px rgba(0,204,150, 0.4);
         border: none;
-        z-index: 9999;
+        color: white;
         font-size: 28px;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: transform 0.2s, box-shadow 0.2s;
-        padding: 0 !important;
     }
-    div.stButton > button[kind="primary"]:hover {
+    
+    div[data-testid="stPopover"] > button:hover {
         transform: scale(1.1);
         box-shadow: 0 6px 20px rgba(0,204,150, 0.6);
         background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%);
-        color: white;
     }
-    div.stButton > button[kind="primary"]:active {
+    
+    div[data-testid="stPopover"] > button:active {
         transform: scale(0.95);
     }
-    div.stButton > button[kind="primary"] p {
-        font-size: 28px; /* Ensure emoji size */
-        margin: 0;
-        line-height: 1;
+    
+    /* Ensure the popover content (popup) has a clean background */
+    div[data-testid="stPopoverBody"] {
+        border-radius: 10px;
+        border: 1px solid #334155;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
 
     /* --- MOBILE OPTIMIZATION --- */
@@ -115,9 +123,11 @@ seo_meta_tags = """
         .js-plotly-plot {
             height: 400px !important;
         }
-        div.stButton > button[kind="primary"] {
+        div[data-testid="stPopover"] {
             bottom: 20px;
             right: 20px;
+        }
+        div[data-testid="stPopover"] > button {
             width: 50px;
             height: 50px;
             font-size: 24px;
@@ -291,7 +301,7 @@ trend_df['Total_Updates'] = trend_df['Youth_Updates'] + trend_df['Adult_Updates'
 filtered_df = district_df[district_df['Total_Updates'] >= min_updates]
 
 # ==========================================
-# 🤖 AI CHATBOT LOGIC & UI (POPUP MODAL)
+# 🤖 AI CHATBOT LOGIC HELPERS
 # ==========================================
 def prepare_data_context(df, state_selection):
     """Summarizes current data view for the AI Context"""
@@ -329,81 +339,6 @@ def get_ai_response(messages):
         return completion.choices[0].message.content
     except Exception as e:
         return f"AI Error: {str(e)}"
-
-# --- MODAL DEFINITION ---
-@st.dialog("🤖 Government Policy AI Advisor")
-def open_ai_modal(context_df, context_states):
-    if not client:
-        st.error("AI Client not initialized. Check your secrets.")
-        return
-        
-    st.caption("Ask questions about the current demographic data in any Indian language.")
-    
-    # Initialize session history for chat if not present
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
-    # Prepare context based on CURRENT filters passed to modal
-    data_context = prepare_data_context(context_df, context_states)
-    
-    # System Prompt
-    system_prompt = {
-        "role": "system", 
-        "content": f"""You are a senior Indian Government Policy Advisor. 
-        You are analyzing Aadhar demographic update data to suggest improvements.
-        
-        Metrics Definition:
-        - Youth Index: High % means more children (5-17). Needs Schools, Scholarships, Nutrition.
-        - Low Youth Index (High Adult): Means more workforce (17+). Needs Jobs, Skilling, Banking, Loans.
-        
-        Current Data:
-        {data_context}
-        
-        Instructions:
-        1. Provide specific, actionable policy advice based on the districts shown.
-        2. If the user speaks in an Indian language (Hindi, Tamil, Telugu, Marathi, Bengali, etc.), REPLY IN THAT LANGUAGE.
-        3. Keep answers concise and professional.
-        """
-    }
-
-    # Auto-trigger specific insights if history is empty
-    if not st.session_state.chat_history:
-        initial_prompt = "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation."
-        st.session_state.chat_history.append({"role": "user", "content": initial_prompt})
-        
-        # Generate response
-        full_messages = [system_prompt] + st.session_state.chat_history
-        with st.spinner("Analyzing demographic data for insights..."):
-            response = get_ai_response(full_messages)
-        st.session_state.chat_history.append({"role": "assistant", "content": response})
-
-    # FIXED SIZE CONTAINER FOR CHAT HISTORY
-    # This creates a scrollable area of fixed height (500px)
-    with st.container(height=500, border=False):
-        # Display Chat History
-        for message in st.session_state.chat_history:
-            if message["role"] != "system": # Skip system prompt
-                if message["content"] == "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation.":
-                        with st.chat_message("user"):
-                            st.write("🔍 *Auto-Analysis Request*")
-                else:
-                    with st.chat_message(message["role"]):
-                        st.markdown(message["content"])
-
-    # Chat Input
-    if prompt := st.chat_input("Ask about specific districts or policy strategies..."):
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        
-        # We don't display the new message immediately here because st.chat_input triggers a rerun
-        # The loop above will display it on the rerun.
-        
-        full_messages = [system_prompt] + st.session_state.chat_history
-        
-        # Note: We can't use st.spinner inside the rerun flow easily before the loop update
-        # But st.chat_input handles the UI state well.
-        response = get_ai_response(full_messages)
-        st.session_state.chat_history.append({"role": "assistant", "content": response})
-        st.rerun()
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -634,6 +569,70 @@ with tab4:
 
 # --- RENDER FLOATING CHATBOT BUTTON (FAB) ---
 if client:
-    # We place this at the end, but the CSS makes it fixed at bottom-right
-    if st.button("💬", type="primary", use_container_width=False):
-        open_ai_modal(filtered_df, selected_states)
+    # Use st.popover to create a floating chat window
+    # The CSS defined at the top will position this element at the bottom right
+    with st.popover("💬", use_container_width=False):
+        st.markdown("### 🤖 Policy Advisor")
+        st.caption("Ask specific questions about the visible districts.")
+        
+        # Initialize session history for chat if not present
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+        
+        # Prepare context based on CURRENT filters passed to modal
+        data_context = prepare_data_context(filtered_df, selected_states)
+        
+        # System Prompt
+        system_prompt = {
+            "role": "system", 
+            "content": f"""You are a senior Indian Government Policy Advisor. 
+            You are analyzing Aadhar demographic update data to suggest improvements.
+            
+            Metrics Definition:
+            - Youth Index: High % means more children (5-17). Needs Schools, Scholarships, Nutrition.
+            - Low Youth Index (High Adult): Means more workforce (17+). Needs Jobs, Skilling, Banking, Loans.
+            
+            Current Data:
+            {data_context}
+            
+            Instructions:
+            1. Provide specific, actionable policy advice based on the districts shown.
+            2. If the user speaks in an Indian language (Hindi, Tamil, Telugu, Marathi, Bengali, etc.), REPLY IN THAT LANGUAGE.
+            3. Keep answers concise and professional.
+            """
+        }
+
+        # Auto-trigger specific insights if history is empty
+        if not st.session_state.chat_history:
+            initial_prompt = "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation."
+            st.session_state.chat_history.append({"role": "user", "content": initial_prompt})
+            
+            # Generate response
+            full_messages = [system_prompt] + st.session_state.chat_history
+            with st.spinner("Analyzing demographic data for insights..."):
+                response = get_ai_response(full_messages)
+            st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+        # FIXED SIZE SCROLLABLE CONTAINER FOR CHAT HISTORY
+        # This creates a scrollable area of fixed height (450px) inside the popover
+        chat_container = st.container(height=450)
+        with chat_container:
+            # Display Chat History
+            for message in st.session_state.chat_history:
+                if message["role"] != "system": # Skip system prompt
+                    if message["content"] == "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation.":
+                            with st.chat_message("user"):
+                                st.write("🔍 *Auto-Analysis Request*")
+                    else:
+                        with st.chat_message(message["role"]):
+                            st.markdown(message["content"])
+
+        # Chat Input inside Popover
+        if prompt := st.chat_input("Ask policy questions...", key="popover_chat_input"):
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            
+            full_messages = [system_prompt] + st.session_state.chat_history
+            
+            response = get_ai_response(full_messages)
+            st.session_state.chat_history.append({"role": "assistant", "content": response})
+            st.rerun()

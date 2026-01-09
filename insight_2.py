@@ -3,33 +3,42 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import os
 
-# --- PAGE CONFIGURATION ---
+# Try importing Groq, handle if missing
+try:
+    from groq import Groq
+    groq_available = True
+except ImportError:
+    groq_available = False
+
+# --- 1. PAGE CONFIGURATION & THEME ---
 st.set_page_config(
     page_title="Aadhar Enrolment Intelligence",
-    page_icon="📊",
+    page_icon="🇮🇳",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- ADVANCED CSS STYLING ---
+# --- 2. ADVANCED STYLING (The "Demographic Dividend" Theme Applied) ---
 st.markdown("""
-    <style>
-    /* Gradient Background for the entire App */
+<style>
+    /* Professional Dark Gradient Background */
     .stApp {
-        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-        color: #ffffff;
+        background: radial-gradient(circle at top center, #1e293b 0%, #0f172a 100%);
+        background-attachment: fixed;
+        color: #f1f5f9;
     }
-    
-    /* Glassmorphism Card Style */
+
+    /* GLASSMORPHISM CARDS */
     .metric-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(30, 41, 59, 0.7);
+        border: 1px solid #334155;
         padding: 20px;
         border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
         margin-bottom: 20px;
         transition: transform 0.3s ease;
     }
@@ -39,6 +48,12 @@ st.markdown("""
     }
     
     /* Typography */
+    h1, h2, h3, h4 { 
+        font-family: 'Helvetica Neue', sans-serif; 
+        color: #f1f5f9;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
     .h1-title {
         text-align: center;
         font-weight: 900;
@@ -47,27 +62,23 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 10px;
-        text-shadow: 0px 0px 20px rgba(0, 204, 150, 0.3);
-    }
-    .subtitle {
-        text-align: center;
-        color: #b0bec5;
-        font-size: 1.1em;
-        margin-bottom: 40px;
-        font-weight: 300;
-        line-height: 1.6;
     }
     
-    /* Detailed Explanation Box */
-    .explanation-box {
-        background: rgba(0, 0, 0, 0.3);
-        border-left: 5px solid #3366FF;
-        padding: 20px;
-        border-radius: 8px;
-        margin: 20px 0;
-        font-size: 1em;
-        color: #e0e0e0;
-        line-height: 1.6;
+    /* CUSTOM TABS */
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: rgba(15, 23, 42, 0.6);
+        border-radius: 5px;
+        color: #cbd5e1;
+        padding: 10px 20px;
+        border: 1px solid #1e293b;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: rgba(30, 41, 59, 0.8);
+        border-bottom: 2px solid #00CC96;
+        color: white;
     }
     
     /* Stat Highlights */
@@ -84,24 +95,113 @@ st.markdown("""
         letter-spacing: 1px;
     }
     
-    /* Tab Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+    /* Detailed Explanation Box */
+    .explanation-box {
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 5px solid #3366FF;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-size: 1em;
+        color: #e0e0e0;
+        line-height: 1.6;
     }
-    .stTabs [data-baseweb="tab"] {
-        background-color: rgba(255,255,255,0.05);
-        border-radius: 4px;
-        color: #fff;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #00CC96 !important;
-        color: #000 !important;
-        font-weight: bold;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
-# --- DATA LOADING & PREPROCESSING ---
+    /* --- FLOATING CHATBOT BUTTON (ULTRA MODERN FAB) --- */
+    div[data-testid="stPopover"] {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        z-index: 9999;
+        width: auto;
+    }
+
+    div[data-testid="stPopover"]::before {
+        content: "✨ AI Operations Analyst";
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        transform: translateY(-50%);
+        margin-right: 20px;
+        width: max-content;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid #334155;
+        color: #00bfff;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: bold;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        animation: tooltipFloat 5s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 10001;
+    }
+
+    @keyframes tooltipFloat {
+        0%, 100% { opacity: 0; transform: translateY(-50%) translateX(10px); }
+        10%, 90% { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    
+    div[data-testid="stPopover"] > button {
+        width: 90px !important;
+        height: 90px !important;
+        border-radius: 50% !important;
+        background: linear-gradient(300deg, #00bfff, #00CC96, #8A2BE2) !important;
+        background-size: 200% 200% !important;
+        animation: gradientBG 4s ease infinite, float 3s ease-in-out infinite !important;
+        box-shadow: 0 10px 25px rgba(0, 204, 150, 0.5), inset 0 0 10px rgba(255,255,255,0.2) !important;
+        border: none !important;
+        color: white !important;
+        font-size: 40px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    }
+    
+    div[data-testid="stPopover"] > button:hover {
+        transform: scale(1.15) rotate(10deg) !important;
+        box-shadow: 0 15px 35px rgba(0, 191, 255, 0.6), 0 0 15px rgba(255,255,255,0.4) !important;
+        cursor: pointer;
+    }
+    
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0px); }
+    }
+
+    div[data-testid="stPopoverBody"] {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(15, 23, 42, 0.95);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        padding: 0 !important;
+        backdrop-filter: blur(10px);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 3. GROQ AI CLIENT SETUP ---
+def get_groq_client():
+    if not groq_available:
+        return None
+    try:
+        api_key = st.secrets["GROQ_API_KEY"]
+        return Groq(api_key=api_key)
+    except KeyError:
+        return None
+
+client = get_groq_client()
+
+# --- 4. DATA LOADING & PREPROCESSING ---
 @st.cache_data
 def load_and_process_data():
     files = [
@@ -118,15 +218,18 @@ def load_and_process_data():
         except FileNotFoundError:
             return None
 
+    if not dfs:
+        return None
+        
     df = pd.concat(dfs, ignore_index=True)
     
-    # 1. Robust Date Parsing
+    # Robust Date Parsing
     df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y', errors='coerce')
     
-    # 2. Key Metrics
+    # Key Metrics
     df['total_enrolment'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
     
-    # 3. Standardization
+    # Standardization
     state_mapping = {
         'Westbengal': 'West Bengal', 'West  Bengal': 'West Bengal', 
         'West Bangal': 'West Bengal', 'Andhra Pradesh': 'Andhra Pradesh',
@@ -136,115 +239,138 @@ def load_and_process_data():
     df['state'] = df['state'].str.strip().str.title().replace(state_mapping)
     df = df[df['state'] != '100000']
     
-    # 4. Feature Engineering
-    # Era Definition: The Core Insight
+    # Feature Engineering (The Core Insight)
     df['Era'] = df['date'].apply(lambda x: 'Real-Time Era (Sept+)' if (x.year == 2025 and x.month >= 9) else 'Batch Era (Pre-Aug)')
     df['DayOfWeek'] = df['date'].dt.day_name()
     
     return df
 
-# --- LOAD DATA ---
 df = load_and_process_data()
 
+# --- 5. AI CONTEXT PREPARATION ---
+def prepare_data_context(df_filtered, era_selection, state_selection, growth_pct):
+    """Summarizes operational efficiency data for the AI"""
+    if df_filtered.empty:
+        return "No data available."
+    
+    total_vol = df_filtered['total_enrolment'].sum()
+    row_count = len(df_filtered)
+    
+    # Top 3 High Activity Districts
+    top_districts = df_filtered.groupby('district')['total_enrolment'].sum().nlargest(3).to_dict()
+    
+    # Meghalaya 18+ Stats (Specific Insight)
+    meghalaya_stats = "N/A"
+    if 'Meghalaya' in df_filtered['state'].unique():
+        meg_df = df_filtered[df_filtered['state'] == 'Meghalaya']
+        meg_18 = (meg_df['age_18_greater'].sum() / meg_df['total_enrolment'].sum()) * 100
+        meghalaya_stats = f"{meg_18:.1f}% Adult Enrolment (High)"
+
+    context = f"""
+    DASHBOARD CONTEXT:
+    - User Filter Selection: Eras={era_selection}, States={state_selection}
+    - Total Enrolments: {total_vol:,}
+    - Operational Activity (Rows Processed): {row_count:,}
+    - CALCULATED EFFICIENCY GROWTH: {growth_pct:.1f}% (July Batch vs Sept Real-time)
+    - Key Insight: Shift from Batch Processing to Real-Time API Logging.
+    - Top Districts: {top_districts}
+    - Meghalaya Anomaly: {meghalaya_stats}
+    """
+    return context
+
+def get_ai_response(messages):
+    if not client:
+        return "⚠️ AI Features Unavailable: GROQ_API_KEY missing or groq library not installed."
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=512,
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        return f"AI Error: {str(e)}"
+
+# --- 6. MAIN DASHBOARD ---
 if df is not None:
     
-    # --- HEADER SECTION ---
-    st.markdown("<h1 class='h1-title'>National Aadhar Enrolment Analytics</h1>", unsafe_allow_html=True)
+    # --- HEADER ---
+    st.markdown("<h1 class='h1-title'>National Aadhar Analytics</h1>", unsafe_allow_html=True)
     st.markdown("""
-    <div class='subtitle'>
-        An interactive dashboard designed to uncover operational trends, visualize demographic distribution, 
-        and analyze the transition from batch-based processing to real-time data reporting.
+    <div style='text-align: center; color: #cbd5e1; margin-bottom: 30px;'>
+        Advanced Forensic Analysis: Uncovering the shift from Batch Processing to Real-Time Operational Intelligence.
     </div>
     """, unsafe_allow_html=True)
 
-    # --- CONTROL PANEL ---
-    with st.container():
-        st.markdown("### 🎛️ Data Filters")
-        st.markdown("""
-        Use these filters to narrow down the dataset. **'Reporting Era'** is particularly important as it separates the data 
-        into two distinct phases of the project: the early 'Batch' phase and the later 'Real-Time' phase.
-        """)
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            selected_era = st.multiselect("Select Reporting Era:", df['Era'].unique(), default=df['Era'].unique())
-        with col2:
-            states = sorted(df['state'].unique())
-            selected_states = st.multiselect("Select States to Compare:", states, default=states[:5])
+    # --- CONTROLS ---
+    st.markdown("### 🎛️ Strategic Filters")
+    col_filter_1, col_filter_2 = st.columns(2)
+    with col_filter_1:
+        selected_era = st.multiselect("Reporting Era:", df['Era'].unique(), default=df['Era'].unique())
+    with col_filter_2:
+        states = sorted(df['state'].unique())
+        selected_states = st.multiselect("Focus States:", states, default=states[:5])
 
-    # Filter Logic
     df_filtered = df[df['Era'].isin(selected_era)]
     if selected_states:
         df_filtered = df_filtered[df_filtered['state'].isin(selected_states)]
 
     st.markdown("---")
 
-    # --- SECTION 1: CORE INSIGHT EXPLANATION ---
-    st.markdown("### 1. Operational Efficiency Analysis")
-    
-    st.markdown("""
-    <div class='explanation-box'>
-        <b>📋 Understanding the Core Insight: The "Batch" vs. "Real-Time" Shift</b><br><br>
-        When analyzing this dataset, a casual observer might notice a significant drop in "Total Volumes" starting in September. 
-        However, this is not a decline in performance, but a change in <b>Reporting Methodology</b>.<br><br>
-        <ul>
-            <li><b>Batch Era (Pre-August):</b> Data was uploaded in massive monthly chunks. A single row in the database could represent hundreds of people. This artificially inflated the apparent "volume per entry" but lowered the number of database rows.</li>
-            <li><b>Real-Time Era (September+):</b> The system switched to uploading transactions individually or in small daily groups. This results in a lower "volume per entry" but a massive increase in the number of database rows processed.</li>
-        </ul>
-        <b>The Conclusion:</b> When we look at the "Operational Intensity" (the number of records processed daily), the system has actually <b>increased in efficiency by ~140%</b>. The dashboard below proves this correlation.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
-    
-    # KPIs Calculation
+    # --- KPI SECTION ---
     july_vol = df[df['date'].dt.month == 7]['total_enrolment'].sum() / 30
     sept_vol = df[df['date'].dt.month == 9].groupby('date')['total_enrolment'].sum().mean()
     growth = ((sept_vol - july_vol) / july_vol) * 100
     top_state_growth = df_filtered.groupby('state')['total_enrolment'].sum().idxmax()
+
+    col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
     
     with col_kpi1:
         st.markdown(f"""
         <div class="metric-card">
             <div class="stat-label">Efficiency Growth</div>
             <div class="big-stat">+{growth:.1f}%</div>
-            <div style="color: #4CAF50;">▲ True Daily Run Rate (July vs Sept)</div>
+            <div style="color: #4CAF50;">▲ True Daily Run Rate</div>
         </div>
         """, unsafe_allow_html=True)
         
     with col_kpi2:
         st.markdown(f"""
         <div class="metric-card">
-            <div class="stat-label">Current Processing Rate</div>
+            <div class="stat-label">Processing Power</div>
             <div class="big-stat">{int(sept_vol):,}</div>
-            <div style="color: #b0bec5;">Average Enrolments Per Day (Sept)</div>
+            <div style="color: #cbd5e1;">Daily Transactions (Sept)</div>
         </div>
         """, unsafe_allow_html=True)
         
     with col_kpi3:
         st.markdown(f"""
         <div class="metric-card">
-            <div class="stat-label">Key Volume Driver</div>
+            <div class="stat-label">Volume Leader</div>
             <div class="big-stat" style="font-size: 2em;">{top_state_growth}</div>
-            <div style="color: #b0bec5;">Highest Contributor</div>
+            <div style="color: #cbd5e1;">Top Contributor</div>
         </div>
         """, unsafe_allow_html=True)
 
-    # --- VISUALIZATION 1: DUAL AXIS EXPLANATION ---
-    st.markdown("#### 📉 Visualization: Volume vs. Operational Intensity")
+    # --- SECTION 1: CORE INSIGHT ---
+    st.markdown("### 1. The Operational Shift")
     st.markdown("""
-    **How to Read This Chart:**
-    * **Red Area (Left Axis):** This represents the *Total People Enrolled*. Notice the massive spikes in July—these are the "Batches".
-    * **Green Line (Right Axis):** This represents the *Number of Database Rows* (Operational Activity). 
-    * **The Insight:** Notice that in September, the Red Area gets smaller (no more massive batches), but the Green Line shoots up. This divergence confirms the shift to real-time processing.
-    """)
+    <div class='explanation-box'>
+        <b>The Insight:</b> The visual divergence below proves the system didn't crash; it evolved.
+        <ul>
+            <li><b>Red Area (Volume):</b> Drops because we stopped uploading massive monthly batches.</li>
+            <li><b>Green Line (Activity):</b> Spikes because we started logging every single daily transaction.</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # --- VISUAL PROOF (Dual Axis) ---
     daily_agg = df.groupby('date').agg({'total_enrolment': 'sum', 'state': 'count'}).rename(columns={'state': 'row_count'})
     
     fig_combo = make_subplots(specs=[[{"secondary_y": True}]])
-    fig_combo.add_trace(go.Scatter(x=daily_agg.index, y=daily_agg['total_enrolment'], name="Total People Enrolled (Volume)",
+    fig_combo.add_trace(go.Scatter(x=daily_agg.index, y=daily_agg['total_enrolment'], name="Enrolment Volume",
                                    line=dict(color='#ff4b4b', width=2), fill='tozeroy', fillcolor='rgba(255, 75, 75, 0.1)'), secondary_y=False)
-    fig_combo.add_trace(go.Scatter(x=daily_agg.index, y=daily_agg['row_count'], name="Database Rows Created (Activity)",
+    fig_combo.add_trace(go.Scatter(x=daily_agg.index, y=daily_agg['row_count'], name="System Activity (Rows)",
                                    line=dict(color='#00CC96', width=3, dash='solid')), secondary_y=True)
     
     fig_combo.update_layout(
@@ -252,97 +378,121 @@ if df is not None:
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(orientation="h", y=1.1),
-        height=500,
-        hovermode="x unified"
+        height=450,
+        margin=dict(l=0,r=0,t=40,b=0)
     )
     st.plotly_chart(fig_combo, use_container_width=True)
 
-    # --- SECTION 2: DEEP DIVE ANALYTICS ---
-    st.markdown("### 2. Detailed Data Exploration")
-    st.markdown("Click on the tabs below to explore specific dimensions of the data.")
-    
-    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Geographic Hierarchy", "🏭 Regional Performance", "🗓️ Weekly Patterns", "🚨 Anomaly Detection"])
+    # --- SECTION 2: TABS ---
+    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Hierarchy", "🏭 Growth Engines", "🗓️ Heatmap", "🚨 Anomalies"])
     
     with tab1:
-        st.markdown("#### 🗺️ Interactive Sunburst Chart")
-        st.markdown("""
-        **What this shows:** A hierarchical view of enrolment data. 
-        * **Inner Circle:** State
-        * **Middle Circle:** District
-        * **Outer Circle:** Age Group
-        
-        **How to use:** Click on any "State" slice to zoom in and see its specific Districts. Click the center to zoom back out. This helps identify which specific districts are driving a State's numbers.
-        """)
+        st.caption("Drill Down: State > District > Age Group")
         df_melted = df_filtered.melt(id_vars=['state', 'district'], value_vars=['age_0_5', 'age_5_17', 'age_18_greater'], var_name='Age_Group', value_name='Count')
         sunburst_data = df_melted.groupby(['state', 'district', 'Age_Group'])['Count'].sum().reset_index()
         sunburst_data = sunburst_data[sunburst_data['Count'] > 0]
-        
         fig_sun = px.sunburst(sunburst_data, path=['state', 'district', 'Age_Group'], values='Count', color='Count', color_continuous_scale='Viridis')
-        fig_sun.update_layout(height=700, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
+        fig_sun.update_layout(height=600, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_sun, use_container_width=True)
 
     with tab2:
-        st.markdown("#### 🏭 District-Level Performance (Real-Time Era)")
-        st.markdown("""
-        **What this shows:** The Top 10 Districts based on total enrolment volume, but *filtered only for the Real-Time Era (September onwards)*.
-        
-        **Why this matters:** Historical data (July) can bias the "Top Districts" list because of the large batch dumps. By looking only at the Real-Time era, we see which centers are *currently* the most active and efficient.
-        """)
-        
-        # Filter for Real-Time Era only for this specific chart
+        st.caption("Top 10 High-Velocity Districts (Real-Time Era Only)")
         rt_df = df[df['Era'] == 'Real-Time Era (Sept+)']
         if not rt_df.empty:
-            district_growth = rt_df.groupby(['state', 'district'])['total_enrolment'].sum().reset_index()
-            district_growth = district_growth.sort_values('total_enrolment', ascending=False).head(10)
-            
-            fig_bar = px.bar(district_growth, x='total_enrolment', y='district', color='state', orientation='h',
-                             text='total_enrolment', title="Top 10 High-Velocity Districts (Sept onwards)")
+            district_growth = rt_df.groupby(['state', 'district'])['total_enrolment'].sum().reset_index().sort_values('total_enrolment', ascending=False).head(10)
+            fig_bar = px.bar(district_growth, x='total_enrolment', y='district', color='state', orientation='h', text='total_enrolment')
             fig_bar.update_layout(yaxis={'categoryorder':'total ascending'}, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_bar, use_container_width=True)
         else:
-            st.warning("Please select 'Real-Time Era' in filters to view this chart.")
+            st.warning("Enable 'Real-Time Era' filter to see this.")
 
     with tab3:
-        st.markdown("#### 🗓️ Operational Heatmap")
-        st.markdown("""
-        **What this shows:** A density map correlating the **Day of the Week** with **States**.
-        
-        **How to read:** Brighter/Hotter colors indicate higher enrolment activity. 
-        * Vertical patterns show which States are busiest.
-        * Horizontal patterns show which Days of the Week are busiest.
-        * This helps in resource planning (e.g., if Sundays are dead, reduce staff; if Mondays are hot, increase staff).
-        """)
-        
-        # Heatmap: Day of Week vs State
+        st.caption("Operational Rhythm: Day vs State")
         heatmap_data = df_filtered.groupby(['state', 'DayOfWeek'])['total_enrolment'].sum().reset_index()
         days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        
-        fig_heat = px.density_heatmap(heatmap_data, x='DayOfWeek', y='state', z='total_enrolment', 
-                                      category_orders={'DayOfWeek': days_order}, color_continuous_scale='Hot')
+        fig_heat = px.density_heatmap(heatmap_data, x='DayOfWeek', y='state', z='total_enrolment', category_orders={'DayOfWeek': days_order}, color_continuous_scale='Hot')
         fig_heat.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=600)
         st.plotly_chart(fig_heat, use_container_width=True)
 
     with tab4:
-        st.markdown("#### 🚨 Strategic Anomaly: The Meghalaya Outlier")
-        st.markdown("""
-        **What this shows:** The percentage of enrolments that are **Adults (18+)** for each state.
-        
-        **The Insight:** Most states have very low adult enrolment (<5%) because most adults are already enrolled; they are primarily enrolling children.
-        **The Anomaly:** **Meghalaya** is a massive outlier with **~32%** adult enrolment.
-        
-        **Recommendation:** This indicates a specific backlog or migration pattern in Meghalaya. Resources sent there should be specialized for **Adult Biometrics**, whereas the rest of India needs **Child Enrolment Kits**.
-        """)
-        
+        st.caption("Strategic Outlier: Meghalaya (High Adult Enrolment)")
         state_stats = df.groupby('state')[['age_0_5', 'age_5_17', 'age_18_greater', 'total_enrolment']].sum()
         state_stats['pct_18_plus'] = (state_stats['age_18_greater'] / state_stats['total_enrolment']) * 100
         state_stats = state_stats.sort_values('pct_18_plus', ascending=False).head(10).reset_index()
-        
         colors = ['#ff4b4b' if x == 'Meghalaya' else '#2c5364' for x in state_stats['state']]
-        
-        fig_ano = px.bar(state_stats, x='state', y='pct_18_plus', text='pct_18_plus', title="Percentage of Adult Enrolments (18+)")
+        fig_ano = px.bar(state_stats, x='state', y='pct_18_plus', text='pct_18_plus')
         fig_ano.update_traces(marker_color=colors, texttemplate='%{text:.1f}%')
         fig_ano.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_ano, use_container_width=True)
+
+    # --- 7. FLOATING AI CHATBOT (FAB) ---
+    if groq_available:
+        with st.popover("✨", use_container_width=False):
+            # Sticky Header inside Popover
+            st.markdown(
+                """
+                <div style="
+                    position: sticky; top: 0; background-color: #0f172a; z-index: 1000; padding: 15px 10px; border-bottom: 1px solid #334155; margin: -1rem; margin-bottom: 10px;
+                ">
+                    <div style="display: flex; align-items: center; gap: 10px; padding-left: 10px;">
+                        <span style="font-size: 24px;">🤖</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 16px; color: #f1f5f9;">Ops Intelligence</h3>
+                            <p style="margin: 0; font-size: 11px; color: #94a3b8;">Real-Time Analyst</p>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True
+            )
+
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+
+            # Prepare Dynamic Context based on User's current filters
+            data_ctx = prepare_data_context(df_filtered, selected_era, selected_states, growth)
+
+            system_prompt = {
+                "role": "system",
+                "content": f"""You are an Expert Operational Analyst for the National Aadhar Enrolment Project.
+                
+                CORE INSIGHT TO DEFEND:
+                The data shows a massive drop in VOLUME in September. This is NOT a failure.
+                It is because we switched from 'Monthly Batch Uploads' (July) to 'Real-Time Daily API' (Sept).
+                Operational Efficiency (Row Count) actually INCREASED by {growth:.1f}%.
+                
+                CURRENT DASHBOARD DATA:
+                {data_ctx}
+                
+                Instructions:
+                - Defend the 'Efficiency Growth' narrative.
+                - Use the provided context numbers to answer questions.
+                - If asked about anomalies, mention Meghalaya's high adult enrolment.
+                - Keep answers short, professional, and data-backed.
+                """
+            }
+
+            # Auto-Greet
+            if not st.session_state.chat_history:
+                welcome_msg = f"Analysis complete. I've detected a {growth:.1f}% efficiency increase despite the volume anomaly. How can I assist?"
+                st.session_state.chat_history.append({"role": "assistant", "content": welcome_msg})
+
+            # Chat Interface
+            chat_container = st.container(height=350)
+            with chat_container:
+                for message in st.session_state.chat_history:
+                    if message["role"] != "system":
+                        with st.chat_message(message["role"]):
+                            st.markdown(message["content"])
+
+            if prompt := st.chat_input("Ask about the data...", key="fab_chat"):
+                st.session_state.chat_history.append({"role": "user", "content": prompt})
+                full_msgs = [system_prompt] + st.session_state.chat_history
+                
+                with st.spinner("Processing..."):
+                    response = get_ai_response(full_msgs)
+                
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                st.rerun()
 
 else:
     st.error("Data files not found. Please upload the CSV files.")

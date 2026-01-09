@@ -76,6 +76,32 @@ seo_meta_tags = """
         z-index: 9999;
         width: auto;
     }
+
+    /* TOOLTIP POPUP FOR AI BOT */
+    div[data-testid="stPopover"]::before {
+        content: "✨ AI Insight Extractor";
+        position: absolute;
+        bottom: 85px;
+        right: 50%;
+        transform: translateX(50%);
+        width: max-content;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid #334155;
+        color: #00bfff; /* Matches button gradient start */
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: bold;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        animation: tooltipFloat 5s ease-in-out infinite;
+        pointer-events: none; /* Allows clicking through if overlaps */
+        z-index: 10001;
+    }
+
+    @keyframes tooltipFloat {
+        0%, 100% { opacity: 0; transform: translateX(50%) translateY(10px); }
+        10%, 90% { opacity: 1; transform: translateX(50%) translateY(0); }
+    }
     
     /* Animated Gradient Button Styling */
     div[data-testid="stPopover"] > button {

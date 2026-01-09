@@ -464,6 +464,7 @@ if df is not None:
                 {data_ctx}
                 
                 Instructions:
+                - Provide SPECIFIC policy recommendations for the government based on the data.
                 - Defend the 'Efficiency Growth' narrative.
                 - Use the provided context numbers to answer questions.
                 - If asked about anomalies, mention Meghalaya's high adult enrolment.
@@ -471,16 +472,27 @@ if df is not None:
                 """
             }
 
-            # Auto-Greet
+            # Auto-Greet and Policy Measures
             if not st.session_state.chat_history:
-                welcome_msg = f"Analysis complete. I've detected a {growth:.1f}% efficiency increase despite the volume anomaly. How can I assist?"
-                st.session_state.chat_history.append({"role": "assistant", "content": welcome_msg})
+                initial_user_prompt = "Give me a list of recommended government policy measures based on this data."
+                st.session_state.chat_history.append({"role": "user", "content": initial_user_prompt})
+                
+                # Pre-generate response to ensure immediate display
+                full_msgs = [system_prompt] + st.session_state.chat_history
+                with st.spinner("Generating Policy Recommendations..."):
+                    initial_response = get_ai_response(full_msgs)
+                
+                st.session_state.chat_history.append({"role": "assistant", "content": initial_response})
+
 
             # Chat Interface
             chat_container = st.container(height=350)
             with chat_container:
                 for message in st.session_state.chat_history:
                     if message["role"] != "system":
+                         # Hide the auto-triggered user prompt from view to make it look like the bot started it
+                        if message["content"] == "Give me a list of recommended government policy measures based on this data.":
+                             continue
                         with st.chat_message(message["role"]):
                             st.markdown(message["content"])
 

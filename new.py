@@ -20,6 +20,7 @@ st.set_page_config(
 )
 
 # --- 2. META TAGS & RESPONSIVE STYLING ---
+# Updated CSS for a more modern, animated chatbot button
 seo_meta_tags = """
 <div style="display: none;">
     <h1>India Demographic Dividend Dashboard</h1>
@@ -66,51 +67,71 @@ seo_meta_tags = """
         color: white;
     }
 
-    /* --- FLOATING CHATBOT BUTTON (MODERN FAB) --- */
+    /* --- FLOATING CHATBOT BUTTON (ULTRA MODERN FAB) --- */
     /* Container positioning */
     div[data-testid="stPopover"] {
         position: fixed;
-        bottom: 30px;
-        right: 30px;
+        bottom: 40px;
+        right: 40px;
         z-index: 9999;
         width: auto;
     }
     
-    /* Circular Button Styling */
+    /* Animated Gradient Button Styling */
     div[data-testid="stPopover"] > button {
-        width: 60px !important;
-        height: 60px !important;
+        width: 70px !important;
+        height: 70px !important;
         border-radius: 50% !important;
-        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%) !important;
-        box-shadow: 0 8px 32px rgba(0, 204, 150, 0.4) !important;
-        border: 2px solid rgba(255,255,255,0.1) !important;
+        
+        /* Modern Gradient with Animation */
+        background: linear-gradient(300deg, #00bfff, #00CC96, #8A2BE2) !important;
+        background-size: 200% 200% !important;
+        animation: gradientBG 4s ease infinite, float 3s ease-in-out infinite !important;
+        
+        box-shadow: 0 10px 25px rgba(0, 204, 150, 0.5), inset 0 0 10px rgba(255,255,255,0.2) !important;
+        border: none !important;
+        
         color: white !important;
-        font-size: 28px !important;
+        font-size: 32px !important;
         padding: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     }
     
-    /* Hover Effect */
+    /* Hover Interaction */
     div[data-testid="stPopover"] > button:hover {
-        transform: translateY(-5px) scale(1.05) !important;
-        box-shadow: 0 12px 40px rgba(0, 204, 150, 0.6) !important;
-        background: linear-gradient(135deg, #00e0a6 0%, #00bc8b 100%) !important;
+        transform: scale(1.15) rotate(10deg) !important;
+        box-shadow: 0 15px 35px rgba(0, 191, 255, 0.6), 0 0 15px rgba(255,255,255,0.4) !important;
+        cursor: pointer;
     }
     
     div[data-testid="stPopover"] > button:active {
         transform: scale(0.95) !important;
     }
     
+    /* Keyframe Animations */
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0px); }
+    }
+
     /* Popover Body Styling */
     div[data-testid="stPopoverBody"] {
-        border-radius: 12px;
-        border: 1px solid #334155;
-        background-color: #0f172a; /* Dark background matches theme */
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        padding: 0 !important; /* Remove default padding for full control */
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(15, 23, 42, 0.95); /* Deep frosted glass */
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        padding: 0 !important;
+        backdrop-filter: blur(10px);
     }
 
     /* --- MOBILE OPTIMIZATION --- */
@@ -128,13 +149,13 @@ seo_meta_tags = """
             height: 400px !important;
         }
         div[data-testid="stPopover"] {
-            bottom: 20px;
-            right: 20px;
+            bottom: 25px;
+            right: 25px;
         }
         div[data-testid="stPopover"] > button {
-            width: 50px !important;
-            height: 50px !important;
-            font-size: 24px !important;
+            width: 55px !important;
+            height: 55px !important;
+            font-size: 26px !important;
         }
     }
 </style>
@@ -574,8 +595,9 @@ with tab4:
 # --- RENDER FLOATING CHATBOT BUTTON (FAB) ---
 if client:
     # Use st.popover to create a floating chat window
-    # The CSS defined at the top will position this element at the bottom right
-    with st.popover("💬", use_container_width=False):
+    # Updated text to "✨" for a cleaner, modern AI look. 
+    # The new CSS animations will make this button float and pulse.
+    with st.popover("✨", use_container_width=False):
         
         # --- FIXED HEADER (Sticky) ---
         st.markdown(

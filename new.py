@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import glob
 import os
+from groq import Groq  # Import Groq Client
 
 # --- 1. SEO & PAGE CONFIGURATION ---
 st.set_page_config(
@@ -84,6 +85,17 @@ seo_meta_tags = """
 """
 st.markdown(seo_meta_tags, unsafe_allow_html=True)
 
+# --- 3. GROQ AI CLIENT SETUP ---
+def get_groq_client():
+    try:
+        api_key = st.secrets["GROQ_API_KEY"]
+        return Groq(api_key=api_key)
+    except KeyError:
+        st.error("🚨 GROQ_API_KEY not found in secrets.toml. AI features will be disabled.")
+        return None
+
+client = get_groq_client()
+
 # --- DATA LOADING & PREPROCESSING ---
 @st.cache_data
 def load_data():
@@ -136,14 +148,16 @@ if raw_df_full is None:
     st.error("No data found. Please place the CSV files in the same directory.")
     st.stop()
 
-# --- 3. DEEP LINKING SETUP ---
+# --- 4. DEEP LINKING SETUP ---
 query_params = st.query_params
 default_states = query_params.get_all("state") if "state" in query_params else []
 valid_states = sorted(raw_df_full['State'].unique())
 default_states = [s for s in default_states if s in valid_states]
 
-# --- MAIN DASHBOARD CONTENT ---
-st.title("🇮🇳 The Demographic Dividend: Education vs. Workforce Intelligence")
+# --- MAIN DASHBOARD HEADER ---
+col_head_1, col_head_2 = st.columns([4, 1])
+with col_head_1:
+    st.title("🇮🇳 The Demographic Dividend: Education vs. Workforce Intelligence")
 
 # DETAILED INTRODUCTION
 st.markdown("""
@@ -233,6 +247,127 @@ trend_df['Total_Updates'] = trend_df['Youth_Updates'] + trend_df['Adult_Updates'
 
 # 4. Noise Filter
 filtered_df = district_df[district_df['Total_Updates'] >= min_updates]
+
+# ==========================================
+# 🤖 AI CHATBOT LOGIC & UI (POPUP MODAL)
+# ==========================================
+def prepare_data_context(df, state_selection):
+    """Summarizes current data view for the AI Context"""
+    if df.empty:
+        return "No data available for the current selection."
+    
+    total_samples = df['Total_Updates'].sum()
+    avg_youth_idx = df['Youth_Index'].mean()
+    
+    top_youth = df.nlargest(5, 'Youth_Index')[['District', 'State', 'Youth_Index']]
+    top_work = df.nsmallest(5, 'Youth_Index')[['District', 'State', 'Youth_Index']]
+    
+    context = f"""
+    DATA CONTEXT:
+    - Scope: {state_selection if state_selection else "All India"}
+    - Total Data Points: {total_samples}
+    - Average Youth Index: {avg_youth_idx:.2f}%
+    
+    TOP 5 DISTRICTS NEEDING EDUCATION FOCUS (High Youth Index):
+    {top_youth.to_string(index=False)}
+    
+    TOP 5 DISTRICTS NEEDING JOB FOCUS (Low Youth Index/High Adult):
+    {top_work.to_string(index=False)}
+    """
+    return context
+
+def get_ai_response(messages):
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1024,
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        return f"AI Error: {str(e)}"
+
+# --- MODAL DEFINITION ---
+@st.dialog("🤖 Government Policy AI Advisor")
+def open_ai_modal(context_df, context_states):
+    if not client:
+        st.error("AI Client not initialized. Check your secrets.")
+        return
+        
+    st.caption("Ask questions about the current demographic data in any Indian language.")
+    
+    # Initialize session history for chat if not present
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    # Prepare context based on CURRENT filters passed to modal
+    data_context = prepare_data_context(context_df, context_states)
+    
+    # System Prompt
+    system_prompt = {
+        "role": "system", 
+        "content": f"""You are a senior Indian Government Policy Advisor. 
+        You are analyzing Aadhar demographic update data to suggest improvements.
+        
+        Metrics Definition:
+        - Youth Index: High % means more children (5-17). Needs Schools, Scholarships, Nutrition.
+        - Low Youth Index (High Adult): Means more workforce (17+). Needs Jobs, Skilling, Banking, Loans.
+        
+        Current Data:
+        {data_context}
+        
+        Instructions:
+        1. Provide specific, actionable policy advice based on the districts shown.
+        2. If the user speaks in an Indian language (Hindi, Tamil, Telugu, Marathi, Bengali, etc.), REPLY IN THAT LANGUAGE.
+        3. Keep answers concise and professional.
+        """
+    }
+
+    # Auto-trigger specific insights if history is empty
+    if not st.session_state.chat_history:
+        initial_prompt = "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation."
+        st.session_state.chat_history.append({"role": "user", "content": initial_prompt})
+        
+        # Generate response
+        full_messages = [system_prompt] + st.session_state.chat_history
+        with st.spinner("Analyzing demographic data for insights..."):
+            response = get_ai_response(full_messages)
+        st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+    # Display Chat History
+    for message in st.session_state.chat_history:
+        if message["role"] != "system": # Skip system prompt
+            if message["content"] == "Based on the currently filtered data, give me 3 urgent government policy recommendations to improve the situation.":
+                    with st.chat_message("user"):
+                        st.write("🔍 *Auto-Analysis Request*")
+            else:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+    # Chat Input
+    if prompt := st.chat_input("Ask about specific districts or policy strategies..."):
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        full_messages = [system_prompt] + st.session_state.chat_history
+        
+        with st.chat_message("assistant"):
+            with st.spinner("Consulting policy database..."):
+                response = get_ai_response(full_messages)
+                st.markdown(response)
+        
+        st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+# --- RENDER CHATBOT BUTTON IN HEADER ---
+# We render this into the col_head_2 container defined at the top
+if client:
+    with col_head_2:
+        st.write("") # Spacer
+        st.write("") # Spacer
+        if st.button("🤖 AI Policy Advisor", type="primary", use_container_width=True):
+            open_ai_modal(filtered_df, selected_states)
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([

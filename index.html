@@ -913,14 +913,14 @@
                         </div>
                     </div>
 
-                    <!-- Suburban Sprawl -->
-                    <div class="module-card" data-module="Suburban Sprawl">
+                    <!-- Hidden Hyper-Growth Module (Formerly Suburban Sprawl) -->
+                    <div class="module-card" data-module="Hidden Hyper-Growth">
                         <div class="module-icon icon-sprawl">
-                            <i data-lucide="expand"></i>
+                            <i data-lucide="zap"></i>
                         </div>
                         <div class="module-content">
-                            <span class="module-text">Suburban Sprawl</span>
-                            <span class="module-subtext">Detect expansion patterns</span>
+                            <span class="module-text">Hidden Hyper-Growth</span>
+                            <span class="module-subtext">The Hidden 140% Efficiency Surge</span>
                         </div>
                     </div>
 
@@ -1046,6 +1046,8 @@ moduleCards.forEach(card => {
         const moduleName = card.getAttribute('data-module');
         if (moduleName === "AAdhaar analytics module") {
             window.location.href = 'insights_1.html';
+        } else if (moduleName === "Hidden Hyper-Growth") {
+            window.location.href = 'insight_2.html';
         }
     });
 });
@@ -1059,7 +1061,7 @@ async function handleAISearch() {
     lucide.createIcons();
 
     const modules = [
-        "AAdhaar analytics module", "Suburban Sprawl", "Rental Heatmap", 
+        "AAdhaar analytics module", "Hidden Hyper-Growth", "Rental Heatmap", 
         "Smart Allocation", "Family Migration", "Voter Readiness", 
         "Delimitation Data", "Fraud Prevention"
     ];

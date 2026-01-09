@@ -5,3 +5,4 @@ matplotlib
 langchain
 langchain-experimental
 langchain-groq
+scikit-learn

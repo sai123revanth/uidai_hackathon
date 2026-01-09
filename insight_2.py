@@ -2,312 +2,347 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-import numpy as np
+from plotly.subplots import make_subplots
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="Biometric Deficit Detector | Hackathon Edition",
-    page_icon="🧬",
+    page_title="Aadhar Enrolment Intelligence",
+    page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# --- CUSTOM STYLING (HACKATHON VIBE) ---
+# --- ADVANCED CSS STYLING ---
 st.markdown("""
-<style>
-    .main {
-        background-color: #0e1117;
+    <style>
+    /* Gradient Background for the entire App */
+    .stApp {
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        color: #ffffff;
     }
-    h1 {
-        color: #ff4b4b;
-        font-family: 'Helvetica Neue', sans-serif;
-        font-weight: 800;
-    }
-    h2, h3 {
-        color: #fafafa;
-    }
-    .stMetric {
-        background-color: #262730;
-        padding: 15px;
-        border-radius: 5px;
-        border: 1px solid #41424b;
-    }
-    .critical-alert {
-        background-color: #ff4b4b;
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-weight: bold;
-        text-align: center;
+    
+    /* Glassmorphism Card Style */
+    .metric-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
+        transition: transform 0.3s ease;
     }
-</style>
-""", unsafe_allow_html=True)
+    .metric-card:hover {
+        transform: translateY(-5px);
+        border-color: #00CC96;
+    }
+    
+    /* Typography */
+    .h1-title {
+        text-align: center;
+        font-weight: 900;
+        font-size: 2.8em;
+        background: -webkit-linear-gradient(left, #00CC96, #3366FF);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+        text-shadow: 0px 0px 20px rgba(0, 204, 150, 0.3);
+    }
+    .subtitle {
+        text-align: center;
+        color: #b0bec5;
+        font-size: 1.1em;
+        margin-bottom: 40px;
+        font-weight: 300;
+        line-height: 1.6;
+    }
+    
+    /* Detailed Explanation Box */
+    .explanation-box {
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 5px solid #3366FF;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-size: 1em;
+        color: #e0e0e0;
+        line-height: 1.6;
+    }
+    
+    /* Stat Highlights */
+    .big-stat {
+        font-size: 3em;
+        font-weight: 800;
+        color: #00CC96;
+        line-height: 1;
+    }
+    .stat-label {
+        color: #a0a0a0;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: rgba(255,255,255,0.05);
+        border-radius: 4px;
+        color: #fff;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #00CC96 !important;
+        color: #000 !important;
+        font-weight: bold;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- DATA LOADING & PREPROCESSING ---
 @st.cache_data
-def load_and_prep_data():
+def load_and_process_data():
     files = [
-        "api_data_aadhar_biometric_0_500000.csv",
-        "api_data_aadhar_biometric_500000_1000000.csv",
-        "api_data_aadhar_biometric_1000000_1500000.csv",
-        "api_data_aadhar_biometric_1500000_1861108.csv"
+        "api_data_aadhar_enrolment_0_500000.csv",
+        "api_data_aadhar_enrolment_500000_1000000.csv",
+        "api_data_aadhar_enrolment_1000000_1006029.csv"
     ]
     
     dfs = []
     for f in files:
         try:
-            dfs.append(pd.read_csv(f))
+            df = pd.read_csv(f)
+            dfs.append(df)
         except FileNotFoundError:
-            continue # Handle case where files aren't local during dev
-            
-    if not dfs:
-        return pd.DataFrame() # Return empty if no files
-        
+            return None
+
     df = pd.concat(dfs, ignore_index=True)
     
-    # 1. Date Conversion
+    # 1. Robust Date Parsing
     df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y', errors='coerce')
     
-    # 2. State Name Cleaning (Crucial for correct aggregation)
-    state_mapping = {
-        'odisha': 'Odisha', 'ODISHA': 'Odisha', 'Orissa': 'Odisha',
-        'Westbengal': 'West Bengal', 'West  Bengal': 'West Bengal', 'WEST BENGAL': 'West Bengal',
-        'West bengal': 'West Bengal', 'West Bangal': 'West Bengal', 'WESTBENGAL': 'West Bengal', 
-        'west Bengal': 'West Bengal', 'Tamilnadu': 'Tamil Nadu',
-        'Chhatisgarh': 'Chhattisgarh', 'Pondicherry': 'Puducherry',
-        'Uttaranchal': 'Uttarakhand', 'Andaman & Nicobar Islands': 'Andaman and Nicobar Islands',
-        'Dadra & Nagar Haveli': 'Dadra and Nagar Haveli',
-        'Dadra and Nagar Haveli and Daman and Diu': 'Dadra and Nagar Haveli',
-        'andhra pradesh': 'Andhra Pradesh', 'Telengana': 'Telangana'
-    }
-    df['state_clean'] = df['state'].replace(state_mapping).str.title().str.strip()
+    # 2. Key Metrics
+    df['total_enrolment'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
     
-    # 3. Feature Engineering
-    df['total_updates'] = df['bio_age_5_17'] + df['bio_age_17_']
+    # 3. Standardization
+    state_mapping = {
+        'Westbengal': 'West Bengal', 'West  Bengal': 'West Bengal', 
+        'West Bangal': 'West Bengal', 'Andhra Pradesh': 'Andhra Pradesh',
+        'andhra pradesh': 'Andhra Pradesh', 'Odisha': 'Odisha',
+        'ODISHA': 'Odisha', 'Orissa': 'Odisha', 'Pondicherry': 'Puducherry'
+    }
+    df['state'] = df['state'].str.strip().str.title().replace(state_mapping)
+    df = df[df['state'] != '100000']
+    
+    # 4. Feature Engineering
+    # Era Definition: The Core Insight
+    df['Era'] = df['date'].apply(lambda x: 'Real-Time Era (Sept+)' if (x.year == 2025 and x.month >= 9) else 'Batch Era (Pre-Aug)')
+    df['DayOfWeek'] = df['date'].dt.day_name()
     
     return df
 
-df_raw = load_and_prep_data()
+# --- LOAD DATA ---
+df = load_and_process_data()
 
-if df_raw.empty:
-    st.error("🚨 Data files not found. Please ensure the CSV files are in the same directory.")
-    st.stop()
-
-# --- ADVANCED AGGREGATION & ML ---
-@st.cache_data
-def perform_clustering(df):
-    # Group by District for Analysis
-    district_stats = df.groupby(['state_clean', 'district'])[['bio_age_5_17', 'bio_age_17_', 'total_updates']].sum().reset_index()
+if df is not None:
     
-    # Calculate Child Participation Ratio (CPR)
-    # Avoid division by zero
-    district_stats['child_ratio'] = district_stats['bio_age_5_17'] / district_stats['total_updates'].replace(0, 1)
-    
-    # Filter for meaningful clustering (remove districts with negligible data)
-    ml_df = district_stats[district_stats['total_updates'] > 1000].copy()
-    
-    # Prepare features: Log transform total_updates to handle skew, and use child_ratio
-    # We want to find: High Volume + Low Ratio
-    X = ml_df[['total_updates', 'child_ratio']].copy()
-    X['log_updates'] = np.log1p(X['total_updates'])
-    
-    # Scale features
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X[['log_updates', 'child_ratio']])
-    
-    # K-Means Clustering (4 Clusters)
-    kmeans = KMeans(n_clusters=4, random_state=42, n_init=10)
-    ml_df['cluster'] = kmeans.fit_predict(X_scaled)
-    
-    # Interpret Clusters (Heuristic labeling based on cluster centers)
-    # We need to identify which cluster is the "Critical Failure" (High Vol, Low Ratio)
-    cluster_centers = pd.DataFrame(scaler.inverse_transform(kmeans.cluster_centers_), columns=['log_updates', 'child_ratio'])
-    cluster_centers['updates_exp'] = np.expm1(cluster_centers['log_updates'])
-    
-    # Identify the "Critical" cluster: Highest Updates but Lowest Ratio
-    # We score clusters: Score = Updates - (Ratio * Weight). High Score = Bad.
-    # Actually, simpler: Look for low ratio (< 0.2) and high updates.
-    
-    def label_cluster(row):
-        # High Ratio (> 0.35) is generally Healthy
-        if row['child_ratio'] > 0.35:
-            if row['updates_exp'] > 10000: return "🌟 Gold Standard (High Vol, Healthy)"
-            else: return "✅ Healthy (Normal Vol)"
-        else:
-            # Low Ratio
-            if row['updates_exp'] > 10000: return "🚨 CRITICAL EXCLUSION ZONE"
-            else: return "⚠️ Lagging / Inactive"
-
-    cluster_labels = {}
-    for i, row in cluster_centers.iterrows():
-        cluster_labels[i] = label_cluster(row)
-        
-    ml_df['status'] = ml_df['cluster'].map(cluster_labels)
-    
-    return district_stats, ml_df
-
-district_stats, district_ml = perform_clustering(df_raw)
-
-# --- SIDEBAR FILTERS ---
-st.sidebar.title("🎛️ Control Panel")
-st.sidebar.markdown("Filter the analysis dimensions.")
-
-selected_state = st.sidebar.multiselect("Select State(s)", options=sorted(district_stats['state_clean'].unique()))
-
-if selected_state:
-    filtered_stats = district_stats[district_stats['state_clean'].isin(selected_state)]
-    filtered_ml = district_ml[district_ml['state_clean'].isin(selected_state)]
-else:
-    filtered_stats = district_stats
-    filtered_ml = district_ml
-
-# --- MAIN DASHBOARD ---
-
-# TABS
-tab1, tab2, tab3, tab4 = st.tabs(["🚀 The 1% Insight (Jury Mode)", "📊 Advanced Analytics", "🗺️ Geo-Spatial Analysis", "🔬 Raw Data Explorer"])
-
-# --- TAB 1: THE WINNING PITCH ---
-with tab1:
-    st.markdown("## 🕵️ The 1% Anomaly: Silent Biometric Exclusion")
+    # --- HEADER SECTION ---
+    st.markdown("<h1 class='h1-title'>National Aadhar Enrolment Analytics</h1>", unsafe_allow_html=True)
     st.markdown("""
-    <div style='background-color: #1e2130; padding: 20px; border-radius: 10px; border-left: 5px solid #ff4b4b;'>
-        <h3 style='margin-top:0;'>The Problem Statement</h3>
-        <p>Government mandates require children to update biometrics at age 5 and 15. Standard dashboards show "Total Updates", masking a critical failure. 
-        Our algorithms detected <b>"Silent Exclusion Zones"</b>—districts where the infrastructure is active for adults, but failing children completely.</p>
+    <div class='subtitle'>
+        An interactive dashboard designed to uncover operational trends, visualize demographic distribution, 
+        and analyze the transition from batch-based processing to real-time data reporting.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- CONTROL PANEL ---
+    with st.container():
+        st.markdown("### 🎛️ Data Filters")
+        st.markdown("""
+        Use these filters to narrow down the dataset. **'Reporting Era'** is particularly important as it separates the data 
+        into two distinct phases of the project: the early 'Batch' phase and the later 'Real-Time' phase.
+        """)
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            selected_era = st.multiselect("Select Reporting Era:", df['Era'].unique(), default=df['Era'].unique())
+        with col2:
+            states = sorted(df['state'].unique())
+            selected_states = st.multiselect("Select States to Compare:", states, default=states[:5])
+
+    # Filter Logic
+    df_filtered = df[df['Era'].isin(selected_era)]
+    if selected_states:
+        df_filtered = df_filtered[df_filtered['state'].isin(selected_states)]
+
+    st.markdown("---")
+
+    # --- SECTION 1: CORE INSIGHT EXPLANATION ---
+    st.markdown("### 1. Operational Efficiency Analysis")
+    
+    st.markdown("""
+    <div class='explanation-box'>
+        <b>📋 Understanding the Core Insight: The "Batch" vs. "Real-Time" Shift</b><br><br>
+        When analyzing this dataset, a casual observer might notice a significant drop in "Total Volumes" starting in September. 
+        However, this is not a decline in performance, but a change in <b>Reporting Methodology</b>.<br><br>
+        <ul>
+            <li><b>Batch Era (Pre-August):</b> Data was uploaded in massive monthly chunks. A single row in the database could represent hundreds of people. This artificially inflated the apparent "volume per entry" but lowered the number of database rows.</li>
+            <li><b>Real-Time Era (September+):</b> The system switched to uploading transactions individually or in small daily groups. This results in a lower "volume per entry" but a massive increase in the number of database rows processed.</li>
+        </ul>
+        <b>The Conclusion:</b> When we look at the "Operational Intensity" (the number of records processed daily), the system has actually <b>increased in efficiency by ~140%</b>. The dashboard below proves this correlation.
     </div>
     """, unsafe_allow_html=True)
     
-    st.write("")
+    col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
     
-    col1, col2, col3 = st.columns(3)
+    # KPIs Calculation
+    july_vol = df[df['date'].dt.month == 7]['total_enrolment'].sum() / 30
+    sept_vol = df[df['date'].dt.month == 9].groupby('date')['total_enrolment'].sum().mean()
+    growth = ((sept_vol - july_vol) / july_vol) * 100
+    top_state_growth = df_filtered.groupby('state')['total_enrolment'].sum().idxmax()
     
-    # Calculate Impact Metrics
-    critical_districts = district_ml[district_ml['status'] == "🚨 CRITICAL EXCLUSION ZONE"]
-    impacted_kids_est = (critical_districts['total_updates'] * 0.45) - critical_districts['bio_age_5_17'] # Estimated missed kids based on healthy 45% ratio
-    
-    col1.metric("🚨 Critical Districts Detected", f"{len(critical_districts)}")
-    col2.metric("📉 Avg Child Ratio in Critical Zones", f"{critical_districts['child_ratio'].mean():.1%}", delta="-40% vs National Avg")
-    col3.metric("⚠️ Est. Children at Risk", f"{int(impacted_kids_est.sum()):,}", help="Children who should have been updated based on footfall but weren't.")
+    with col_kpi1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="stat-label">Efficiency Growth</div>
+            <div class="big-stat">+{growth:.1f}%</div>
+            <div style="color: #4CAF50;">▲ True Daily Run Rate (July vs Sept)</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col_kpi2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="stat-label">Current Processing Rate</div>
+            <div class="big-stat">{int(sept_vol):,}</div>
+            <div style="color: #b0bec5;">Average Enrolments Per Day (Sept)</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col_kpi3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="stat-label">Key Volume Driver</div>
+            <div class="big-stat" style="font-size: 2em;">{top_state_growth}</div>
+            <div style="color: #b0bec5;">Highest Contributor</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("### 🧬 The 'Biometric Deficit' Scatter Plot")
-    st.markdown("This chart separates the **Healthy** districts from the **Critical Failures** using our ML clustering.")
+    # --- VISUALIZATION 1: DUAL AXIS EXPLANATION ---
+    st.markdown("#### 📉 Visualization: Volume vs. Operational Intensity")
+    st.markdown("""
+    **How to Read This Chart:**
+    * **Red Area (Left Axis):** This represents the *Total People Enrolled*. Notice the massive spikes in July—these are the "Batches".
+    * **Green Line (Right Axis):** This represents the *Number of Database Rows* (Operational Activity). 
+    * **The Insight:** Notice that in September, the Red Area gets smaller (no more massive batches), but the Green Line shoots up. This divergence confirms the shift to real-time processing.
+    """)
+
+    # --- VISUAL PROOF (Dual Axis) ---
+    daily_agg = df.groupby('date').agg({'total_enrolment': 'sum', 'state': 'count'}).rename(columns={'state': 'row_count'})
     
-    fig_scatter = px.scatter(
-        district_ml,
-        x="total_updates",
-        y="child_ratio",
-        color="status",
-        hover_data=['state_clean', 'district'],
-        log_x=True,
-        title="Volume vs. Child Participation Ratio (CPR)",
-        color_discrete_map={
-            "🚨 CRITICAL EXCLUSION ZONE": "#ff4b4b",
-            "🌟 Gold Standard (High Vol, Healthy)": "#00cc96",
-            "✅ Healthy (Normal Vol)": "#636efa",
-            "⚠️ Lagging / Inactive": "#ffa15a"
-        },
-        height=500
+    fig_combo = make_subplots(specs=[[{"secondary_y": True}]])
+    fig_combo.add_trace(go.Scatter(x=daily_agg.index, y=daily_agg['total_enrolment'], name="Total People Enrolled (Volume)",
+                                   line=dict(color='#ff4b4b', width=2), fill='tozeroy', fillcolor='rgba(255, 75, 75, 0.1)'), secondary_y=False)
+    fig_combo.add_trace(go.Scatter(x=daily_agg.index, y=daily_agg['row_count'], name="Database Rows Created (Activity)",
+                                   line=dict(color='#00CC96', width=3, dash='solid')), secondary_y=True)
+    
+    fig_combo.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        legend=dict(orientation="h", y=1.1),
+        height=500,
+        hovermode="x unified"
     )
-    fig_scatter.add_hline(y=0.45, line_dash="dash", line_color="green", annotation_text="Healthy Target (45%)")
-    fig_scatter.add_hline(y=0.10, line_dash="dash", line_color="red", annotation_text="Critical Failure (<10%)")
-    st.plotly_chart(fig_scatter, use_container_width=True)
+    st.plotly_chart(fig_combo, use_container_width=True)
 
-    st.markdown("### 🚨 The 'Black List': Top Critical Failures")
-    st.dataframe(
-        critical_districts[['state_clean', 'district', 'total_updates', 'bio_age_5_17', 'child_ratio']]
-        .sort_values('child_ratio', ascending=True)
-        .head(10)
-        .style.format({'child_ratio': '{:.2%}', 'total_updates': '{:,}'})
-        .background_gradient(subset=['child_ratio'], cmap='RdYlGn')
-    )
-
-# --- TAB 2: ADVANCED ANALYTICS ---
-with tab2:
-    st.header("Deep Dive Analytics")
+    # --- SECTION 2: DEEP DIVE ANALYTICS ---
+    st.markdown("### 2. Detailed Data Exploration")
+    st.markdown("Click on the tabs below to explore specific dimensions of the data.")
     
-    c1, c2 = st.columns(2)
+    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Geographic Hierarchy", "🏭 Regional Performance", "🗓️ Weekly Patterns", "🚨 Anomaly Detection"])
     
-    with c1:
-        st.subheader("Child Update Ratio by State")
-        state_agg = df_raw.groupby('state_clean')[['bio_age_5_17', 'total_updates']].sum().reset_index()
-        state_agg['ratio'] = state_agg['bio_age_5_17'] / state_agg['total_updates']
-        state_agg = state_agg.sort_values('ratio', ascending=True)
+    with tab1:
+        st.markdown("#### 🗺️ Interactive Sunburst Chart")
+        st.markdown("""
+        **What this shows:** A hierarchical view of enrolment data. 
+        * **Inner Circle:** State
+        * **Middle Circle:** District
+        * **Outer Circle:** Age Group
         
-        fig_bar = px.bar(
-            state_agg,
-            x='ratio',
-            y='state_clean',
-            orientation='h',
-            title="State-wise Child Participation Ratio",
-            color='ratio',
-            color_continuous_scale='RdYlGn',
-            height=800
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
-        
-    with c2:
-        st.subheader("Age Group Distribution")
-        # National aggregate
-        total_5_17 = df_raw['bio_age_5_17'].sum()
-        total_17_plus = df_raw['bio_age_17_'].sum()
-        
-        fig_pie = px.pie(
-            values=[total_5_17, total_17_plus],
-            names=['Children (5-17)', 'Adults (17+)'],
-            title="Overall Demographic Split",
-            hole=0.4,
-            color_discrete_sequence=['#ef553b', '#636efa']
-        )
-        st.plotly_chart(fig_pie, use_container_width=True)
-        
-        st.markdown("---")
-        st.subheader("Algorithm Explanation")
-        st.info("""
-        **K-Means Clustering:**
-        We used an unsupervised learning algorithm to cluster districts based on two dimensions:
-        1. **Volume Intensity:** How busy is the center?
-        2. **Child Participation:** What % of updates are for minors?
-        
-        This eliminates bias and automatically highlights outliers like Nandurbar, which have high activity but near-zero child updates.
+        **How to use:** Click on any "State" slice to zoom in and see its specific Districts. Click the center to zoom back out. This helps identify which specific districts are driving a State's numbers.
         """)
+        df_melted = df_filtered.melt(id_vars=['state', 'district'], value_vars=['age_0_5', 'age_5_17', 'age_18_greater'], var_name='Age_Group', value_name='Count')
+        sunburst_data = df_melted.groupby(['state', 'district', 'Age_Group'])['Count'].sum().reset_index()
+        sunburst_data = sunburst_data[sunburst_data['Count'] > 0]
+        
+        fig_sun = px.sunburst(sunburst_data, path=['state', 'district', 'Age_Group'], values='Count', color='Count', color_continuous_scale='Viridis')
+        fig_sun.update_layout(height=700, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig_sun, use_container_width=True)
 
-# --- TAB 3: SPATIAL ---
-with tab3:
-    st.header("Spatial Performance Analysis")
-    st.markdown("Visualizing the spread of biometric efficiency.")
-    
-    # Treemap is great for hierarchical data (State -> District)
-    st.subheader("Biometric Activity Treemap (State > District)")
-    fig_tree = px.treemap(
-        district_ml,
-        path=[px.Constant("India"), 'state_clean', 'status', 'district'],
-        values='total_updates',
-        color='child_ratio',
-        color_continuous_scale='RdYlGn',
-        midpoint=0.4,
-        title="Size = Total Volume | Color = Child Ratio (Red is Critical)"
-    )
-    st.plotly_chart(fig_tree, use_container_width=True)
+    with tab2:
+        st.markdown("#### 🏭 District-Level Performance (Real-Time Era)")
+        st.markdown("""
+        **What this shows:** The Top 10 Districts based on total enrolment volume, but *filtered only for the Real-Time Era (September onwards)*.
+        
+        **Why this matters:** Historical data (July) can bias the "Top Districts" list because of the large batch dumps. By looking only at the Real-Time era, we see which centers are *currently* the most active and efficient.
+        """)
+        
+        # Filter for Real-Time Era only for this specific chart
+        rt_df = df[df['Era'] == 'Real-Time Era (Sept+)']
+        if not rt_df.empty:
+            district_growth = rt_df.groupby(['state', 'district'])['total_enrolment'].sum().reset_index()
+            district_growth = district_growth.sort_values('total_enrolment', ascending=False).head(10)
+            
+            fig_bar = px.bar(district_growth, x='total_enrolment', y='district', color='state', orientation='h',
+                             text='total_enrolment', title="Top 10 High-Velocity Districts (Sept onwards)")
+            fig_bar.update_layout(yaxis={'categoryorder':'total ascending'}, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig_bar, use_container_width=True)
+        else:
+            st.warning("Please select 'Real-Time Era' in filters to view this chart.")
 
-# --- TAB 4: RAW DATA ---
-with tab4:
-    st.header("Data Explorer")
-    st.markdown("Full transparency into the dataset.")
-    
-    st.dataframe(district_ml)
-    
-    csv = district_ml.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        "Download Analysis Report (CSV)",
-        csv,
-        "biometric_analysis_report.csv",
-        "text/csv",
-        key='download-csv'
-    )
+    with tab3:
+        st.markdown("#### 🗓️ Operational Heatmap")
+        st.markdown("""
+        **What this shows:** A density map correlating the **Day of the Week** with **States**.
+        
+        **How to read:** Brighter/Hotter colors indicate higher enrolment activity. 
+        * Vertical patterns show which States are busiest.
+        * Horizontal patterns show which Days of the Week are busiest.
+        * This helps in resource planning (e.g., if Sundays are dead, reduce staff; if Mondays are hot, increase staff).
+        """)
+        
+        # Heatmap: Day of Week vs State
+        heatmap_data = df_filtered.groupby(['state', 'DayOfWeek'])['total_enrolment'].sum().reset_index()
+        days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        
+        fig_heat = px.density_heatmap(heatmap_data, x='DayOfWeek', y='state', z='total_enrolment', 
+                                      category_orders={'DayOfWeek': days_order}, color_continuous_scale='Hot')
+        fig_heat.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', height=600)
+        st.plotly_chart(fig_heat, use_container_width=True)
 
-# --- FOOTER ---
-st.markdown("---")
-st.markdown("<div style='text-align: center; color: grey;'>Developed for the Hackathon | Powered by Python, Streamlit & Scikit-Learn</div>", unsafe_allow_html=True)
+    with tab4:
+        st.markdown("#### 🚨 Strategic Anomaly: The Meghalaya Outlier")
+        st.markdown("""
+        **What this shows:** The percentage of enrolments that are **Adults (18+)** for each state.
+        
+        **The Insight:** Most states have very low adult enrolment (<5%) because most adults are already enrolled; they are primarily enrolling children.
+        **The Anomaly:** **Meghalaya** is a massive outlier with **~32%** adult enrolment.
+        
+        **Recommendation:** This indicates a specific backlog or migration pattern in Meghalaya. Resources sent there should be specialized for **Adult Biometrics**, whereas the rest of India needs **Child Enrolment Kits**.
+        """)
+        
+        state_stats = df.groupby('state')[['age_0_5', 'age_5_17', 'age_18_greater', 'total_enrolment']].sum()
+        state_stats['pct_18_plus'] = (state_stats['age_18_greater'] / state_stats['total_enrolment']) * 100
+        state_stats = state_stats.sort_values('pct_18_plus', ascending=False).head(10).reset_index()
+        
+        colors = ['#ff4b4b' if x == 'Meghalaya' else '#2c5364' for x in state_stats['state']]
+        
+        fig_ano = px.bar(state_stats, x='state', y='pct_18_plus', text='pct_18_plus', title="Percentage of Adult Enrolments (18+)")
+        fig_ano.update_traces(marker_color=colors, texttemplate='%{text:.1f}%')
+        fig_ano.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig_ano, use_container_width=True)
+
+else:
+    st.error("Data files not found. Please upload the CSV files.")

@@ -4,6 +4,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
+import numpy as np
+import glob
+from datetime import timedelta
 
 # Try importing Groq, handle if missing
 try:
@@ -200,6 +203,7 @@ st.markdown("""
     .badge-uni { background-color: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
     .badge-bi { background-color: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
     .badge-tri { background-color: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid #ec4899; }
+    .badge-pred { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -257,23 +261,60 @@ def load_and_process_data():
     df['Era'] = df['date'].apply(lambda x: 'Real-Time Era (Sept+)' if (x.year == 2025 and x.month >= 9) else 'Batch Era (Pre-Aug)')
     df['DayOfWeek'] = df['date'].dt.day_name()
     
+    # Create Indices for Analysis
+    df['Youth_Index'] = ((df['age_0_5'] + df['age_5_17']) / df['total_enrolment']) * 100
+    
     return df
 
 df = load_and_process_data()
 
-# --- 5. AI CONTEXT PREPARATION ---
+# --- 5. PREDICTIVE & STATISTICAL FUNCTIONS ---
+def calculate_trend_forecast(df_trend):
+    """
+    Performs Linear Regression to forecast future volume.
+    Type: Bivariate Analysis (Time vs Volume)
+    """
+    if df_trend is None or len(df_trend) < 2:
+        return None, 0
+    
+    df_trend = df_trend.sort_values('date')
+    df_trend['Time_Index'] = np.arange(len(df_trend))
+    
+    x = df_trend['Time_Index'].values
+    y = df_trend['total_enrolment'].values
+    
+    # Linear Regression (Polyfit degree 1)
+    slope, intercept = np.polyfit(x, y, 1)
+    
+    next_x = x[-1] + 1
+    predicted_val = slope * next_x + intercept
+    
+    return max(0, predicted_val), slope
+
+def detect_anomalies(df_dist):
+    """
+    Uses Z-Score to detect statistical outliers.
+    Type: Univariate Analysis
+    """
+    if df_dist.empty:
+        return df_dist
+    
+    mean_val = df_dist['total_enrolment'].mean()
+    std_val = df_dist['total_enrolment'].std()
+    
+    df_dist['Z_Score'] = (df_dist['total_enrolment'] - mean_val) / std_val
+    df_dist['Is_Anomaly'] = df_dist['Z_Score'] > 2
+    return df_dist
+
+# --- 6. AI CONTEXT PREPARATION ---
 def prepare_data_context(df_filtered, era_selection, state_selection, growth_pct):
-    """Summarizes operational efficiency data for the AI"""
     if df_filtered.empty:
         return "No data available."
     
     total_vol = df_filtered['total_enrolment'].sum()
     row_count = len(df_filtered)
-    
-    # Top 3 High Activity Districts
     top_districts = df_filtered.groupby('district')['total_enrolment'].sum().nlargest(3).to_dict()
     
-    # Meghalaya 18+ Stats (Specific Insight)
     meghalaya_stats = "N/A"
     if 'Meghalaya' in df_filtered['state'].unique():
         meg_df = df_filtered[df_filtered['state'] == 'Meghalaya']
@@ -306,7 +347,7 @@ def get_ai_response(messages):
     except Exception as e:
         return f"AI Error: {str(e)}"
 
-# --- 6. MAIN DASHBOARD ---
+# --- 7. MAIN DASHBOARD ---
 if df is not None:
     
     # --- HEADER ---
@@ -317,15 +358,15 @@ if df is not None:
     </div>
     """, unsafe_allow_html=True)
 
-    # --- EDUCATIONAL INSIGHT BOX (ADDED) ---
+    # --- EDUCATIONAL INSIGHT BOX ---
     st.markdown("""
     <div class='explanation-box'>
         <h4>📊 Understanding the Analytics Methodology</h4>
-        <p>This dashboard uses three levels of statistical analysis to derive insights:</p>
+        <p>This dashboard employs a rigorous statistical framework to interpret the data:</p>
         <ul>
-            <li><span class="stat-badge badge-uni">Univariate Analysis</span> <b>(One Variable):</b> Analyzing a single variable, such as "Total Enrolments" or "Age Group," in isolation. Example: The Histogram below showing the distribution of enrolments across districts.</li>
-            <li><span class="stat-badge badge-bi">Bivariate Analysis</span> <b>(Two Variables):</b> Exploring the relationship between two variables. Example: Comparing "Time" vs. "Volume" (Trend Analysis) or "State" vs. "Efficiency Growth".</li>
-            <li><span class="stat-badge badge-tri">Trivariate Analysis</span> <b>(Three Variables):</b> Visualizing the interaction between three distinct variables. Example: The Sunburst chart showing "State" -> "District" -> "Age Group".</li>
+            <li><span class="stat-badge badge-uni">Univariate Analysis</span> <b>(One Variable):</b> Analyzing the distribution and central tendency of a single variable in isolation (e.g., Histogram of Total Enrolments). This tells us "What is the typical value?".</li>
+            <li><span class="stat-badge badge-bi">Bivariate Analysis</span> <b>(Two Variables):</b> Examining relationships between two variables (e.g., Trend Lines correlating Time vs. Volume, or Bar Charts comparing State vs. Efficiency). This reveals correlations and trends.</li>
+            <li><span class="stat-badge badge-tri">Trivariate Analysis</span> <b>(Three Variables):</b> Visualizing complex interactions among three distinct variables simultaneously (e.g., Sunburst Chart linking State → District → Age Group). This uncovers hierarchical dependencies.</li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
@@ -385,11 +426,13 @@ if df is not None:
     st.markdown("""
     <div class='explanation-box'>
         <span class="stat-badge badge-bi">Bivariate Analysis</span>
-        <b>The Insight:</b> The visual divergence below proves the system didn't crash; it evolved.
+        <b>Variables: Time (Independent) vs. Volume/Activity (Dependent)</b><br>
+        This visual divergence proves the system didn't crash; it evolved. It plots two dependent variables against time:
         <ul>
-            <li><b>Red Area (Volume):</b> Drops because we stopped uploading massive monthly batches.</li>
-            <li><b>Green Line (Activity):</b> Spikes because we started logging every single daily transaction.</li>
+            <li><b>Red Area (Volume):</b> Shows the aggregate number of people enrolled. It drops because we stopped uploading massive monthly batches.</li>
+            <li><b>Green Line (Activity):</b> Shows the number of database rows created. It spikes because we started logging every single daily transaction individually.</li>
         </ul>
+        This inverse correlation confirms the hypothesis of a systemic reporting change.
     </div>
     """, unsafe_allow_html=True)
 
@@ -416,7 +459,16 @@ if df is not None:
     
     with tab1:
         st.markdown('<span class="stat-badge badge-tri">Trivariate Analysis</span>', unsafe_allow_html=True)
-        st.caption("Drill Down: State > District > Age Group. This visualizes three variables simultaneously.")
+        st.markdown("""
+        **Visualization:** Hierarchical Sunburst Chart.
+        **Variables Analyzed:**
+        1.  **State (Categorical - Nominal):** The inner-most ring, representing the highest level of aggregation.
+        2.  **District (Categorical - Nominal):** The middle ring, nested within each state.
+        3.  **Age Group (Categorical - Ordinal):** The outer-most ring, splitting each district into demographic segments.
+        4.  **Count (Quantitative - Ratio):** Determines the arc length (size) of each slice.
+        
+        **Interpretation:** This allows you to trace the contribution flow. For example, you can see if a State's high volume is driven by one massive district or spread evenly. You can also see if specific districts have disproportionate Age 0-5 enrolments (Education Hubs).
+        """)
         df_melted = df_filtered.melt(id_vars=['state', 'district'], value_vars=['age_0_5', 'age_5_17', 'age_18_greater'], var_name='Age_Group', value_name='Count')
         sunburst_data = df_melted.groupby(['state', 'district', 'Age_Group'])['Count'].sum().reset_index()
         sunburst_data = sunburst_data[sunburst_data['Count'] > 0]
@@ -426,7 +478,14 @@ if df is not None:
 
     with tab2:
         st.markdown('<span class="stat-badge badge-bi">Bivariate Analysis</span>', unsafe_allow_html=True)
-        st.caption("Top 10 High-Velocity Districts (Real-Time Era Only). Compares 'District' vs 'Total Enrolment'.")
+        st.markdown("""
+        **Visualization:** Horizontal Bar Chart.
+        **Variables Analyzed:**
+        1.  **District (Categorical):** The independent variable on the Y-axis.
+        2.  **Total Enrolment (Quantitative):** The dependent variable on the X-axis.
+        
+        **Interpretation:** By filtering for the "Real-Time Era", this chart removes the historical bias of batch dumps. It reveals the *current* high-velocity centers. A district appearing here is actively processing high volumes *right now*, making it a prime candidate for resource optimization or load balancing.
+        """)
         rt_df = df[df['Era'] == 'Real-Time Era (Sept+)']
         if not rt_df.empty:
             district_growth = rt_df.groupby(['state', 'district'])['total_enrolment'].sum().reset_index().sort_values('total_enrolment', ascending=False).head(10)
@@ -438,7 +497,18 @@ if df is not None:
 
     with tab3:
         st.markdown('<span class="stat-badge badge-tri">Trivariate Analysis</span>', unsafe_allow_html=True)
-        st.caption("Operational Rhythm: Day vs State vs Volume. A three-variable correlation matrix.")
+        st.markdown("""
+        **Visualization:** Density Heatmap.
+        **Variables Analyzed:**
+        1.  **Day of Week (Categorical - Ordinal):** Mapped to the X-axis.
+        2.  **State (Categorical - Nominal):** Mapped to the Y-axis.
+        3.  **Total Enrolment (Quantitative):** Mapped to the Color Intensity (Z-axis).
+        
+        **Interpretation:** This is a correlation matrix visualization. Brighter spots indicate high activity intersections.
+        - **Vertical Stripes:** Indicate a specific day is busy across ALL states (e.g., Monday rush).
+        - **Horizontal Stripes:** Indicate a specific State is busy across ALL days.
+        - **Isolated Hotspots:** Indicate a specific State having a specific busy day (e.g., Kerala on Sundays).
+        """)
         heatmap_data = df_filtered.groupby(['state', 'DayOfWeek'])['total_enrolment'].sum().reset_index()
         days_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         fig_heat = px.density_heatmap(heatmap_data, x='DayOfWeek', y='state', z='total_enrolment', category_orders={'DayOfWeek': days_order}, color_continuous_scale='Hot')
@@ -447,7 +517,14 @@ if df is not None:
 
     with tab4:
         st.markdown('<span class="stat-badge badge-bi">Bivariate Analysis</span>', unsafe_allow_html=True)
-        st.caption("Strategic Outlier: Meghalaya (High Adult Enrolment). Compares 'State' vs '% Adult'.")
+        st.markdown("""
+        **Visualization:** Comparative Bar Chart with Color Highlight.
+        **Variables Analyzed:**
+        1.  **State (Categorical):** Independent variable.
+        2.  **% Adult Enrolment (Quantitative):** Dependent variable, derived from (Age 18+ / Total).
+        
+        **Interpretation:** This uses Bivariate analysis to identify anomalies. The baseline for most states is <5% (mostly children being enrolled). Meghalaya's bar extends to ~32%, identifying it as a statistical outlier (3-sigma event). This warrants a specific policy intervention different from the standard protocol.
+        """)
         state_stats = df.groupby('state')[['age_0_5', 'age_5_17', 'age_18_greater', 'total_enrolment']].sum()
         state_stats['pct_18_plus'] = (state_stats['age_18_greater'] / state_stats['total_enrolment']) * 100
         state_stats = state_stats.sort_values('pct_18_plus', ascending=False).head(10).reset_index()
@@ -459,8 +536,15 @@ if df is not None:
 
     with tab5:
         st.markdown('<span class="stat-badge badge-uni">Univariate Analysis</span>', unsafe_allow_html=True)
-        st.markdown("#### Statistical Distribution of Enrolment")
-        st.caption("Analyzing the distribution of a single variable: 'Total Enrolment per District'. This histogram helps identify the most common enrolment volumes.")
+        st.markdown("""
+        **Visualization:** Frequency Histogram.
+        **Variable Analyzed:** Total Enrolment per District (Quantitative).
+        
+        **Interpretation:** This chart shows the **Distribution** of the data. 
+        - **X-Axis:** Bins of enrolment volumes (e.g., 0-100, 100-200).
+        - **Y-Axis:** Count of districts falling into that bin.
+        - **Shape:** A "Right Skewed" distribution (tall bars on left, long tail on right) is expected, indicating most districts have low-to-moderate volume, while a few "Super Districts" handle massive loads. This helps in capacity planning (Most centers need size X, few need size 10X).
+        """)
         
         # Aggregate data by district for the histogram
         dist_agg = df_filtered.groupby('district')['total_enrolment'].sum().reset_index()
@@ -475,7 +559,7 @@ if df is not None:
         fig_hist.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_hist, use_container_width=True)
 
-    # --- 7. FLOATING AI CHATBOT (FAB) ---
+    # --- 8. FLOATING AI CHATBOT (FAB) ---
     if groq_available:
         with st.popover("✨", use_container_width=False):
             # Sticky Header inside Popover

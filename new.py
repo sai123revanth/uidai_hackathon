@@ -9,7 +9,7 @@ from groq import Groq  # Import Groq Client
 # --- 1. SEO & PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="Demographic Dividend | Education vs Workforce",
-    page_icon="🇮🇳",
+    page_icon="🤖",  # Updated to Chatbot Logo
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -85,7 +85,7 @@ seo_meta_tags = """
         box-shadow: 0 8px 32px rgba(0, 204, 150, 0.4) !important;
         border: 2px solid rgba(255,255,255,0.1) !important;
         color: white !important;
-        font-size: 28px !important;
+        font-size: 32px !important; /* Increased font size for the Robot Icon */
         padding: 0 !important;
         display: flex !important;
         align-items: center !important;
@@ -134,7 +134,7 @@ seo_meta_tags = """
         div[data-testid="stPopover"] > button {
             width: 50px !important;
             height: 50px !important;
-            font-size: 24px !important;
+            font-size: 26px !important;
         }
     }
 </style>
@@ -213,7 +213,7 @@ default_states = [s for s in default_states if s in valid_states]
 # --- MAIN DASHBOARD HEADER ---
 col_head_1, col_head_2 = st.columns([4, 1])
 with col_head_1:
-    st.title("🇮🇳 The Demographic Dividend: Education vs. Workforce Intelligence")
+    st.title("🤖 The Demographic Dividend: Education vs. Workforce Intelligence")
 
 # DETAILED INTRODUCTION
 st.markdown("""
@@ -575,7 +575,7 @@ with tab4:
 if client:
     # Use st.popover to create a floating chat window
     # The CSS defined at the top will position this element at the bottom right
-    with st.popover("💬", use_container_width=False):
+    with st.popover("🤖", use_container_width=False):
         
         # --- FIXED HEADER (Sticky) ---
         st.markdown(

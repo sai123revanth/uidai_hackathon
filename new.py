@@ -66,47 +66,51 @@ seo_meta_tags = """
         color: white;
     }
 
-    /* --- FLOATING CHATBOT BUTTON (POPOVER VERSION) --- */
-    /* Target the popover container to fix it to bottom right */
+    /* --- FLOATING CHATBOT BUTTON (MODERN FAB) --- */
+    /* Container positioning */
     div[data-testid="stPopover"] {
         position: fixed;
         bottom: 30px;
         right: 30px;
         z-index: 9999;
-        width: auto; /* Ensure container doesn't stretch */
+        width: auto;
     }
     
-    /* Style the button inside the popover to look like a FAB */
+    /* Circular Button Styling */
     div[data-testid="stPopover"] > button {
         width: 60px !important;
         height: 60px !important;
         border-radius: 50% !important;
         background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%) !important;
-        box-shadow: 0 4px 15px rgba(0,204,150, 0.4) !important;
-        border: none !important;
+        box-shadow: 0 8px 32px rgba(0, 204, 150, 0.4) !important;
+        border: 2px solid rgba(255,255,255,0.1) !important;
         color: white !important;
         font-size: 28px !important;
         padding: 0 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
     
+    /* Hover Effect */
     div[data-testid="stPopover"] > button:hover {
-        transform: scale(1.1) !important;
-        box-shadow: 0 6px 20px rgba(0,204,150, 0.6) !important;
-        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%) !important;
+        transform: translateY(-5px) scale(1.05) !important;
+        box-shadow: 0 12px 40px rgba(0, 204, 150, 0.6) !important;
+        background: linear-gradient(135deg, #00e0a6 0%, #00bc8b 100%) !important;
     }
     
     div[data-testid="stPopover"] > button:active {
         transform: scale(0.95) !important;
     }
     
-    /* Ensure the popover content (popup) has a clean background */
+    /* Popover Body Styling */
     div[data-testid="stPopoverBody"] {
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid #334155;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        background-color: #0f172a; /* Dark background matches theme */
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        padding: 0 !important; /* Remove default padding for full control */
     }
 
     /* --- MOBILE OPTIMIZATION --- */
@@ -571,9 +575,35 @@ with tab4:
 if client:
     # Use st.popover to create a floating chat window
     # The CSS defined at the top will position this element at the bottom right
-    with st.popover("🤖", use_container_width=False):
-        st.markdown("### 🤖 Policy Advisor")
-        st.caption("Ask specific questions about the visible districts.")
+    with st.popover("💬", use_container_width=False):
+        
+        # --- FIXED HEADER (Sticky) ---
+        st.markdown(
+            """
+            <div style="
+                position: sticky; 
+                top: 0; 
+                background-color: #0f172a; 
+                z-index: 1000; 
+                padding: 15px 10px; 
+                border-bottom: 1px solid #334155;
+                margin-top: -1rem; /* Negate default padding */
+                margin-left: -1rem;
+                margin-right: -1rem;
+            ">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 10px; padding-right: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">🤖</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 16px; color: #f1f5f9;">Policy Advisor</h3>
+                            <p style="margin: 0; font-size: 11px; color: #94a3b8;">AI Analytics Engine</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
         
         # Initialize session history for chat if not present
         if "chat_history" not in st.session_state:
@@ -614,8 +644,8 @@ if client:
             st.session_state.chat_history.append({"role": "assistant", "content": response})
 
         # FIXED SIZE SCROLLABLE CONTAINER FOR CHAT HISTORY
-        # This creates a scrollable area of fixed height (450px) inside the popover
-        chat_container = st.container(height=450)
+        # This creates a scrollable area of fixed height (400px) inside the popover
+        chat_container = st.container(height=400)
         with chat_container:
             # Display Chat History
             for message in st.session_state.chat_history:

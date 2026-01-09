@@ -77,13 +77,14 @@ seo_meta_tags = """
         width: auto;
     }
 
-    /* TOOLTIP POPUP FOR AI BOT */
+    /* TOOLTIP POPUP FOR AI BOT (MOVED TO LEFT SIDE) */
     div[data-testid="stPopover"]::before {
         content: "✨ AI Insight Extractor";
         position: absolute;
-        bottom: 85px;
-        right: 50%;
-        transform: translateX(50%);
+        top: 50%;
+        right: 100%; /* Push to the left of the button */
+        transform: translateY(-50%); /* Center vertically */
+        margin-right: 20px; /* Spacing from button */
         width: max-content;
         background: rgba(15, 23, 42, 0.95);
         border: 1px solid #334155;
@@ -99,14 +100,14 @@ seo_meta_tags = """
     }
 
     @keyframes tooltipFloat {
-        0%, 100% { opacity: 0; transform: translateX(50%) translateY(10px); }
-        10%, 90% { opacity: 1; transform: translateX(50%) translateY(0); }
+        0%, 100% { opacity: 0; transform: translateY(-50%) translateX(10px); }
+        10%, 90% { opacity: 1; transform: translateY(-50%) translateX(0); }
     }
     
     /* Animated Gradient Button Styling */
     div[data-testid="stPopover"] > button {
-        width: 70px !important;
-        height: 70px !important;
+        width: 90px !important; /* INCREASED SIZE */
+        height: 90px !important; /* INCREASED SIZE */
         border-radius: 50% !important;
         
         /* Modern Gradient with Animation */
@@ -118,7 +119,7 @@ seo_meta_tags = """
         border: none !important;
         
         color: white !important;
-        font-size: 32px !important;
+        font-size: 40px !important; /* INCREASED FONT SIZE */
         padding: 0 !important;
         display: flex !important;
         align-items: center !important;
@@ -179,9 +180,9 @@ seo_meta_tags = """
             right: 25px;
         }
         div[data-testid="stPopover"] > button {
-            width: 55px !important;
-            height: 55px !important;
-            font-size: 26px !important;
+            width: 65px !important;
+            height: 65px !important;
+            font-size: 30px !important;
         }
     }
 </style>

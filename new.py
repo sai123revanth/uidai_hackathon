@@ -73,33 +73,33 @@ seo_meta_tags = """
         bottom: 30px;
         right: 30px;
         z-index: 9999;
+        width: auto; /* Ensure container doesn't stretch */
     }
     
     /* Style the button inside the popover to look like a FAB */
     div[data-testid="stPopover"] > button {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%);
-        box-shadow: 0 4px 15px rgba(0,204,150, 0.4);
-        border: none;
-        color: white;
-        font-size: 28px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.2s, box-shadow 0.2s;
+        width: 60px !important;
+        height: 60px !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%) !important;
+        box-shadow: 0 4px 15px rgba(0,204,150, 0.4) !important;
+        border: none !important;
+        color: white !important;
+        font-size: 28px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     div[data-testid="stPopover"] > button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 20px rgba(0,204,150, 0.6);
-        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%);
+        transform: scale(1.1) !important;
+        box-shadow: 0 6px 20px rgba(0,204,150, 0.6) !important;
+        background: linear-gradient(135deg, #00CC96 0%, #00a87d 100%) !important;
     }
     
     div[data-testid="stPopover"] > button:active {
-        transform: scale(0.95);
+        transform: scale(0.95) !important;
     }
     
     /* Ensure the popover content (popup) has a clean background */
@@ -128,9 +128,9 @@ seo_meta_tags = """
             right: 20px;
         }
         div[data-testid="stPopover"] > button {
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
+            width: 50px !important;
+            height: 50px !important;
+            font-size: 24px !important;
         }
     }
 </style>
@@ -571,7 +571,7 @@ with tab4:
 if client:
     # Use st.popover to create a floating chat window
     # The CSS defined at the top will position this element at the bottom right
-    with st.popover("💬", use_container_width=False):
+    with st.popover("🤖", use_container_width=False):
         st.markdown("### 🤖 Policy Advisor")
         st.caption("Ask specific questions about the visible districts.")
         

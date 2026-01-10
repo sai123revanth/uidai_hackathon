@@ -924,14 +924,14 @@
                         </div>
                     </div>
 
-                    <!-- Rental Heatmap RENAMED TO The Strategic Pivot -->
-                    <div class="module-card" data-module="The Strategic Pivot">
+                    <!-- Rental Heatmap -->
+                    <div class="module-card" data-module="Rental Heatmap">
                         <div class="module-icon icon-rent">
-                            <i data-lucide="refresh-cw"></i>
+                            <i data-lucide="bar-chart-3"></i>
                         </div>
                         <div class="module-content">
-                            <span class="module-text">The Strategic Pivot</span>
-                            <span class="module-subtext">From "Acquisition" to "Maintenance"</span>
+                            <span class="module-text">Rental Heatmap</span>
+                            <span class="module-subtext">Market value analysis</span>
                         </div>
                     </div>
 
@@ -1048,8 +1048,6 @@ moduleCards.forEach(card => {
             window.location.href = 'insights_1.html';
         } else if (moduleName === "Hidden Hyper-Growth") {
             window.location.href = 'insight_2.html';
-        } else if (moduleName === "The Strategic Pivot") {
-            window.location.href = 'insight_3.html';
         }
     });
 });
@@ -1063,7 +1061,7 @@ async function handleAISearch() {
     lucide.createIcons();
 
     const modules = [
-        "AAdhaar analytics module", "Hidden Hyper-Growth", "The Strategic Pivot", 
+        "AAdhaar analytics module", "Hidden Hyper-Growth", "Rental Heatmap", 
         "Smart Allocation", "Family Migration", "Voter Readiness", 
         "Delimitation Data", "Fraud Prevention"
     ];

@@ -250,12 +250,13 @@ with col4:
 # 5. TABS & VISUALIZATIONS
 # -----------------------------------------------------------------------------
 
-# Added a new tab for "Statistical Deep Dive"
-tab1, tab2, tab3, tab4 = st.tabs([
+# Added a new tab for "Statistical Deep Dive" and "Module Documentation"
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 The Divergence Matrix", 
     "🗺️ Geographic Hotspots", 
-    "📈 Statistical Deep Dive",  # NEW TAB
-    "🧠 Strategic Intelligence"
+    "📈 Statistical Deep Dive",  
+    "🧠 Strategic Intelligence",
+    "📘 Module Documentation" # New Detailed Explanation Tab
 ])
 
 # --- TAB 1: THE SCATTER PLOT (THE WINNING VISUAL) ---
@@ -370,7 +371,7 @@ with tab2:
         fig_state.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_state, use_container_width=True)
 
-# --- TAB 3: STATISTICAL DEEP DIVE (NEW!) ---
+# --- TAB 3: STATISTICAL DEEP DIVE ---
 with tab3:
     st.markdown("## 📈 Advanced Statistical Analysis")
     st.markdown("Here we deconstruct the data using Univariate, Bivariate, and Trivariate methods to find hidden correlations.")
@@ -519,3 +520,51 @@ with tab4:
         file_name='uidai_hackathon_analysis.csv',
         mime='text/csv',
     )
+
+# --- TAB 5: MODULE DOCUMENTATION (NEWLY ADDED FOR COMPLETE EXPLANATION) ---
+with tab5:
+    st.markdown("## 📘 Detailed Module Explanation")
+    st.markdown("### 1. The Core Philosophy: 'Identity Anxiety'")
+    st.write("This module operates on a sociological hypothesis: **The way citizens interact with their Digital ID reveals their socio-economic stability.**")
+    
+    st.markdown("### 2. The Algorithm: DBDI")
+    st.latex(r'''
+        DBDI = \frac{\text{Demographic Updates (Corrections)}}{\text{Biometric Updates (Mandatory)}}
+    ''')
+    st.write("""
+    * **Numerator (Demographic Updates):** Changes to Name, Address, DOB, Gender. These are *voluntary* and *corrective*. A high number implies the ID was rejected somewhere (Bank, Ration, Job), forcing the user to fix it. This represents **"Friction"**.
+    * **Denominator (Biometric Updates):** Mandatory updates at age 5 and 15, or every 10 years. These are *compliance-driven*. A high number without demographic changes implies the user is just following rules but not actively using the ID for services that require accurate demographic data. This represents **"Compliance"**.
+    """)
+
+    st.markdown("### 3. Cluster Definitions")
+    col_doc1, col_doc2, col_doc3 = st.columns(3)
+    with col_doc1:
+        st.error("#### Cluster A: Hyper-Correction")
+        st.write("**DBDI > 2.5**")
+        st.write("Districts where people are frantically correcting their IDs. Often seen in border areas (citizenship anxiety) or migration hubs (address changes).")
+    with col_doc2:
+        st.info("#### Cluster B: Digital Dormancy")
+        st.write("**DBDI < 0.2**")
+        st.write("Districts where people update biometrics only when forced by the system, but rarely fix demographic errors. Suggests the ID is sitting in a drawer, unused for financial or employment access.")
+    with col_doc3:
+        st.warning("#### Cluster C: Balanced Economy")
+        st.write("**0.2 <= DBDI <= 2.5**")
+        st.write("A healthy digital state where updates happen naturally alongside mandatory biometric refreshes.")
+
+    st.markdown("### 4. Data Dictionary & Sources")
+    st.write("This module processes synthetic API data mirroring the structure of UIDAI datasets.")
+    st.dataframe(pd.DataFrame({
+        "Variable": ["bio_age_17_", "demo_age_17_", "age_18_greater", "Total_Activity"],
+        "Description": ["Biometric updates for adults (Compliance)", "Demographic corrections for adults (Anxiety)", "New adult enrolments (Inclusion)", "Sum of Bio + Demo updates (Volume)"],
+        "Source File Category": ["Biometric API", "Demographic API", "Enrolment API", "Calculated Field"]
+    }), use_container_width=True)
+    
+    st.markdown("### 5. Why this matters?")
+    st.info("""
+    Traditional metrics track **Volume** (How many updates?). 
+    This module tracks **Intent** (Why are they updating?).
+    
+    By separating "Compliance" from "Correction", we can allocate resources better:
+    * **High Anxiety Areas** need more operators and help desks.
+    * **High Dormancy Areas** need more utility and banking integration.
+    """)

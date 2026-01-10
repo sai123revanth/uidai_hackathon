@@ -14,62 +14,111 @@ st.set_page_config(
     initial_sidebar_state="collapsed" 
 )
 
-# Custom CSS for styling - Fixed for visibility in both light and dark modes
+# Custom CSS for styling - Upgraded for Navy Blue Gradient Theme
 st.markdown("""
 <style>
+    /* Main App Background Gradient */
+    .stApp {
+        background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+        color: #ffffff;
+    }
+
+    /* Target specific container for background to ensure full coverage */
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(180deg, #020c1b 0%, #061a33 100%);
+    }
+
+    /* Glassmorphism Metric Cards */
     .metric-card {
-        background-color: rgba(240, 242, 246, 0.15); 
-        border: 1px solid rgba(128, 128, 128, 0.3);
-        border-radius: 12px;
+        background-color: rgba(255, 255, 255, 0.05); 
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
         padding: 25px;
-        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         text-align: center;
         margin-bottom: 15px;
+        transition: transform 0.3s ease;
     }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        border: 1px solid rgba(0, 191, 255, 0.4);
+    }
+
     .metric-title {
-        color: inherit; 
-        opacity: 0.9;
-        font-size: 15px;
+        color: #8892b0; 
+        font-size: 14px;
         margin-bottom: 8px;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1.2px;
     }
+
     .metric-value {
-        font-size: 36px;
+        font-size: 38px;
         font-weight: 800;
         line-height: 1.2;
+        background: linear-gradient(to right, #ffffff, #00d2ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
-    .highlight-red { color: #FF4B4B !important; }
-    .highlight-green { color: #28a745 !important; }
-    .highlight-blue { color: #007bff !important; }
-    .highlight-orange { color: #FD7E14 !important; }
+
+    /* Gradient Font Colors for Highlighting */
+    .highlight-red { color: #ff4d4d !important; text-shadow: 0 0 10px rgba(255, 77, 77, 0.3); }
+    .highlight-green { color: #00ff88 !important; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
+    .highlight-blue { color: #00d2ff !important; text-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
+    .highlight-orange { color: #ff9f43 !important; text-shadow: 0 0 10px rgba(255, 159, 67, 0.3); }
     
+    /* Box Styles */
     .guide-box {
-        background-color: rgba(0, 123, 255, 0.05);
-        border-left: 4px solid #007bff;
+        background-color: rgba(0, 210, 255, 0.03);
+        border-left: 4px solid #00d2ff;
         padding: 20px;
         margin: 10px 0 25px 0;
         font-size: 14px;
         line-height: 1.6;
         border-radius: 0 10px 10px 0;
+        color: #ccd6f6;
     }
+
     .insight-header {
-        color: #007bff;
+        color: #00d2ff;
         font-weight: bold;
         margin-bottom: 10px;
         display: block;
         font-size: 18px;
+        letter-spacing: 0.5px;
     }
-    .stMarkdown { color: inherit; }
-    
-    /* Horizontal Navigation Bar styling for Filters */
+
+    /* Navigation Bar styling for Filters */
     .nav-filter-container {
-        background-color: rgba(128, 128, 128, 0.05);
+        background-color: rgba(255, 255, 255, 0.02);
         padding: 20px;
-        border-radius: 10px;
+        border-radius: 12px;
         margin-bottom: 25px;
-        border: 1px solid rgba(128, 128, 128, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* General Typography Fixes for Dark Theme */
+    h1, h2, h3, h4, h5, p, span, li {
+        color: #e6f1ff;
+    }
+    
+    .stMarkdown div p {
+        color: #ccd6f6;
+    }
+
+    /* Adjusting Streamlit internal elements */
+    .stSelectbox label, .stMultiSelect label, .stDateInput label {
+        color: #00d2ff !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Dataframe visibility */
+    .stDataFrame {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -195,11 +244,11 @@ st.title("🇮🇳 Aadhar Strategic Pivot Dashboard")
 st.subheader("Transitioning from 'New Acquisition' to 'Continuous Maintenance'")
 
 st.markdown("""
-<div style='background-color: rgba(0, 123, 255, 0.1); padding: 20px; border-radius: 8px; border-left: 6px solid #007bff; margin-bottom: 25px;'>
-    <h4 style="margin-top:0; color: #007bff;">💡 Executive Context (Multi-File Consolidated)</h4>
-    India's identity infrastructure is moving from an <strong>Enrolment Phase</strong> (getting everyone an ID) to a 
+<div style='background: linear-gradient(90deg, rgba(0, 210, 255, 0.15) 0%, rgba(58, 123, 213, 0.05) 100%); padding: 20px; border-radius: 12px; border-left: 6px solid #00d2ff; margin-bottom: 25px;'>
+    <h4 style="margin-top:0; color: #00d2ff; letter-spacing: 0.5px;">💡 Executive Context (Multi-File Consolidated)</h4>
+    <p style="margin:0; color: #ccd6f6;">India's identity infrastructure is moving from an <strong>Enrolment Phase</strong> (getting everyone an ID) to a 
     <strong>Lifecycle Phase</strong> (keeping IDs accurate). This dashboard tracks that transition using the full data workload. 
-    A high "Update Ratio" means the region is fully saturated and requires maintenance infrastructure, not enrolment kits.
+    A high "Update Ratio" means the region is fully saturated and requires maintenance infrastructure, not enrolment kits.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -267,7 +316,7 @@ with c4:
 st.markdown("""
 <div class="guide-box">
     <span class="insight-header">📋 How to Read the KPIs:</span>
-    <ul>
+    <ul style="color: #ccd6f6;">
         <li><strong>New Enrolments:</strong> Number of unique Aadhaar IDs generated. A decline here isn't bad—it indicates high saturation.</li>
         <li><strong>Updates (Demo/Bio):</strong> Volume of changes to existing IDs. This is your primary workload now.</li>
         <li><strong>Update-to-Enrol Ratio:</strong> The critical "Saturation Metric." 
@@ -292,8 +341,19 @@ with col_growth_1:
     max_val = max(values) if max(values) > 0 else 1
     norm_values = [v/max_val for v in values]
     
-    fig_radar = go.Figure(data=go.Scatterpolar(r=norm_values, theta=categories, fill='toself', line_color='#007bff'))
-    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=False)), showlegend=False, height=400)
+    fig_radar = go.Figure(data=go.Scatterpolar(r=norm_values, theta=categories, fill='toself', line_color='#00d2ff'))
+    fig_radar.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=False),
+            bgcolor="rgba(0,0,0,0)"
+        ), 
+        showlegend=False, 
+        height=400,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#ccd6f6"),
+        template="plotly_dark"
+    )
     st.plotly_chart(fig_radar, use_container_width=True)
     
     with st.expander("🔍 Deep Detail: Radar Analysis"):
@@ -308,9 +368,17 @@ with col_growth_2:
     st.subheader("📈 Cumulative Growth Comparison")
     daily_growth = filtered_df.groupby('date')[['New_Enrolments', 'Total_Updates']].sum().cumsum().reset_index()
     fig_cum = go.Figure()
-    fig_cum.add_trace(go.Scatter(x=daily_growth['date'], y=daily_growth['New_Enrolments'], name='New Enrolments', fill='tozeroy'))
-    fig_cum.add_trace(go.Scatter(x=daily_growth['date'], y=daily_growth['Total_Updates'], name='Total Updates', fill='tonexty'))
-    fig_cum.update_layout(title="Volume Progression", hovermode="x unified", height=400, template="plotly_white")
+    fig_cum.add_trace(go.Scatter(x=daily_growth['date'], y=daily_growth['New_Enrolments'], name='New Enrolments', fill='tozeroy', line_color="#00ff88"))
+    fig_cum.add_trace(go.Scatter(x=daily_growth['date'], y=daily_growth['Total_Updates'], name='Total Updates', fill='tonexty', line_color="#00d2ff"))
+    fig_cum.update_layout(
+        title="Volume Progression", 
+        hovermode="x unified", 
+        height=400, 
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#ccd6f6")
+    )
     st.plotly_chart(fig_cum, use_container_width=True)
     
     with st.expander("🔍 Deep Detail: Growth Velocity"):
@@ -330,8 +398,15 @@ with col_seasonal_1:
     day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     heatmap_data = filtered_df.groupby('day_of_week')[['Total_Updates']].mean().reindex(day_order).reset_index()
     fig_heat = px.bar(heatmap_data, x='day_of_week', y='Total_Updates', color='Total_Updates',
-                     color_continuous_scale='Viridis', labels={'Total_Updates': 'Avg Daily Load'})
-    fig_heat.update_layout(height=400, template="plotly_white", xaxis_title="")
+                     color_continuous_scale='Blues', labels={'Total_Updates': 'Avg Daily Load'})
+    fig_heat.update_layout(
+        height=400, 
+        template="plotly_dark", 
+        xaxis_title="",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#ccd6f6")
+    )
     st.plotly_chart(fig_heat, use_container_width=True)
     
     st.markdown("""
@@ -343,9 +418,16 @@ with col_seasonal_2:
     month_order = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
     monthly_data = filtered_df.groupby(['month', 'month_num'])[['Total_Updates', 'New_Enrolments']].mean().sort_values('month_num').reset_index()
     fig_month = go.Figure()
-    fig_month.add_trace(go.Bar(x=monthly_data['month'], y=monthly_data['Total_Updates'], name='Avg Updates', marker_color='#636EFA'))
-    fig_month.add_trace(go.Bar(x=monthly_data['month'], y=monthly_data['New_Enrolments'], name='Avg Enrolments', marker_color='#00CC96'))
-    fig_month.update_layout(height=400, barmode='group', template="plotly_white")
+    fig_month.add_trace(go.Bar(x=monthly_data['month'], y=monthly_data['Total_Updates'], name='Avg Updates', marker_color='#00d2ff'))
+    fig_month.add_trace(go.Bar(x=monthly_data['month'], y=monthly_data['New_Enrolments'], name='Avg Enrolments', marker_color='#00ff88'))
+    fig_month.update_layout(
+        height=400, 
+        barmode='group', 
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#ccd6f6")
+    )
     st.plotly_chart(fig_month, use_container_width=True)
 
     st.markdown("""
@@ -368,7 +450,13 @@ with col_scatter:
         size='New_Enrolments', color='Demographic_Updates',
         title="Update Type Intensity by Region",
         labels={'Demographic_Updates': 'Demographic Volume', 'Biometric_Updates': 'Biometric Volume'},
-        template="plotly_white"
+        template="plotly_dark",
+        color_continuous_scale="Viridis"
+    )
+    fig_scatter.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#ccd6f6")
     )
     st.plotly_chart(fig_scatter, use_container_width=True)
     
@@ -389,7 +477,7 @@ with col_geo_list:
     # Sort and highlight
     top_efficiency = geo_group.sort_values('Update_Ratio', ascending=False).head(10)
     st.write("**Top 10 Saturated Regions (High Ratio):**")
-    st.dataframe(top_efficiency[['state' if not selected_districts else 'district', 'Update_Ratio']].style.format({"Update_Ratio": "{:.2f}x"}).background_gradient(cmap='Reds'), use_container_width=True)
+    st.dataframe(top_efficiency[['state' if not selected_districts else 'district', 'Update_Ratio']].style.format({"Update_Ratio": "{:.2f}x"}).background_gradient(cmap='Blues'), use_container_width=True)
     
     st.markdown("""
     **What this list tells you:** These are the regions where the old "Enrolment First" KPIs are no longer applicable. Management should judge these centers based on **Customer Waiting Time (CWT)** and **Update Success Rate** rather than "IDs generated."
@@ -407,7 +495,13 @@ with col_age_1:
         'Count': [filtered_df['age_0_5'].sum(), filtered_df['age_5_17'].sum(), filtered_df['age_18_greater'].sum()]
     })
     fig_age_enrol = px.pie(enrol_age, values='Count', names='Age Group', hole=0.5, 
-                           color_discrete_sequence=px.colors.sequential.Greens_r)
+                           color_discrete_sequence=px.colors.sequential.GnBu_r)
+    fig_age_enrol.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#ccd6f6")
+    )
     st.plotly_chart(fig_age_enrol, use_container_width=True)
     
     st.markdown("""
@@ -422,6 +516,12 @@ with col_age_2:
     })
     fig_upd_type = px.pie(update_type, values='Count', names='Type', hole=0.5, 
                            color_discrete_sequence=px.colors.sequential.Blues_r)
+    fig_upd_type.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#ccd6f6")
+    )
     st.plotly_chart(fig_upd_type, use_container_width=True)
 
     st.markdown("""
@@ -446,31 +546,40 @@ st.markdown("### 🎯 Final Strategic Directives")
 avg_ratio = ratio
 if avg_ratio > 10:
     status_label = "MATURE SERVICE ECOSYSTEM"
-    status_color = "#FF4B4B"
+    status_color = "#ff4d4d"
 else:
     status_label = "HYBRID GROWTH ECOSYSTEM"
-    status_color = "#007bff"
+    status_color = "#00d2ff"
 
 st.markdown(f"""
-<div style='border: 2px solid {status_color}; padding: 20px; border-radius: 10px; text-align: center;'>
-    <h2 style='color: {status_color}; margin: 0;'>CURRENT STRATEGY: {status_label}</h2>
-    <p>Based on the calculated Update-to-Enrol ratio of <strong>{avg_ratio:.1f}x</strong></p>
+<div style='border: 2px solid {status_color}; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 0 20px {status_color}33;'>
+    <h2 style='color: {status_color}; margin: 0; letter-spacing: 2px;'>CURRENT STRATEGY: {status_label}</h2>
+    <p style='color: #ccd6f6; font-size: 1.1em;'>Based on the calculated Update-to-Enrol ratio of <strong style='color:#ffffff;'>{avg_ratio:.1f}x</strong></p>
 </div>
 """, unsafe_allow_html=True)
 
 rec_col1, rec_col2 = st.columns(2)
 with rec_col1:
-    st.success("#### 🛠️ Operational Pivot")
-    st.markdown("""
-    - **Update Center Conversion:** In all regions showing > 15x ratio, convert Enrolment Kits to 'Update Kiosks'.
-    - **Skill Training:** Shift operator training from "How to enroll" to "How to verify biometric consistency" to reduce update rejection rates.
-    """)
+    st.markdown(f"""
+    <div style="background: rgba(0, 255, 136, 0.05); padding: 20px; border-radius: 10px; border-left: 5px solid #00ff88;">
+        <h4 style="color: #00ff88; margin-top: 0;">🛠️ Operational Pivot</h4>
+        <ul style="color: #ccd6f6;">
+            <li><strong>Update Center Conversion:</strong> In all regions showing > 15x ratio, convert Enrolment Kits to 'Update Kiosks'.</li>
+            <li><strong>Skill Training:</strong> Shift operator training from "How to enroll" to "How to verify biometric consistency" to reduce update rejection rates.</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
 with rec_col2:
-    st.warning("#### 📡 Infrastructure Deployment")
-    st.markdown("""
-    - **Hardware Refresh:** Prioritize Biometric Scanner upgrades in the 'Low Demo / High Bio' quadrants identified in the scatter plot.
-    - **Mobile Strategy:** If adult enrolments (18+) are high in specific districts, deploy short-term 'Saturation Camps' to close the gap quickly and move to maintenance.
-    """)
+    st.markdown(f"""
+    <div style="background: rgba(255, 159, 67, 0.05); padding: 20px; border-radius: 10px; border-left: 5px solid #ff9f43;">
+        <h4 style="color: #ff9f43; margin-top: 0;">📡 Infrastructure Deployment</h4>
+        <ul style="color: #ccd6f6;">
+            <li><strong>Hardware Refresh:</strong> Prioritize Biometric Scanner upgrades in the 'Low Demo / High Bio' quadrants identified in the scatter plot.</li>
+            <li><strong>Mobile Strategy:</strong> If adult enrolments (18+) are high in specific districts, deploy short-term 'Saturation Camps' to close the gap quickly and move to maintenance.</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-# Credit bar removed as requested.
+# Footer spacing
+st.markdown("<br><br>", unsafe_allow_html=True)

@@ -93,32 +93,68 @@ def load_and_process_data():
     Performs merging, cleaning, and calculates the Divergence Index.
     """
     try:
-        # Load Files (Simulating the API data load from CSVs)
-        bio_files = ['api_data_aadhar_biometric_0_500000.csv', 'api_data_aadhar_biometric_500000_1000000.csv']
-        demo_files = ['api_data_aadhar_demographic_1000000_1500000.csv', 'api_data_aadhar_demographic_1500000_2000000.csv']
-        enrol_files = ['api_data_aadhar_enrolment_0_500000.csv', 'api_data_aadhar_enrolment_500000_1000000.csv']
+        # Load Files (Now including all segments provided for complete analysis)
+        bio_files = [
+            'api_data_aadhar_biometric_0_500000.csv', 
+            'api_data_aadhar_biometric_500000_1000000.csv',
+            'api_data_aadhar_biometric_1000000_1500000.csv',
+            'api_data_aadhar_biometric_1500000_1861108.csv'
+        ]
+        
+        demo_files = [
+            'api_data_aadhar_demographic_0_500000.csv',
+            'api_data_aadhar_demographic_500000_1000000.csv',
+            'api_data_aadhar_demographic_1000000_1500000.csv', 
+            'api_data_aadhar_demographic_1500000_2000000.csv',
+            'api_data_aadhar_demographic_2000000_2071700.csv'
+        ]
+        
+        enrol_files = [
+            'api_data_aadhar_enrolment_0_500000.csv', 
+            'api_data_aadhar_enrolment_500000_1000000.csv',
+            'api_data_aadhar_enrolment_1000000_1006029.csv'
+        ]
 
         # Generator expressions for efficient concatenation
-        df_bio = pd.concat((pd.read_csv(f) for f in bio_files), ignore_index=True)
-        df_demo = pd.concat((pd.read_csv(f) for f in demo_files), ignore_index=True)
-        df_enrol = pd.concat((pd.read_csv(f) for f in enrol_files), ignore_index=True)
+        # We use a try-except inside the generator to handle potential missing files gracefully if running locally without all chunks
+        def safe_read(f):
+            try:
+                return pd.read_csv(f)
+            except FileNotFoundError:
+                return pd.DataFrame()
+
+        df_bio = pd.concat((safe_read(f) for f in bio_files), ignore_index=True)
+        df_demo = pd.concat((safe_read(f) for f in demo_files), ignore_index=True)
+        df_enrol = pd.concat((safe_read(f) for f in enrol_files), ignore_index=True)
 
         # Basic Cleanup & Standardization
         for df in [df_bio, df_demo, df_enrol]:
-            df.columns = [c.strip() for c in df.columns] # Clean whitespace
-            # Standardize State/District names (Title case for consistency)
-            df['state'] = df['state'].str.title().str.strip()
-            df['district'] = df['district'].str.title().str.strip()
+            if not df.empty:
+                df.columns = [c.strip() for c in df.columns] # Clean whitespace
+                # Standardize State/District names (Title case for consistency)
+                if 'state' in df.columns:
+                    df['state'] = df['state'].str.title().str.strip()
+                if 'district' in df.columns:
+                    df['district'] = df['district'].str.title().str.strip()
 
         # Aggregation by State & District
         # Biometric Focus: Adult Updates (likely aging/mandatory) -> bio_age_17_
-        bio_grp = df_bio.groupby(['state', 'district'])[['bio_age_17_', 'bio_age_5_17']].sum().reset_index()
+        if not df_bio.empty:
+            bio_grp = df_bio.groupby(['state', 'district'])[['bio_age_17_', 'bio_age_5_17']].sum().reset_index()
+        else:
+            bio_grp = pd.DataFrame(columns=['state', 'district', 'bio_age_17_', 'bio_age_5_17'])
         
         # Demographic Focus: Adult Updates (Corrections/KYC) -> demo_age_17_
-        demo_grp = df_demo.groupby(['state', 'district'])[['demo_age_17_', 'demo_age_5_17']].sum().reset_index()
+        if not df_demo.empty:
+            demo_grp = df_demo.groupby(['state', 'district'])[['demo_age_17_', 'demo_age_5_17']].sum().reset_index()
+        else:
+            demo_grp = pd.DataFrame(columns=['state', 'district', 'demo_age_17_', 'demo_age_5_17'])
         
         # Enrolment Focus: New Adults (Inclusion) -> age_18_greater
-        enrol_grp = df_enrol.groupby(['state', 'district'])[['age_18_greater']].sum().reset_index()
+        if not df_enrol.empty:
+            enrol_grp = df_enrol.groupby(['state', 'district'])[['age_18_greater']].sum().reset_index()
+        else:
+             enrol_grp = pd.DataFrame(columns=['state', 'district', 'age_18_greater'])
 
         # Master Merge: Outer join to ensure no district is left behind
         master = pd.merge(bio_grp, demo_grp, on=['state', 'district'], how='outer').fillna(0)

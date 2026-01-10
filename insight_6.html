@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UDAAN - Aadhar Operational Friction Analytics</title>
+    <title>UDAAN - Forensic Analytics Module</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <!-- Import Plus Jakarta Sans and Rajdhani -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
@@ -328,74 +328,73 @@
 
     <div class="dashboard-grid" id="dashboardGrid">
         
-        <!-- PART 1: Left Sidebar (UPDATED CONTENT) -->
+        <!-- PART 1: Left Sidebar (UPDATED CONTENT FOR GHOST VILLAGE DETECTOR) -->
         <div class="sidebar-left glass-panel" id="sidebarLeft" style="padding: 24px;">
             <button class="nav-back-btn" onclick="window.location.href='index.html'">
                 <i data-lucide="arrow-left"></i> Back to Map
             </button>
 
-            <!-- Updated Section Header for Operational Friction -->
+            <!-- Updated Section Header for Forensic Analytics -->
             <div class="section-header">
-                <i data-lucide="alert-triangle" style="color: var(--accent-3); width: 28px; height: 28px; margin-top: 4px;"></i>
+                <!-- Changed Icon to Ghost for visual relevance -->
+                <i data-lucide="ghost" style="color: var(--accent-3); width: 28px; height: 28px; margin-top: 4px;"></i>
                 <div>
-                    <h1 class="section-title" style="font-size: 1.25rem; line-height: 1.1;">Operational Friction</h1>
-                    <div style="font-size: 0.8rem; color: var(--accent-1); margin-top: 6px;">Ecosystem Health Monitor</div>
+                    <h1 class="section-title" style="font-size: 1.25rem; line-height: 1.1;">Ghost Village Detector</h1>
+                    <div style="font-size: 0.8rem; color: var(--accent-1); margin-top: 6px;">Forensic Analytics Module</div>
                 </div>
             </div>
 
             <!-- Intro Section: Executive Summary -->
             <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
-                This module acts as an advanced operational intelligence tool. It processes millions of records to identify <strong>"Friction Zones"</strong>—districts where residents face disproportionate difficulty with biometric authentication.
+                <strong>Unmasking Digital Phantoms:</strong> This module utilizes Unsupervised Machine Learning to identify high-density enrolment zones exhibiting zero life-cycle activity—a primary indicator of fake entity farms.
             </p>
 
             <!-- Key Insights Header -->
             <h3 style="color: white; font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <i data-lucide="activity" style="width: 16px; height: 16px; color: var(--accent-2);"></i> Detection Logic
+                <i data-lucide="scan-search" style="width: 16px; height: 16px; color: var(--accent-2);"></i> Detection Logic
             </h3>
 
-            <!-- Insight Card 1: The Core Problem -->
+            <!-- Insight Card 1: The Problem/Anomaly -->
             <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border);">
                 <div style="margin-bottom: 8px;">
                     <strong style="color: var(--accent-3); display:block; font-size: 0.85rem; text-transform:uppercase; letter-spacing: 0.05em;">The Anomaly</strong> 
                 </div>
                 <p style="font-size: 0.85rem; color: #ddd; line-height: 1.5; margin: 0;">
-                    In a healthy ecosystem, Biometric and Demographic updates often correlate. An anomaly exists when <strong style="color:#fff">Biometric Updates surge</strong> while Demographic changes remain low.
+                    A "Ghost Village" is defined by massive <strong>Enrolment Spikes</strong> (Birth of ID) followed by <strong>Zero Activity</strong> (No Biometric/Demographic updates).
                 </p>
                 <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: var(--text-secondary);">
-                    <strong>Cause:</strong> Manual labor (fingerprint wear) or hardware failure.<br>
-                    <strong>Effect:</strong> Authentication failure for rations & banking.
+                    <strong>Implication:</strong> These entities may be "ghosts" created solely for benefit diversion, or dormant accounts.
                 </div>
             </div>
 
             <!-- Insight Card 2: Methodology & Formula -->
             <div class="info-card" style="margin-bottom: 12px;">
-                <span class="info-label" style="color: var(--accent-1); font-size: 0.8rem;">Methodology: The Friction Index</span>
+                <span class="info-label" style="color: var(--accent-1); font-size: 0.8rem;">Feature Engineering</span>
                 
                 <!-- Math Formula Display -->
                 <div class="math-block">
-                    Total Biometric Updates<br>
-                    -------------------------<br>
-                    (Total Demographic + 1)
+                    Update Ratio (R) =<br>
+                    (Bio + Demo Updates) / Enrolments
                 </div>
 
                 <!-- Color Coded Status -->
                 <div class="status-badge-container">
                     <div class="status-badge badge-green">
-                        <div style="color: #4ade80; font-weight: 700; font-size: 1rem;">&lt; 1.0</div>
-                        <div style="font-size: 0.7rem; color: #bbf7d0; text-transform: uppercase;">Healthy</div>
+                        <div style="color: #4ade80; font-weight: 700; font-size: 1rem;">High Ratio</div>
+                        <div style="font-size: 0.7rem; color: #bbf7d0; text-transform: uppercase;">Normal</div>
                     </div>
                     <div class="status-badge badge-red">
-                        <div style="color: #f87171; font-weight: 700; font-size: 1rem;">&gt; 2.0</div>
-                        <div style="font-size: 0.7rem; color: #fecaca; text-transform: uppercase;">Critical</div>
+                        <div style="color: #f87171; font-weight: 700; font-size: 1rem;">Ratio ≈ 0</div>
+                        <div style="font-size: 0.7rem; color: #fecaca; text-transform: uppercase;">Ghost Zone</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Insight Card 3: The Solution -->
+            <!-- Insight Card 3: The Solution (Machine Learning) -->
             <div class="info-card" style="border-left: 3px solid var(--accent-2);">
-                <span class="info-label" style="color: var(--accent-2); font-size: 0.8rem;">Strategic Solution</span>
+                <span class="info-label" style="color: var(--accent-2); font-size: 0.8rem;">Algorithmic Solution</span>
                 <p style="font-size: 0.85rem; color: #ddd; margin-top: 6px; line-height: 1.5;">
-                    Administrators can immediately identify high-friction districts and <strong>deploy Iris Scanners</strong>. This bypasses the fingerprint limitations caused by manual labor, restoring service access.
+                    <strong>K-Means Clustering</strong> (Unsupervised ML) mathematically segments pincodes into "Normal," "Suspicious," and "High Risk" clusters, eliminating human bias in detection.
                 </p>
             </div>
 

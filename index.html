@@ -957,14 +957,14 @@
                         </div>
                     </div>
 
-                    <!-- First-Time Voter Readiness -->
-                    <div class="module-card" data-module="Voter Readiness">
+                    <!-- Ghost Village Detector (Formerly Voter Readiness) -->
+                    <div class="module-card" data-module="Ghost Village Detector">
                         <div class="module-icon icon-voter">
-                            <i data-lucide="user-check"></i>
+                            <i data-lucide="ghost"></i>
                         </div>
                         <div class="module-content">
-                            <span class="module-text">Voter Readiness</span>
-                            <span class="module-subtext">New eligible voter analysis</span>
+                            <span class="module-text">Ghost Village Detector</span>
+                            <span class="module-subtext">Forensic Analytics Module</span>
                         </div>
                     </div>
 
@@ -1054,6 +1054,8 @@ moduleCards.forEach(card => {
             window.location.href = 'insight_4.html';
         } else if (moduleName === "Operational Friction") {
             window.location.href = 'insight_5.html';
+        } else if (moduleName === "Ghost Village Detector") {
+            window.location.href = 'insight_6.html';
         }
     });
 });
@@ -1068,7 +1070,7 @@ async function handleAISearch() {
 
     const modules = [
         "AAdhaar analytics module", "Hidden Hyper-Growth", "The Strategic Pivot", 
-        "Mapping Human Mobility", "Operational Friction", "Voter Readiness", 
+        "Mapping Human Mobility", "Operational Friction", "Ghost Village Detector", 
         "Delimitation Data", "Fraud Prevention"
     ];
 

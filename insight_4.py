@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import gc  # Imported for Garbage Collection to manage memory resources
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -102,8 +103,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- Data Loading Function ---
-@st.cache_data
+# Added TTL (Time To Live) to clear cache periodically to free memory
+@st.cache_data(ttl="2h", show_spinner=True)
 def load_and_process_data():
+    """
+    Loads, merges, and optimizes data for memory usage.
+    Uses garbage collection and type casting to minimize RAM footprint.
+    """
+    
     # 1. Load Biometric Data (Adding new files to the list)
     bio_files = [
         "api_data_aadhar_biometric_0_500000.csv",
@@ -114,12 +121,18 @@ def load_and_process_data():
     df_bio_list = []
     for f in bio_files:
         try:
-            df_bio_list.append(pd.read_csv(f))
+            # Load only necessary columns if files are huge, otherwise load all
+            temp_df = pd.read_csv(f)
+            df_bio_list.append(temp_df)
         except FileNotFoundError:
             continue
     
     if df_bio_list:
-        df_bio = pd.concat(df_bio_list)
+        df_bio = pd.concat(df_bio_list, ignore_index=True)
+        # Explicitly delete list to free memory
+        del df_bio_list
+        gc.collect()
+        
         # Rename columns to standardized format
         df_bio.rename(columns={
             'bio_age_5_17': 'Biometric_5_17',
@@ -139,12 +152,17 @@ def load_and_process_data():
     df_demo_list = []
     for f in demo_files:
         try:
-            df_demo_list.append(pd.read_csv(f))
+            temp_df = pd.read_csv(f)
+            df_demo_list.append(temp_df)
         except FileNotFoundError:
             continue
             
     if df_demo_list:
-        df_demo = pd.concat(df_demo_list)
+        df_demo = pd.concat(df_demo_list, ignore_index=True)
+        # Explicitly delete list to free memory
+        del df_demo_list
+        gc.collect()
+        
         df_demo.rename(columns={
             'demo_age_5_17': 'Demographic_5_17',
             'demo_age_17_': 'Demographic_18_plus'
@@ -159,12 +177,17 @@ def load_and_process_data():
     df_enrol_list = []
     for f in enrol_files:
         try:
-            df_enrol_list.append(pd.read_csv(f))
+            temp_df = pd.read_csv(f)
+            df_enrol_list.append(temp_df)
         except FileNotFoundError:
             continue
     
     if df_enrol_list:
-        df_enrol = pd.concat(df_enrol_list)
+        df_enrol = pd.concat(df_enrol_list, ignore_index=True)
+        # Explicitly delete list to free memory
+        del df_enrol_list
+        gc.collect()
+
         df_enrol.rename(columns={
             'age_0_5': 'Enrolment_0_5',
             'age_5_17': 'Enrolment_5_17',
@@ -177,15 +200,27 @@ def load_and_process_data():
     # We group by common columns first to handle duplicates if any
     group_cols = ['date', 'state', 'district', 'pincode']
     
+    # Pre-aggregating reduces the size of dataframes before merging, saving memory
     df_bio_grouped = df_bio.groupby(group_cols, as_index=False).sum()
     df_demo_grouped = df_demo.groupby(group_cols, as_index=False).sum()
     df_enrol_grouped = df_enrol.groupby(group_cols, as_index=False).sum()
+    
+    # Free up original heavy dataframes
+    del df_bio, df_demo, df_enrol
+    gc.collect()
 
     # Outer join to keep all records: Start with Demo and Bio
     df_merged = pd.merge(df_demo_grouped, df_bio_grouped, on=group_cols, how='outer').fillna(0)
     
+    # Free intermediate grouped frames
+    del df_demo_grouped, df_bio_grouped
+    gc.collect()
+    
     # Merge Enrolment Data
     df_merged = pd.merge(df_merged, df_enrol_grouped, on=group_cols, how='outer').fillna(0)
+    
+    del df_enrol_grouped
+    gc.collect()
 
     # Convert Date
     df_merged['date'] = pd.to_datetime(df_merged['date'], dayfirst=True, errors='coerce')
@@ -195,9 +230,28 @@ def load_and_process_data():
     df_merged['Total_Biometric_Updates'] = df_merged['Biometric_5_17'] + df_merged['Biometric_18_plus']
     df_merged['Total_Enrolments'] = df_merged['Enrolment_0_5'] + df_merged['Enrolment_5_17'] + df_merged['Enrolment_18_plus']
     
-    # Clean string columns
-    df_merged['state'] = df_merged['state'].astype(str).str.title().str.strip()
-    df_merged['district'] = df_merged['district'].astype(str).str.title().str.strip()
+    # --- MEMORY OPTIMIZATION STEP ---
+    # Convert object columns to categories (Drastically reduces memory for repeated strings like state names)
+    # And downcast numeric types to float32/int32
+    
+    # 1. Optimize Strings
+    for col in ['state', 'district']:
+        if col in df_merged.columns:
+            # Clean strings
+            df_merged[col] = df_merged[col].astype(str).str.title().str.strip()
+            # Convert to category
+            df_merged[col] = df_merged[col].astype('category')
+            
+    # 2. Optimize Numbers
+    # Identify float columns and downcast to float32
+    float_cols = df_merged.select_dtypes(include=['float64']).columns
+    for col in float_cols:
+        df_merged[col] = df_merged[col].astype('float32')
+        
+    # Identify int columns (if any remained as int64) and downcast
+    int_cols = df_merged.select_dtypes(include=['int64']).columns
+    for col in int_cols:
+        df_merged[col] = df_merged[col].astype('int32')
 
     return df_merged
 
@@ -266,17 +320,24 @@ st.markdown("Analyzing **Demographic vs. Biometric Updates** to detect migration
 col1, col2, col3, col4 = st.columns(4)
 total_demo = df_filtered['Total_Demographic_Updates'].sum()
 total_bio = df_filtered['Total_Biometric_Updates'].sum()
-top_state = df_filtered.groupby('state')['Total_Demographic_Updates'].sum().idxmax() if not df_filtered.empty else "N/A"
-top_district = df_filtered.groupby('district')['Total_Demographic_Updates'].sum().idxmax() if not df_filtered.empty else "N/A"
+
+# Handle empty dataframe edge cases for top state/district
+if not df_filtered.empty:
+    # Use observed=True for categorical grouping to save memory and avoid warnings
+    top_state = df_filtered.groupby('state', observed=True)['Total_Demographic_Updates'].sum().idxmax()
+    top_district = df_filtered.groupby('district', observed=True)['Total_Demographic_Updates'].sum().idxmax()
+else:
+    top_state = "N/A"
+    top_district = "N/A"
 
 with col1:
     st.metric("Total Demographic Updates", f"{total_demo:,.0f}", delta="Migration Signal")
 with col2:
     st.metric("Total Biometric Updates", f"{total_bio:,.0f}", delta="Routine Activity", delta_color="off")
 with col3:
-    st.metric("Highest Activity State", top_state)
+    st.metric("Highest Activity State", str(top_state))
 with col4:
-    st.metric("Top Hotspot District", top_district)
+    st.metric("Top Hotspot District", str(top_district))
 
 st.markdown("---")
 
@@ -303,7 +364,8 @@ with tab1:
     """)
 
     # Prepare Data for Treemap
-    df_tree = df_filtered.groupby(['state', 'district']).agg({
+    # Use observed=True for efficient categorical grouping
+    df_tree = df_filtered.groupby(['state', 'district'], observed=True).agg({
         'Total_Demographic_Updates': 'sum',
         'Total_Biometric_Updates': 'sum'
     }).reset_index()
@@ -390,7 +452,8 @@ with tab2:
     # Education Demand Analysis
     with col_edu:
         st.markdown("#### 🏫 School Capacity Planning")
-        df_edu = df_filtered.groupby(['state', 'district'])['Demographic_5_17'].sum().reset_index()
+        # Ensure observed=True for memory efficiency in groupby
+        df_edu = df_filtered.groupby(['state', 'district'], observed=True)['Demographic_5_17'].sum().reset_index()
         df_edu = df_edu.sort_values(by='Demographic_5_17', ascending=False).head(10)
         
         fig_edu = px.bar(
@@ -401,7 +464,8 @@ with tab2:
         fig_edu.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_edu, use_container_width=True)
         
-        st.info(f"Insight: {df_edu.iloc[0]['district']} ({df_edu.iloc[0]['state']}) shows the highest flux in student-age population.")
+        if not df_edu.empty:
+            st.info(f"Insight: {df_edu.iloc[0]['district']} ({df_edu.iloc[0]['state']}) shows the highest flux in student-age population.")
 
         st.markdown("""
         <div class="explanation-text">
@@ -414,7 +478,7 @@ with tab2:
     # Civic Services Demand Analysis
     with col_civic:
         st.markdown("#### 🏠 Housing & Ration Card Planning")
-        df_civic = df_filtered.groupby(['state', 'district'])['Demographic_18_plus'].sum().reset_index()
+        df_civic = df_filtered.groupby(['state', 'district'], observed=True)['Demographic_18_plus'].sum().reset_index()
         df_civic = df_civic.sort_values(by='Demographic_18_plus', ascending=False).head(10)
         
         fig_civic = px.bar(
@@ -425,7 +489,8 @@ with tab2:
         fig_civic.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig_civic, use_container_width=True)
 
-        st.info(f"Insight: {df_civic.iloc[0]['district']} ({df_civic.iloc[0]['state']}) requires immediate review of public distribution systems (PDS).")
+        if not df_civic.empty:
+            st.info(f"Insight: {df_civic.iloc[0]['district']} ({df_civic.iloc[0]['state']}) requires immediate review of public distribution systems (PDS).")
 
         st.markdown("""
         <div class="explanation-text">
@@ -441,7 +506,7 @@ with tab3:
     st.markdown("Distinguishing between **Routine Maintenance** (Linear correlation) and **Migration Events** (Outliers).")
     
     # Aggregating by District
-    df_scatter = df_filtered.groupby(['state', 'district']).agg({
+    df_scatter = df_filtered.groupby(['state', 'district'], observed=True).agg({
         'Total_Demographic_Updates': 'sum',
         'Total_Biometric_Updates': 'sum'
     }).reset_index()
@@ -461,10 +526,14 @@ with tab3:
     )
     
     # Add a reference line
-    fig_scatter.add_shape(type="line",
-        x0=0, y0=0, x1=df_scatter['Total_Biometric_Updates'].max(), y1=df_scatter['Total_Demographic_Updates'].max(),
-        line=dict(color="Gray", width=1, dash="dash")
-    )
+    if not df_scatter.empty:
+        max_val_x = df_scatter['Total_Biometric_Updates'].max()
+        max_val_y = df_scatter['Total_Demographic_Updates'].max()
+        
+        fig_scatter.add_shape(type="line",
+            x0=0, y0=0, x1=max_val_x, y1=max_val_y,
+            line=dict(color="Gray", width=1, dash="dash")
+        )
 
     fig_scatter.update_layout(template='plotly_dark', paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig_scatter, use_container_width=True)
@@ -525,7 +594,7 @@ with tab5:
 
     with col_age1:
         # Stacked Bar Chart for Age Groups by State
-        df_age_state = df_filtered.groupby('state')[['Demographic_5_17', 'Demographic_18_plus']].sum().reset_index()
+        df_age_state = df_filtered.groupby('state', observed=True)[['Demographic_5_17', 'Demographic_18_plus']].sum().reset_index()
         
         fig_age_stack = px.bar(
             df_age_state, 
@@ -629,7 +698,7 @@ with tab7:
 
         with col_enrol2:
             st.markdown("#### Top Districts for New Registrations")
-            df_enrol_dist = df_filtered.groupby(['state', 'district'])['Total_Enrolments'].sum().reset_index()
+            df_enrol_dist = df_filtered.groupby(['state', 'district'], observed=True)['Total_Enrolments'].sum().reset_index()
             df_enrol_dist = df_enrol_dist.sort_values(by='Total_Enrolments', ascending=False).head(10)
             
             fig_enrol_bar = px.bar(

@@ -22,7 +22,7 @@
             --text-secondary: #94a3b8;
             
             /* Sidebar defaults */
-            --sidebar-width: 320px;
+            --sidebar-width: 380px; /* Slightly wider for better readability of text */
         }
 
         body {
@@ -247,31 +247,73 @@
             text-align: center;
             margin: 10px 0;
             border: 1px dashed var(--border);
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--accent-1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fraction {
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            margin: 0 5px;
+        }
+        .fraction-top {
+            border-bottom: 1px solid var(--text-secondary);
+            display: block;
+            padding: 2px 5px;
+            color: var(--accent-3); /* Pink for Friction */
+        }
+        .fraction-bottom {
+            display: block;
+            padding: 2px 5px;
+            color: var(--accent-1); /* Blue for Compliance */
         }
 
         .status-badge-container {
             display: flex;
             gap: 8px;
             margin-top: 12px;
+            flex-wrap: wrap;
         }
 
         .status-badge {
             flex: 1;
             padding: 10px;
             border-radius: 10px;
-            text-align: center;
+            text-align: left;
+            min-width: 45%;
         }
         
         .badge-green {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.15);
+        }
+        
+        .badge-red {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
         }
 
-        .badge-red {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
+        .badge-blue {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        .badge-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+            display: block;
+        }
+        
+        .badge-desc {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            line-height: 1.2;
         }
 
         .nav-back-btn {
@@ -328,74 +370,101 @@
 
     <div class="dashboard-grid" id="dashboardGrid">
         
-        <!-- PART 1: Left Sidebar (UPDATED CONTENT FOR GHOST VILLAGE DETECTOR) -->
+        <!-- PART 1: Left Sidebar (UPDATED CONTENT FOR IDENTITY ANXIETY) -->
         <div class="sidebar-left glass-panel" id="sidebarLeft" style="padding: 24px;">
             <button class="nav-back-btn" onclick="window.location.href='index.html'">
                 <i data-lucide="arrow-left"></i> Back to Map
             </button>
 
-            <!-- Updated Section Header for Forensic Analytics -->
+            <!-- Updated Section Header -->
             <div class="section-header">
-                <!-- Changed Icon to Ghost for visual relevance -->
-                <i data-lucide="ghost" style="color: var(--accent-3); width: 28px; height: 28px; margin-top: 4px;"></i>
+                <!-- Icon representing Identity/Fingerprint -->
+                <i data-lucide="fingerprint" style="color: var(--accent-3); width: 28px; height: 28px; margin-top: 4px;"></i>
                 <div>
-                    <h1 class="section-title" style="font-size: 1.25rem; line-height: 1.1;">Ghost Village Detector</h1>
-                    <div style="font-size: 0.8rem; color: var(--accent-1); margin-top: 6px;">Forensic Analytics Module</div>
+                    <h1 class="section-title" style="font-size: 1.25rem; line-height: 1.1;">Identity Anxiety</h1>
+                    <div style="font-size: 0.8rem; color: var(--accent-1); margin-top: 6px;">Socio-Economic Forensic Module</div>
                 </div>
             </div>
 
-            <!-- Intro Section: Executive Summary -->
-            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
-                <strong>Unmasking Digital Phantoms:</strong> This module utilizes Unsupervised Machine Learning to identify high-density enrolment zones exhibiting zero life-cycle activity—a primary indicator of fake entity farms.
-            </p>
-
-            <!-- Key Insights Header -->
-            <h3 style="color: white; font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <i data-lucide="scan-search" style="width: 16px; height: 16px; color: var(--accent-2);"></i> Detection Logic
-            </h3>
-
-            <!-- Insight Card 1: The Problem/Anomaly -->
-            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border);">
-                <div style="margin-bottom: 8px;">
-                    <strong style="color: var(--accent-3); display:block; font-size: 0.85rem; text-transform:uppercase; letter-spacing: 0.05em;">The Anomaly</strong> 
-                </div>
-                <p style="font-size: 0.85rem; color: #ddd; line-height: 1.5; margin: 0;">
-                    A "Ghost Village" is defined by massive <strong>Enrolment Spikes</strong> (Birth of ID) followed by <strong>Zero Activity</strong> (No Biometric/Demographic updates).
+            <!-- Core Philosophy Section -->
+            <div class="info-card">
+                <span class="info-label" style="color: var(--accent-1);">The Core Philosophy</span>
+                <p style="color: #ddd; font-size: 0.9rem; line-height: 1.5; margin: 4px 0 0 0;">
+                    How a citizen interacts with their ID reveals their stability. <br>
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;">High anxiety leads to frantic corrections; stability leads to natural updates.</span>
                 </p>
-                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: var(--text-secondary);">
-                    <strong>Implication:</strong> These entities may be "ghosts" created solely for benefit diversion, or dormant accounts.
-                </div>
             </div>
 
-            <!-- Insight Card 2: Methodology & Formula -->
-            <div class="info-card" style="margin-bottom: 12px;">
-                <span class="info-label" style="color: var(--accent-1); font-size: 0.8rem;">Feature Engineering</span>
-                
-                <!-- Math Formula Display -->
+            <!-- The Algorithm Section -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="color: white; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="calculator" style="width: 16px; height: 16px; color: var(--accent-2);"></i> The DBDI Algorithm
+                </h3>
+
+                <!-- Math Formula Display: Numerator/Denominator visual -->
                 <div class="math-block">
-                    Update Ratio (R) =<br>
-                    (Bio + Demo Updates) / Enrolments
+                    <div style="display: flex; align-items: center;">
+                        <span style="color: white; font-weight: bold; margin-right: 10px;">DBDI = </span>
+                        <div class="fraction">
+                            <span class="fraction-top">Demographic Corrections (Friction)</span>
+                            <span class="fraction-bottom">Biometric Updates (Compliance)</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Color Coded Status -->
-                <div class="status-badge-container">
-                    <div class="status-badge badge-green">
-                        <div style="color: #4ade80; font-weight: 700; font-size: 1rem;">High Ratio</div>
-                        <div style="font-size: 0.7rem; color: #bbf7d0; text-transform: uppercase;">Normal</div>
+                <!-- Explanation of components -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                    <div style="background: rgba(236, 72, 153, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(236, 72, 153, 0.2);">
+                        <strong style="color: #f472b6; font-size: 0.8rem; display: block; margin-bottom: 4px;">Numerator (Top)</strong>
+                        <span style="color: #ddd; font-size: 0.75rem; line-height: 1.3; display: block;">
+                            Voluntary fixes (Name, DOB). High numbers mean rejection at banks/jobs.
+                        </span>
                     </div>
-                    <div class="status-badge badge-red">
-                        <div style="color: #f87171; font-weight: 700; font-size: 1rem;">Ratio ≈ 0</div>
-                        <div style="font-size: 0.7rem; color: #fecaca; text-transform: uppercase;">Ghost Zone</div>
+                    <div style="background: rgba(59, 130, 246, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <strong style="color: #60a5fa; font-size: 0.8rem; display: block; margin-bottom: 4px;">Denominator (Bottom)</strong>
+                        <span style="color: #ddd; font-size: 0.75rem; line-height: 1.3; display: block;">
+                            Mandatory rules (Age 5/15). Just following orders, not using the ID.
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Insight Card 3: The Solution (Machine Learning) -->
-            <div class="info-card" style="border-left: 3px solid var(--accent-2);">
-                <span class="info-label" style="color: var(--accent-2); font-size: 0.8rem;">Algorithmic Solution</span>
-                <p style="font-size: 0.85rem; color: #ddd; margin-top: 6px; line-height: 1.5;">
-                    <strong>K-Means Clustering</strong> (Unsupervised ML) mathematically segments pincodes into "Normal," "Suspicious," and "High Risk" clusters, eliminating human bias in detection.
-                </p>
+            <!-- Cluster Definitions -->
+            <div>
+                <h3 style="color: white; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="pie-chart" style="width: 16px; height: 16px; color: var(--accent-2);"></i> Cluster Definitions
+                </h3>
+                
+                <div class="status-badge-container" style="flex-direction: column; gap: 10px;">
+                    
+                    <!-- Cluster A -->
+                    <div class="status-badge badge-red" style="display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="background: #ef4444; color: black; font-weight: bold; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">> 2.5</div>
+                        <div>
+                            <span class="badge-title" style="color: #f87171;">Hyper-Correction (Anxiety)</span>
+                            <span class="badge-desc" style="color: #fecaca;">Frantic updates. Often seen in border areas or migration hubs. People struggling to prove identity.</span>
+                        </div>
+                    </div>
+
+                    <!-- Cluster B -->
+                    <div class="status-badge badge-blue" style="display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="background: #3b82f6; color: white; font-weight: bold; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">< 0.2</div>
+                        <div>
+                            <span class="badge-title" style="color: #60a5fa;">Digital Dormancy</span>
+                            <span class="badge-desc" style="color: #bfdbfe;">ID sits in a drawer. Updates happen only when forced by rules. Low economic usage.</span>
+                        </div>
+                    </div>
+
+                    <!-- Cluster C -->
+                    <div class="status-badge badge-green" style="display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="background: #22c55e; color: black; font-weight: bold; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">0.2 - 2.5</div>
+                        <div>
+                            <span class="badge-title" style="color: #4ade80;">Balanced Economy</span>
+                            <span class="badge-desc" style="color: #bbf7d0;">Healthy state. Updates happen naturally alongside mandatory refreshes.</span>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
             <!-- Optional: Visual Spacer to maintain length/scroll feel if needed -->
@@ -407,7 +476,7 @@
             <div class="resizer-line"></div>
         </div>
 
-        <!-- PART 2: Center (Streamlit Visualization) - Now occupies remaining space -->
+        <!-- PART 2: Center (Streamlit Visualization) - Occupies remaining space -->
         <div class="main-viz glass-panel">
             <!-- Loading Overlay -->
             <div id="loader" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 5;">

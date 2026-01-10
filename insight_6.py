@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import numpy as np
+import os
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -71,13 +72,26 @@ st.markdown("""
         border-radius: 5px;
         margin-bottom: 20px;
     }
+    
+    /* Report Box Styling */
+    .report-box {
+        background-color: #f0f2f6;
+        color: #000000 !important;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    .report-box h3, .report-box h4, .report-box p, .report-box li {
+        color: #000000 !important;
+    }
 
     /* Risk Classes for Text */
     .risk-high { color: #ff5252; font-weight: bold; }
     .risk-med { color: #ffd740; font-weight: bold; }
     .risk-low { color: #69f0ae; font-weight: bold; }
 
-    /* Navigation/Filter Bar Container Styling (simulated via CSS on specific elements if needed, but standard columns work well) */
+    /* Navigation/Filter Bar Container Styling */
     
 </style>
 """, unsafe_allow_html=True)
@@ -87,11 +101,20 @@ st.markdown("""
 def load_and_process_data():
     try:
         # 1. Load Enrolment Data (New Entries)
+        # Updated with all uploaded enrolment files
         enrol_files = [
             'api_data_aadhar_enrolment_0_500000.csv',
-            'api_data_aadhar_enrolment_500000_1000000.csv'
+            'api_data_aadhar_enrolment_500000_1000000.csv',
+            'api_data_aadhar_enrolment_1000000_1006029.csv'
         ]
-        df_enrol = pd.concat([pd.read_csv(f) for f in enrol_files])
+        
+        # Generator expression to read only existing files to prevent crashes
+        valid_enrol = [f for f in enrol_files if os.path.exists(f)]
+        if not valid_enrol:
+             st.error("No Enrolment files found.")
+             return pd.DataFrame()
+             
+        df_enrol = pd.concat([pd.read_csv(f) for f in valid_enrol])
         
         # Calculate Total Enrolments per Pincode
         df_enrol['total_enrolments'] = (
@@ -100,29 +123,40 @@ def load_and_process_data():
         # Group by Pincode/State/District to get unique locations
         enrol_grouped = df_enrol.groupby(['state', 'district', 'pincode'])['total_enrolments'].sum().reset_index()
 
-        # 2. Load Biometric & Demographic Data (Updates)
-        # We treat both Biometric and Demographic logs as "Proof of Life/Activity"
+        # 2. Load Biometric Data (Updates)
+        # Updated with all uploaded biometric files
         bio_files = [
             'api_data_aadhar_biometric_0_500000.csv',
-            'api_data_aadhar_biometric_500000_1000000.csv'
+            'api_data_aadhar_biometric_500000_1000000.csv',
+            'api_data_aadhar_biometric_1000000_1500000.csv',
+            'api_data_aadhar_biometric_1500000_1861108.csv'
         ]
+        valid_bio = [f for f in bio_files if os.path.exists(f)]
+        if valid_bio:
+            df_bio = pd.concat([pd.read_csv(f) for f in valid_bio])
+            df_bio['total_bio_updates'] = df_bio['bio_age_5_17'] + df_bio['bio_age_17_']
+            bio_grouped = df_bio.groupby('pincode')['total_bio_updates'].sum().reset_index()
+        else:
+            bio_grouped = pd.DataFrame(columns=['pincode', 'total_bio_updates'])
+
+        # 3. Load Demographic Data (Updates)
+        # Updated with all uploaded demographic files
         demo_files = [
+            'api_data_aadhar_demographic_0_500000.csv',
+            'api_data_aadhar_demographic_500000_1000000.csv',
             'api_data_aadhar_demographic_1000000_1500000.csv',
-            'api_data_aadhar_demographic_1500000_2000000.csv'
+            'api_data_aadhar_demographic_1500000_2000000.csv',
+            'api_data_aadhar_demographic_2000000_2071700.csv'
         ]
-        
-        df_bio = pd.concat([pd.read_csv(f) for f in bio_files])
-        df_demo = pd.concat([pd.read_csv(f) for f in demo_files])
+        valid_demo = [f for f in demo_files if os.path.exists(f)]
+        if valid_demo:
+            df_demo = pd.concat([pd.read_csv(f) for f in valid_demo])
+            df_demo['total_demo_updates'] = df_demo['demo_age_5_17'] + df_demo['demo_age_17_']
+            demo_grouped = df_demo.groupby('pincode')['total_demo_updates'].sum().reset_index()
+        else:
+            demo_grouped = pd.DataFrame(columns=['pincode', 'total_demo_updates'])
 
-        # Sum updates
-        df_bio['total_bio_updates'] = df_bio['bio_age_5_17'] + df_bio['bio_age_17_']
-        df_demo['total_demo_updates'] = df_demo['demo_age_5_17'] + df_demo['demo_age_17_']
-
-        # Group updates by Pincode
-        bio_grouped = df_bio.groupby('pincode')['total_bio_updates'].sum().reset_index()
-        demo_grouped = df_demo.groupby('pincode')['total_demo_updates'].sum().reset_index()
-
-        # 3. Merge Datasets to create the Master Forensic Table
+        # 4. Merge Datasets to create the Master Forensic Table
         master_df = pd.merge(enrol_grouped, bio_grouped, on='pincode', how='left').fillna(0)
         master_df = pd.merge(master_df, demo_grouped, on='pincode', how='left').fillna(0)
 
@@ -131,8 +165,8 @@ def load_and_process_data():
 
         return master_df
 
-    except FileNotFoundError as e:
-        st.error(f"Critical Error: Missing Dataset Files. Please ensure all CSVs are in the directory. Details: {e}")
+    except Exception as e:
+        st.error(f"Critical Error during data processing. Details: {e}")
         return pd.DataFrame()
 
 # --- Advanced Analytics Engine ---
@@ -178,10 +212,12 @@ def main():
     df = load_and_process_data()
     
     if df.empty:
+        st.warning("No data loaded. Please check if CSV files are present.")
         return
 
     # --- Header ---
     st.title("🕵️‍♂️ Project: Ghost Village Detector")
+    st.markdown("### Forensic Analytics Dashboard V2.0")
     
     # --- TOP NAVIGATION BAR (Filters moved from Sidebar) ---
     st.markdown("""
@@ -242,7 +278,6 @@ def main():
     """)
 
     # --- Educational Module: Concept ---
-    # REPLACED EXPANDER WITH VISIBLE TEXT
     st.markdown("#### ℹ️ About the 'Ghost Village' Methodology")
     st.markdown("""
     <div class="explanation-box">
@@ -279,7 +314,6 @@ def main():
     st.subheader("1. Anomaly Cluster Detection")
     st.markdown("Visualizing Pincodes by **Activity Volume** vs. **Updates**. The 'Ghost' zones are pinned to the bottom right (High Enrolment, Zero Updates).")
     
-    # REPLACED EXPANDER WITH VISIBLE TEXT
     st.markdown("#### ℹ️ Visualization Guide: Scatter Plot (Bivariate Analysis)")
     st.markdown("""
     <div class="explanation-box">
@@ -331,7 +365,6 @@ def main():
     with c1:
         st.subheader("2. Risk Distribution by District")
         
-        # REPLACED EXPANDER WITH VISIBLE TEXT
         st.markdown("#### ℹ️ Visualization Guide: Bar Chart (Univariate Analysis)")
         st.markdown("""
         <div class="explanation-box">
@@ -371,7 +404,6 @@ def main():
     with c2:
         st.subheader("3. Risk Ratio")
         
-        # REPLACED EXPANDER WITH VISIBLE TEXT
         st.markdown("#### ℹ️ Guide: Pie Chart")
         st.markdown("""
         <div class="explanation-box">
@@ -400,11 +432,10 @@ def main():
     st.header("4. Advanced Forensic Deep Dives")
     st.markdown("Detailed multi-dimensional analysis to isolate specific fraud patterns.")
 
-    tab1, tab2, tab3, tab4 = st.tabs(["3D Cluster View", "Geographic Hierarchy", "Risk Flow Analysis", "Statistical Deviations"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["3D Cluster View", "Geographic Hierarchy", "Risk Flow Analysis", "Statistical Deviations", "📄 Generate Report Text"])
 
     with tab1:
         st.subheader("Multi-Dimensional Outlier Analysis")
-        # REPLACED EXPANDER WITH VISIBLE TEXT
         st.markdown("#### ℹ️ Visualization Guide: 3D Scatter (Multivariate Analysis)")
         st.markdown("""
         <div class="explanation-box">
@@ -451,7 +482,6 @@ def main():
 
     with tab2:
         st.subheader("Hierarchical Fraud Detection")
-        # REPLACED EXPANDER WITH VISIBLE TEXT
         st.markdown("#### ℹ️ Visualization Guide: Treemap (Hierarchical Multivariate Analysis)")
         st.markdown("""
         <div class="explanation-box">
@@ -489,7 +519,6 @@ def main():
 
     with tab3:
         st.subheader("Risk Flow: State to Profile")
-        # REPLACED EXPANDER WITH VISIBLE TEXT
         st.markdown("#### ℹ️ Visualization Guide: Parallel Categories (Multivariate Categorical Flow)")
         st.markdown("""
         <div class="explanation-box">
@@ -520,7 +549,6 @@ def main():
 
     with tab4:
         st.subheader("Statistical Validation")
-        # REPLACED EXPANDER WITH VISIBLE TEXT
         st.markdown("#### ℹ️ Visualization Guide: Violin Plot (Bivariate Statistical Analysis)")
         st.markdown("""
         <div class="explanation-box">
@@ -556,12 +584,40 @@ def main():
         )
         fig_violin.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="#e0f7fa", yaxis_type="log")
         st.plotly_chart(fig_violin, use_container_width=True)
+        
+    with tab5:
+        st.subheader("📝 Report Generator")
+        st.markdown("Copy the text below for your official report.")
+        
+        report_text = """
+        <h3>Forensic Analytics Module: The "Ghost Village" Detector</h3>
+        <p><em>"Unmasking Digital Phantoms: Using Unsupervised Machine Learning to identify high-density enrolment zones with zero life-cycle activity."</em></p>
+        
+        <h4>1. Executive Summary & Objective</h4>
+        <p>The <strong>Ghost Village Detector</strong> is a specialized forensic tool designed to identify potential "Fake Entity Farms". The system identifies "Ghost Villages"—pincodes with massive enrolment activity but near-zero subsequent life-cycle updates, suggesting the entities created there may be non-existent or dormant.</p>
+
+        <h4>2. Data Methodology</h4>
+        <ul>
+            <li><strong>Data Integration:</strong> Merges Enrolment Logs (Birth of ID), Biometric Logs (Maintenance), and Demographic Logs (Activity).</li>
+            <li><strong>Method:</strong> Uses K-Means Clustering (Unsupervised ML) to segment pincodes into "Normal", "Suspicious", and "High Risk" clusters without human bias.</li>
+        </ul>
+
+        <h4>3. Visualization Analysis</h4>
+        <ul>
+            <li><strong>Forensic Scatter Plot (Bivariate):</strong> Separates real cities (Green) from fraud farms (Red) based on the Enrolment vs. Update correlation.</li>
+            <li><strong>District Risk Bar Chart (Univariate):</strong> Identifies Geographic Hotspots where fraud is systemic.</li>
+            <li><strong>3D Multi-Dimensional Scatter (Multivariate):</strong> Separates Biometric vs. Demographic updates to find "Partial Ghosts".</li>
+            <li><strong>Geographic Treemap (Hierarchical):</strong> Reveals regional contagion patterns.</li>
+            <li><strong>Violin Plots (Statistical):</strong> Statistically validates that High Risk clusters have a distinct, flat-lined distribution of updates compared to normal clusters.</li>
+        </ul>
+        """
+        
+        st.markdown(f'<div class="report-box">{report_text}</div>', unsafe_allow_html=True)
 
 
     # --- Audit List Generation ---
     st.markdown("---")
     st.subheader("📋 Physical Verification Audit List")
-    # REPLACED EXPANDER WITH VISIBLE TEXT
     st.markdown("#### ℹ️ About the Audit List Generation")
     st.markdown("""
     <div class="explanation-box">

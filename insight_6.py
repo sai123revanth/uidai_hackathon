@@ -63,11 +63,13 @@ st.markdown("""
         color: #e0f7fa !important;
     }
     
-    /* Expanders */
-    .streamlit-expanderHeader {
+    /* Box Styling for Explanations (Replacing Expanders) */
+    .explanation-box {
         background-color: rgba(255, 255, 255, 0.05);
-        color: #00d2ff !important;
+        border-left: 4px solid #00d2ff;
+        padding: 15px;
         border-radius: 5px;
+        margin-bottom: 20px;
     }
 
     /* Risk Classes for Text */
@@ -240,19 +242,22 @@ def main():
     """)
 
     # --- Educational Module: Concept ---
-    with st.expander("ℹ️ About the 'Ghost Village' Methodology"):
-        st.markdown("""
-        ### 🧠 Forensic Concept: Lifecycle Anomaly Detection
-        In a healthy population, high Aadhar enrolment leads to a predictable volume of subsequent updates (changes in address, mobile number, biometrics).
-        
-        **The 'Ghost Village' Anomaly:**
-        When a specific pincode shows massive Enrolment numbers but **near-zero** Biometric or Demographic updates, it suggests the entities might be:
-        1.  **Non-existent/Fake:** Created solely for benefit diversion.
-        2.  **Dormant:** Created once and never used again.
-        
-        **Machine Learning Approach:**
-        We use **K-Means Clustering** (Unsupervised Learning) to automatically detect these natural groupings without human bias. It mathematically separates 'Normal' behavior from 'Suspicious' behavior based on the ratio of inputs (Enrolments) to lifecycle events (Updates).
-        """)
+    # REPLACED EXPANDER WITH VISIBLE TEXT
+    st.markdown("#### ℹ️ About the 'Ghost Village' Methodology")
+    st.markdown("""
+    <div class="explanation-box">
+        <h3>🧠 Forensic Concept: Lifecycle Anomaly Detection</h3>
+        <p>In a healthy population, high Aadhar enrolment leads to a predictable volume of subsequent updates (changes in address, mobile number, biometrics).</p>
+        <p><strong>The 'Ghost Village' Anomaly:</strong><br>
+        When a specific pincode shows massive Enrolment numbers but <strong>near-zero</strong> Biometric or Demographic updates, it suggests the entities might be:</p>
+        <ol>
+            <li><strong>Non-existent/Fake:</strong> Created solely for benefit diversion.</li>
+            <li><strong>Dormant:</strong> Created once and never used again.</li>
+        </ol>
+        <p><strong>Machine Learning Approach:</strong><br>
+        We use <strong>K-Means Clustering</strong> (Unsupervised Learning) to automatically detect these natural groupings without human bias. It mathematically separates 'Normal' behavior from 'Suspicious' behavior based on the ratio of inputs (Enrolments) to lifecycle events (Updates).</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # --- KPI Row ---
     st.subheader("📊 Key Performance Indicators (KPIs)")
@@ -274,18 +279,24 @@ def main():
     st.subheader("1. Anomaly Cluster Detection")
     st.markdown("Visualizing Pincodes by **Activity Volume** vs. **Updates**. The 'Ghost' zones are pinned to the bottom right (High Enrolment, Zero Updates).")
     
-    with st.expander("ℹ️ Visualization Guide: Scatter Plot (Bivariate Analysis)"):
-        st.markdown("""
-        **Type of Analysis:** **Bivariate Analysis** (with Multivariate Clustering).
-        * **X-Axis (Enrolments):** Represents the volume of new entries.
-        * **Y-Axis (Updates):** Represents the volume of maintenance activity.
-        * **Color (Cluster):** The 3rd dimension derived from ML, indicating Risk Profile.
-        
-        **How to read this:**
-        * **Top Right (Green/Low Risk):** High Enrolment AND High Updates. This is a busy, real city.
-        * **Bottom Right (Red/High Risk):** High Enrolment but Zero/Low Updates. This is the **Ghost Village Zone**.
-        * **Bottom Left:** Low activity overall.
-        """)
+    # REPLACED EXPANDER WITH VISIBLE TEXT
+    st.markdown("#### ℹ️ Visualization Guide: Scatter Plot (Bivariate Analysis)")
+    st.markdown("""
+    <div class="explanation-box">
+        <strong>Type of Analysis:</strong> <strong>Bivariate Analysis</strong> (with Multivariate Clustering).<br>
+        <ul>
+            <li><strong>X-Axis (Enrolments):</strong> Represents the volume of new entries.</li>
+            <li><strong>Y-Axis (Updates):</strong> Represents the volume of maintenance activity.</li>
+            <li><strong>Color (Cluster):</strong> The 3rd dimension derived from ML, indicating Risk Profile.</li>
+        </ul>
+        <strong>How to read this:</strong>
+        <ul>
+            <li><strong>Top Right (Green/Low Risk):</strong> High Enrolment AND High Updates. This is a busy, real city.</li>
+            <li><strong>Bottom Right (Red/High Risk):</strong> High Enrolment but Zero/Low Updates. This is the <strong>Ghost Village Zone</strong>.</li>
+            <li><strong>Bottom Left:</strong> Low activity overall.</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
     fig_scatter = px.scatter(
         df_analyzed,
@@ -320,15 +331,19 @@ def main():
     with c1:
         st.subheader("2. Risk Distribution by District")
         
-        with st.expander("ℹ️ Visualization Guide: Bar Chart (Univariate Analysis)"):
-            st.markdown("""
-            **Type of Analysis:** **Univariate Analysis** (Frequency Distribution).
-            * **Variable:** District Name (Categorical).
-            * **Metric:** Count of Pincodes flagged as 'High Risk'.
-            
-            **Why this matters:**
-            Fraud is often geographically concentrated due to local operators. This chart highlights the **"Hotspots"**—districts where the Ghost Village phenomenon is systemic rather than isolated.
-            """)
+        # REPLACED EXPANDER WITH VISIBLE TEXT
+        st.markdown("#### ℹ️ Visualization Guide: Bar Chart (Univariate Analysis)")
+        st.markdown("""
+        <div class="explanation-box">
+            <strong>Type of Analysis:</strong> <strong>Univariate Analysis</strong> (Frequency Distribution).<br>
+            <ul>
+                <li><strong>Variable:</strong> District Name (Categorical).</li>
+                <li><strong>Metric:</strong> Count of Pincodes flagged as 'High Risk'.</li>
+            </ul>
+            <strong>Why this matters:</strong><br>
+            Fraud is often geographically concentrated due to local operators. This chart highlights the <strong>"Hotspots"</strong>—districts where the Ghost Village phenomenon is systemic rather than isolated.
+        </div>
+        """, unsafe_allow_html=True)
 
         # Filter for High Risk only for the bar chart to see hotspots
         risk_only = df_analyzed[df_analyzed['Risk_Profile'] == 'High Risk (Ghost Village)']
@@ -356,11 +371,14 @@ def main():
     with c2:
         st.subheader("3. Risk Ratio")
         
-        with st.expander("ℹ️ Guide: Pie Chart"):
-            st.markdown("""
-            **Type:** **Univariate Analysis**.
+        # REPLACED EXPANDER WITH VISIBLE TEXT
+        st.markdown("#### ℹ️ Guide: Pie Chart")
+        st.markdown("""
+        <div class="explanation-box">
+            <strong>Type:</strong> <strong>Univariate Analysis</strong>.<br>
             Shows the proportional composition of the dataset by Risk Profile.
-            """)
+        </div>
+        """, unsafe_allow_html=True)
 
         fig_pie = px.pie(
             df_analyzed, 
@@ -386,15 +404,19 @@ def main():
 
     with tab1:
         st.subheader("Multi-Dimensional Outlier Analysis")
-        with st.expander("ℹ️ Visualization Guide: 3D Scatter (Multivariate Analysis)"):
-            st.markdown("""
-            **Type of Analysis:** **Multivariate Analysis** (3 Variables).
-            * **X-Axis:** Total Enrolments.
-            * **Y-Axis:** Biometric Updates.
-            * **Z-Axis:** Demographic Updates.
-            
-            **Deep Insight:** Standard 2D plots group all updates together. This 3D view allows us to spot **"Partial Ghosts"**—areas that might be faking demographic updates (easier to forge) but have zero biometric updates (harder to forge).
-            """)
+        # REPLACED EXPANDER WITH VISIBLE TEXT
+        st.markdown("#### ℹ️ Visualization Guide: 3D Scatter (Multivariate Analysis)")
+        st.markdown("""
+        <div class="explanation-box">
+            <strong>Type of Analysis:</strong> <strong>Multivariate Analysis</strong> (3 Variables).<br>
+            <ul>
+                <li><strong>X-Axis:</strong> Total Enrolments.</li>
+                <li><strong>Y-Axis:</strong> Biometric Updates.</li>
+                <li><strong>Z-Axis:</strong> Demographic Updates.</li>
+            </ul>
+            <strong>Deep Insight:</strong> Standard 2D plots group all updates together. This 3D view allows us to spot <strong>"Partial Ghosts"</strong>—areas that might be faking demographic updates (easier to forge) but have zero biometric updates (harder to forge).
+        </div>
+        """, unsafe_allow_html=True)
         
         fig_3d = px.scatter_3d(
             df_analyzed,
@@ -429,16 +451,20 @@ def main():
 
     with tab2:
         st.subheader("Hierarchical Fraud Detection")
-        with st.expander("ℹ️ Visualization Guide: Treemap (Hierarchical Multivariate Analysis)"):
-            st.markdown("""
-            **Type of Analysis:** **Hierarchical Multivariate Analysis**.
-            * **Hierarchy:** Country → State → District.
-            * **Size:** Total Enrolment Volume (Quantitative).
-            * **Color:** Risk Profile (Categorical).
-            
-            **Deep Insight:**
-            This helps identify **Regional Contagion**. If a specific State box is overwhelmingly Red, it indicates a policy-level or state-level systemic issue rather than isolated operator fraud.
-            """)
+        # REPLACED EXPANDER WITH VISIBLE TEXT
+        st.markdown("#### ℹ️ Visualization Guide: Treemap (Hierarchical Multivariate Analysis)")
+        st.markdown("""
+        <div class="explanation-box">
+            <strong>Type of Analysis:</strong> <strong>Hierarchical Multivariate Analysis</strong>.<br>
+            <ul>
+                <li><strong>Hierarchy:</strong> Country → State → District.</li>
+                <li><strong>Size:</strong> Total Enrolment Volume (Quantitative).</li>
+                <li><strong>Color:</strong> Risk Profile (Categorical).</li>
+            </ul>
+            <strong>Deep Insight:</strong><br>
+            This helps identify <strong>Regional Contagion</strong>. If a specific State box is overwhelmingly Red, it indicates a policy-level or state-level systemic issue rather than isolated operator fraud.
+        </div>
+        """, unsafe_allow_html=True)
         
         # To make the treemap readable, we limit depth or aggregate if too large
         # We'll use a copy to ensure 'India' root node
@@ -463,14 +489,18 @@ def main():
 
     with tab3:
         st.subheader("Risk Flow: State to Profile")
-        with st.expander("ℹ️ Visualization Guide: Parallel Categories (Multivariate Categorical Flow)"):
-            st.markdown("""
-            **Type of Analysis:** **Multivariate Categorical Analysis**.
-            * **Dimensions:** State → Risk Profile.
-            
-            **Deep Insight:**
-            This visualization acts like a **Sankey Diagram**. It shows the 'flow' of data. You can instantly see which State contributes the thickest 'stream' to the Red 'High Risk' bar. It normalizes the view to show **proportional contribution**.
-            """)
+        # REPLACED EXPANDER WITH VISIBLE TEXT
+        st.markdown("#### ℹ️ Visualization Guide: Parallel Categories (Multivariate Categorical Flow)")
+        st.markdown("""
+        <div class="explanation-box">
+            <strong>Type of Analysis:</strong> <strong>Multivariate Categorical Analysis</strong>.<br>
+            <ul>
+                <li><strong>Dimensions:</strong> State → Risk Profile.</li>
+            </ul>
+            <strong>Deep Insight:</strong><br>
+            This visualization acts like a <strong>Sankey Diagram</strong>. It shows the 'flow' of data. You can instantly see which State contributes the thickest 'stream' to the Red 'High Risk' bar. It normalizes the view to show <strong>proportional contribution</strong>.
+        </div>
+        """, unsafe_allow_html=True)
         
         # Group data for Parallel Categories to avoid overcrowding
         cat_df = df_analyzed.groupby(['state', 'Risk_Profile']).size().reset_index(name='count')
@@ -490,19 +520,25 @@ def main():
 
     with tab4:
         st.subheader("Statistical Validation")
-        with st.expander("ℹ️ Visualization Guide: Violin Plot (Bivariate Statistical Analysis)"):
-            st.markdown("""
-            **Type of Analysis:** **Bivariate Analysis** (Numerical Distribution vs Categorical).
-            * **X-Axis:** Risk Category.
-            * **Y-Axis:** Total Updates (Log Scale).
-            * **Shape:** Probability Density.
-            
-            **Deep Insight:**
-            Violin plots show the **shape** of the data. 
-            * **High Risk (Red):** Should look like a flat line or a bulge near zero (indicating most data points have ~0 updates).
-            * **Low Risk (Green):** Should look like a long violin extending upwards (indicating a healthy variety of update counts).
+        # REPLACED EXPANDER WITH VISIBLE TEXT
+        st.markdown("#### ℹ️ Visualization Guide: Violin Plot (Bivariate Statistical Analysis)")
+        st.markdown("""
+        <div class="explanation-box">
+            <strong>Type of Analysis:</strong> <strong>Bivariate Analysis</strong> (Numerical Distribution vs Categorical).<br>
+            <ul>
+                <li><strong>X-Axis:</strong> Risk Category.</li>
+                <li><strong>Y-Axis:</strong> Total Updates (Log Scale).</li>
+                <li><strong>Shape:</strong> Probability Density.</li>
+            </ul>
+            <strong>Deep Insight:</strong><br>
+            Violin plots show the <strong>shape</strong> of the data. 
+            <ul>
+                <li><strong>High Risk (Red):</strong> Should look like a flat line or a bulge near zero (indicating most data points have ~0 updates).</li>
+                <li><strong>Low Risk (Green):</strong> Should look like a long violin extending upwards (indicating a healthy variety of update counts).</li>
+            </ul>
             This statistically proves that the clusters are distinct populations.
-            """)
+        </div>
+        """, unsafe_allow_html=True)
         
         fig_violin = px.violin(
             df_analyzed,
@@ -525,14 +561,18 @@ def main():
     # --- Audit List Generation ---
     st.markdown("---")
     st.subheader("📋 Physical Verification Audit List")
-    with st.expander("ℹ️ About the Audit List Generation"):
-        st.markdown("""
-        **Methodology:**
-        We calculate a **'Suspicion Score'** for every pincode in the High Risk Cluster.
-        $$ Suspicion Score = \\frac{Total Enrolments \\times 10}{Total Updates + 1} $$
-        
-        This formula prioritizes locations with **High Volume** AND **Low Updates**. A pincode with 10,000 enrolments and 0 updates will have a higher score than a pincode with 100 enrolments and 0 updates, ensuring auditors focus on the biggest potential scams first.
-        """)
+    # REPLACED EXPANDER WITH VISIBLE TEXT
+    st.markdown("#### ℹ️ About the Audit List Generation")
+    st.markdown("""
+    <div class="explanation-box">
+        <strong>Methodology:</strong><br>
+        We calculate a <strong>'Suspicion Score'</strong> for every pincode in the High Risk Cluster.<br>
+        <br>
+        <strong>Formula:</strong> Suspicion Score = (Total Enrolments * 10) / (Total Updates + 1)<br>
+        <br>
+        This formula prioritizes locations with <strong>High Volume</strong> AND <strong>Low Updates</strong>. A pincode with 10,000 enrolments and 0 updates will have a higher score than a pincode with 100 enrolments and 0 updates, ensuring auditors focus on the biggest potential scams first.
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("These locations require immediate physical verification. The 'Suspicion Score' is calculated as the inverse of the update ratio.")
 

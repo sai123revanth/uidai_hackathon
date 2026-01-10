@@ -2,370 +2,475 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
+import glob
+import os
+import numpy as np
 
-# -----------------------------------------------------------------------------
-# 1. Page Configuration
-# -----------------------------------------------------------------------------
+# Set page configuration
 st.set_page_config(
-    page_title="Aadhar Enrolment Monitoring System (AEMS)",
+    page_title="Aadhar Lifecycle Strategy Dashboard",
     page_icon="🇮🇳",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed" 
 )
 
-# CSS to hide default Streamlit footer and menu for a purely official look
-hide_streamlit_style = """
+# Custom CSS for styling - Fixed for visibility in both light and dark modes
+st.markdown("""
 <style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
+    .metric-card {
+        background-color: rgba(240, 242, 246, 0.15); 
+        border: 1px solid rgba(128, 128, 128, 0.3);
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.08);
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .metric-title {
+        color: inherit; 
+        opacity: 0.9;
+        font-size: 15px;
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .metric-value {
+        font-size: 36px;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+    .highlight-red { color: #FF4B4B !important; }
+    .highlight-green { color: #28a745 !important; }
+    .highlight-blue { color: #007bff !important; }
+    .highlight-orange { color: #FD7E14 !important; }
+    
+    .guide-box {
+        background-color: rgba(0, 123, 255, 0.05);
+        border-left: 4px solid #007bff;
+        padding: 20px;
+        margin: 10px 0 25px 0;
+        font-size: 14px;
+        line-height: 1.6;
+        border-radius: 0 10px 10px 0;
+    }
+    .insight-header {
+        color: #007bff;
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+        font-size: 18px;
+    }
+    .stMarkdown { color: inherit; }
+    
+    /* Horizontal Navigation Bar styling for Filters */
+    .nav-filter-container {
+        background-color: rgba(128, 128, 128, 0.05);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(128, 128, 128, 0.1);
+    }
 </style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# 2. Data Loading & Caching
-# -----------------------------------------------------------------------------
+# --- Data Loading Functions ---
+
 @st.cache_data
-def load_data():
-    files = [
-        'api_data_aadhar_enrolment_0_500000.csv',
-        'api_data_aadhar_enrolment_500000_1000000.csv',
-        'api_data_aadhar_enrolment_1000000_1006029.csv'
+def load_and_process_data():
+    """
+    Loads all data files (including newly uploaded ones), standardizes columns, 
+    and merges them into a master dataframe aggregated by Date, State, and District.
+    """
+    # Comprehensive File lists including all provided data segments
+    enrolment_files = [
+        "api_data_aadhar_enrolment_0_500000.csv",
+        "api_data_aadhar_enrolment_500000_1000000.csv",
+        "api_data_aadhar_enrolment_1000000_1006029.csv"
     ]
-    
-    dfs = []
-    for f in files:
-        try:
-            df = pd.read_csv(f)
-            dfs.append(df)
-        except FileNotFoundError:
-            st.error(f"File not found: {f}. Please ensure all CSVs are in the directory.")
-            return None
+    demo_files = [
+        "api_data_aadhar_demographic_0_500000.csv",
+        "api_data_aadhar_demographic_500000_1000000.csv",
+        "api_data_aadhar_demographic_1000000_1500000.csv",
+        "api_data_aadhar_demographic_1500000_2000000.csv",
+        "api_data_aadhar_demographic_2000000_2071700.csv"
+    ]
+    bio_files = [
+        "api_data_aadhar_biometric_0_500000.csv",
+        "api_data_aadhar_biometric_500000_1000000.csv",
+        "api_data_aadhar_biometric_1000000_1500000.csv",
+        "api_data_aadhar_biometric_1500000_1861108.csv"
+    ]
 
-    df = pd.concat(dfs, ignore_index=True)
-    
-    # Preprocessing
-    df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y', errors='coerce')
-    df['Total Enrolment'] = df['age_0_5'] + df['age_5_17'] + df['age_18_greater']
-    
-    # Calculate Ratios
-    df['Child_Ratio'] = df['age_0_5'] / df['Total Enrolment']
-    
-    return df
+    # Helper to read and concat multiple CSVs for a category
+    def read_files(file_list, type_tag):
+        df_list = []
+        for f in file_list:
+            if os.path.exists(f):
+                try:
+                    # Low memory set to False to handle large mixed data chunks safely
+                    df_chunk = pd.read_csv(f, low_memory=False)
+                    df_list.append(df_chunk)
+                except Exception as e:
+                    st.error(f"Error reading {f}: {e}")
+        
+        if not df_list:
+            return pd.DataFrame()
+        
+        full_df = pd.concat(df_list, ignore_index=True)
+        return full_df
 
-df = load_data()
+    # 1. Process Enrolment Data
+    df_enrol = read_files(enrolment_files, "Enrolment")
+    if not df_enrol.empty:
+        df_enrol.columns = df_enrol.columns.str.strip()
+        cols = ['age_0_5', 'age_5_17', 'age_18_greater']
+        for c in cols:
+            if c in df_enrol.columns:
+                df_enrol[c] = pd.to_numeric(df_enrol[c], errors='coerce').fillna(0)
+        df_enrol['New_Enrolments'] = df_enrol['age_0_5'] + df_enrol['age_5_17'] + df_enrol['age_18_greater']
+        df_enrol_agg = df_enrol.groupby(['date', 'state', 'district'])[['New_Enrolments', 'age_0_5', 'age_5_17', 'age_18_greater']].sum().reset_index()
+    else:
+        df_enrol_agg = pd.DataFrame(columns=['date', 'state', 'district', 'New_Enrolments'])
 
-if df is None:
+    # 2. Process Demographic Update Data
+    df_demo = read_files(demo_files, "Demographic")
+    if not df_demo.empty:
+        df_demo.columns = df_demo.columns.str.strip()
+        cols = ['demo_age_5_17', 'demo_age_17_'] 
+        for c in cols:
+            if c in df_demo.columns:
+                df_demo[c] = pd.to_numeric(df_demo[c], errors='coerce').fillna(0)
+        df_demo['Demographic_Updates'] = df_demo['demo_age_5_17'] + df_demo['demo_age_17_']
+        df_demo_agg = df_demo.groupby(['date', 'state', 'district'])[['Demographic_Updates', 'demo_age_5_17', 'demo_age_17_']].sum().reset_index()
+    else:
+        df_demo_agg = pd.DataFrame(columns=['date', 'state', 'district', 'Demographic_Updates'])
+
+    # 3. Process Biometric Update Data
+    df_bio = read_files(bio_files, "Biometric")
+    if not df_bio.empty:
+        df_bio.columns = df_bio.columns.str.strip()
+        cols = ['bio_age_5_17', 'bio_age_17_']
+        for c in cols:
+             if c in df_bio.columns:
+                df_bio[c] = pd.to_numeric(df_bio[c], errors='coerce').fillna(0)
+        df_bio['Biometric_Updates'] = df_bio['bio_age_5_17'] + df_bio['bio_age_17_']
+        df_bio_agg = df_bio.groupby(['date', 'state', 'district'])[['Biometric_Updates', 'bio_age_5_17', 'bio_age_17_']].sum().reset_index()
+    else:
+        df_bio_agg = pd.DataFrame(columns=['date', 'state', 'district', 'Biometric_Updates'])
+
+    # 4. Merge All Data (Outer join ensures no date/state/district data is lost)
+    df_master = pd.merge(df_enrol_agg, df_demo_agg, on=['date', 'state', 'district'], how='outer').fillna(0)
+    df_master = pd.merge(df_master, df_bio_agg, on=['date', 'state', 'district'], how='outer').fillna(0)
+
+    # 5. Final Formatting & Feature Engineering
+    df_master['date'] = pd.to_datetime(df_master['date'], dayfirst=True, errors='coerce')
+    df_master['Total_Updates'] = df_master['Demographic_Updates'] + df_master['Biometric_Updates']
+    df_master = df_master.dropna(subset=['date'])
+    df_master['state'] = df_master['state'].str.title().str.strip()
+    df_master['district'] = df_master['district'].str.title().str.strip()
+    
+    # Seasonality features
+    df_master['day_of_week'] = df_master['date'].dt.day_name()
+    df_master['month'] = df_master['date'].dt.month_name()
+    df_master['month_num'] = df_master['date'].dt.month
+    df_master['year'] = df_master['date'].dt.year
+
+    return df_master
+
+# Execute Data Load
+try:
+    df = load_and_process_data()
+except Exception as e:
+    st.error(f"Critical Error Loading Consolidated Data: {e}")
     st.stop()
 
-# -----------------------------------------------------------------------------
-# 3. Main Dashboard Header (Moved Up for Top Navigation Flow)
-# -----------------------------------------------------------------------------
-st.title("🏛️ Aadhar Enrolment Monitoring System (AEMS)")
-# Updated heading to specifically relate to the strategic insight provided
-st.markdown("### Strategic Intelligence Module: Targeting Demographic Deficits in Meghalaya & North-East Region")
+if df.empty:
+    st.warning("No data found. Please ensure all CSV files are uploaded and named correctly.")
+    st.stop()
 
-# Module Information Section (Visible by Default - No longer collapsed)
-st.markdown("#### ℹ️ About this Module: Strategic Utility & Statistical Methodology")
+# --- Dashboard Header Section ---
+
+st.title("🇮🇳 Aadhar Strategic Pivot Dashboard")
+st.subheader("Transitioning from 'New Acquisition' to 'Continuous Maintenance'")
 
 st.markdown("""
-### **1. Strategic Utility & Operational Roadmap**
+<div style='background-color: rgba(0, 123, 255, 0.1); padding: 20px; border-radius: 8px; border-left: 6px solid #007bff; margin-bottom: 25px;'>
+    <h4 style="margin-top:0; color: #007bff;">💡 Executive Context (Multi-File Consolidated)</h4>
+    India's identity infrastructure is moving from an <strong>Enrolment Phase</strong> (getting everyone an ID) to a 
+    <strong>Lifecycle Phase</strong> (keeping IDs accurate). This dashboard tracks that transition using the full data workload. 
+    A high "Update Ratio" means the region is fully saturated and requires maintenance infrastructure, not enrolment kits.
+</div>
+""", unsafe_allow_html=True)
 
-**How this Module Drives Governance:**
-This dashboard transforms raw enrolment logs into a **Prescriptive Analytics Engine**. Instead of merely reporting *what* happened, it identifies *where* the government system is failing to capture citizens and suggests *what should be done*. By isolating demographic outliers (like the low child enrolment in Meghalaya), it allows the Ministry to shift from a 'blanket distribution' strategy to a 'surgical intervention' strategy.
-
-**Actionable Operational Protocols (SOPs):**
-Based on the insights generated by this module, the following actions are recommended:
-* **Resource Reallocation:** Immediately reroute 30% of mobile enrolment kits from high-saturation states (like Bihar/UP) to the identified 'Red Zone' districts in Meghalaya (e.g., South Garo Hills).
-* **Inter-Ministerial Convergence:** Share the 'District-wise Child Deficit' list with the Ministry of Women and Child Development (MWCD). Anganwadi workers in these specific pincodes must be incentivized to bring children to camps.
-* **Camp Scheduling Optimization:** Use the Temporal Trends analysis to avoid scheduling camps during periods of historically low turnout, or to target specific demographics during their peak availability (e.g., weekends for school-age children).
-
----
-
-### **2. Statistical Analysis Methodologies Explained**
-To derive these actionable insights, this dashboard utilizes a layered statistical approach. Here is how each method is applied to the Aadhar dataset:
-
-#### **A. Univariate Analysis (Single Variable)**
-* **Definition:** The analysis of a single variable in isolation to describe its distribution, central tendency, and dispersion.
-* **Application in this Module:** * **Visual:** The **Demographic Segmentation (Pie Chart)**.
-    * **The Insight:** We analyze the 'Age Group' column independently. This establishes the **national baseline composition**. Without this univariate analysis, we wouldn't know that 0-5 enrolments are generally high (~43%) nationwide, making the drop in Meghalaya statistically significant. It answers: *"Who are we enrolling generally?"*
-
-#### **B. Bivariate Analysis (Two Variables)**
-* **Definition:** The analysis of the relationship between two variables to determine empirical associations or correlations.
-* **Application in this Module:** * **Visual:** The **State-wise Child Enrolment Efficiency (Bar Chart)**.
-    * **The Insight:** We plot **'State' (Categorical)** against **'Child Enrolment Proportion' (Numerical)**. This reveals the correlation between specific regions and their efficiency in capturing child enrolments. It allows us to rank states not just by volume (which biases results toward large states like UP) but by *efficiency*, revealing hidden underperformers. It answers: *"Which regions are failing a specific demographic?"*
-
-#### **C. Trivariate Analysis (Three Variables)**
-* **Definition:** The simultaneous analysis of three variables to understand complex hierarchical or temporal relationships.
-* **Application in this Module:** * **Visual 1: Geospatial Hierarchy (Sunburst Chart).** * *Variables:* State + District + Total Enrolment. 
-        * *The Insight:* This shows how district-level contributions (Level 2) aggregate up to state-level volumes (Level 1). It helps identify if a state's poor performance is uniform or caused by a few specific 'black hole' districts.
-    * **Visual 2: Temporal Trends (Line Chart).** * *Variables:* Date (Time) + Enrolment Count (Volume) + Age Group (Category).
-        * *The Insight:* By intersecting time, volume, and demographics, we can see behavioral patterns. For instance, a spike in 'Age 5-17' specifically during school holidays would be a trivariate insight that neither a simple timeline nor a simple age count could show independently.
-""")
-
-st.divider()
-
-# -----------------------------------------------------------------------------
-# 4. Control Panel (Relocated to Top Navigation Bar)
-# -----------------------------------------------------------------------------
-st.markdown("#### 🎛️ Control Panel")
-
-# Using columns to create a horizontal navigation/filter bar
-nav_col1, nav_col2 = st.columns(2)
-
-# State Filter - No default selection (shows all by default)
-with nav_col1:
-    all_states = sorted(df['state'].unique())
-    selected_states = st.multiselect(
-        "Filter by State", 
-        all_states, 
-        default=[]
-    )
-
-    if not selected_states:
-        filtered_df = df
-        st.caption("Showing data for ALL states.")
-    else:
-        filtered_df = df[df['state'].isin(selected_states)]
-
-# Date Filter
-with nav_col2:
-    min_date = df['date'].min()
-    max_date = df['date'].max()
-
-    if pd.notnull(min_date) and pd.notnull(max_date):
-        start_date, end_date = st.date_input(
-            "Filter by Date Range",
-            [min_date, max_date],
-            min_value=min_date,
-            max_value=max_date
-        )
-        # Filter by date
-        filtered_df = filtered_df[
-            (filtered_df['date'] >= pd.to_datetime(start_date)) & 
-            (filtered_df['date'] <= pd.to_datetime(end_date))
-        ]
-
-st.divider()
-
-# -----------------------------------------------------------------------------
-# 5. KPI Metrics (Calculated based on Filters)
-# -----------------------------------------------------------------------------
-col1, col2, col3, col4 = st.columns(4)
-
-total_enrolments = filtered_df['Total Enrolment'].sum()
-# Handle division by zero if filter result is empty
-if total_enrolments > 0:
-    avg_child_ratio = (filtered_df['age_0_5'].sum() / total_enrolments) * 100
-    top_district = filtered_df.groupby('district')['Total Enrolment'].sum().idxmax()
-    top_state_vol = filtered_df.groupby('state')['Total Enrolment'].sum().idxmax()
-else:
-    avg_child_ratio = 0
-    top_district = "N/A"
-    top_state_vol = "N/A"
-
-col1.metric("Total Records Processed", f"{total_enrolments:,}")
-col2.metric("Nat'l Child (0-5) Ratio", f"{avg_child_ratio:.1f}%")
-col3.metric("Top District (Volume)", top_district)
-col4.metric("Top State (Volume)", top_state_vol)
-
-st.divider()
-
-# -----------------------------------------------------------------------------
-# 6. Advanced Visualizations (Tabs)
-# -----------------------------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🗺️ Geospatial Hierarchy", 
-    "📊 Demographics Analysis", 
-    "📈 Temporal Trends", 
-    "📋 Key Findings & Interventions"
-])
-
-# --- TAB 1: HIERARCHY ---
-with tab1:
-    st.subheader("Regional Enrolment Distribution")
-    st.markdown("""
-    **Visualization Guide:**
-    This **Sunburst Chart** provides a hierarchical view of enrolment data. 
-    * **Inner Circle:** Represents the State level.
-    * **Outer Circle:** Represents the District level.
-    * **Interaction:** Click on any State slice to drill down and view only its districts. Click the center to zoom back out.
-    * **Utility:** Helps identify which specific districts are driving a state's total volume.
-    """)
+# --- Navigation Bar Filter Analysis ---
+st.markdown("#### 🎛️ Filter Analysis & Controls")
+with st.container():
+    col_nav1, col_nav2, col_nav3 = st.columns([1.2, 1, 1])
     
-    if not filtered_df.empty:
-        # Aggregating for Sunburst
-        sunburst_data = filtered_df.groupby(['state', 'district'])['Total Enrolment'].sum().reset_index()
-        # Filter for performance
-        if len(sunburst_data) > 500:
-            sunburst_data = sunburst_data.sort_values('Total Enrolment', ascending=False).head(500)
-
-        fig_sun = px.sunburst(
-            sunburst_data, 
-            path=['state', 'district'], 
-            values='Total Enrolment',
-            color='Total Enrolment',
-            color_continuous_scale='RdBu',
-            title="Enrolment Volume Hierarchy"
-        )
-        st.plotly_chart(fig_sun, use_container_width=True)
-    else:
-        st.warning("No data available for the selected filters.")
-
-# --- TAB 2: DEMOGRAPHICS ---
-with tab2:
-    col_a, col_b = st.columns(2)
-    
-    with col_a:
-        st.subheader("Demographic Segmentation")
-        st.markdown("""
-        **Visualization Guide:**
-        This **Pie Chart** breaks down the total enrolments into three mandatory age categories.
-        * **0-5:** Bal Aadhar (Critical focus area).
-        * **5-17:** School-age children.
-        * **18+:** Adult updates/enrolments.
-        """)
-        if not filtered_df.empty:
-            age_sums = filtered_df[['age_0_5', 'age_5_17', 'age_18_greater']].sum().reset_index()
-            age_sums.columns = ['Age Group', 'Count']
-            
-            fig_pie = px.pie(
-                age_sums, 
-                values='Count', 
-                names='Age Group', 
-                hole=0.4,
-                color_discrete_sequence=px.colors.sequential.Teal
+    with col_nav1:
+        min_date = df['date'].min()
+        max_date = df['date'].max()
+        if not pd.isnull(min_date) and not pd.isnull(max_date):
+            selected_range = st.date_input(
+                "Select Date Range",
+                value=[min_date, max_date],
+                min_value=min_date,
+                max_value=max_date
             )
-            st.plotly_chart(fig_pie, use_container_width=True)
+            if len(selected_range) == 2:
+                start_date, end_date = selected_range
+            else:
+                start_date, end_date = min_date, max_date
         else:
-            st.write("No data available.")
+            start_date, end_date = min_date, max_date
 
-    with col_b:
-        st.subheader("State-wise Child Enrolment Efficiency")
-        st.markdown("""
-        **Visualization Guide:**
-        This **Bar Chart** ranks states based on the *proportion* of children (0-5) in their total enrolment figures.
-        * **Red Bars:** Indicate states with low child enrolment ratios (Needs attention).
-        * **Utility:** Allows the Ministry to identify which states are failing to capture new births in the Aadhar ecosystem.
-        """)
-        if not filtered_df.empty:
-            state_stats = filtered_df.groupby('state')[['age_0_5', 'Total Enrolment']].sum().reset_index()
-            state_stats['Child_Prop'] = state_stats['age_0_5'] / state_stats['Total Enrolment']
-            state_stats = state_stats.sort_values('Child_Prop', ascending=True)
+    with col_nav2:
+        # User selection for analysis granularity
+        all_states = sorted(df['state'].unique())
+        selected_states = st.multiselect("Select State(s)", all_states, default=[])
 
-            fig_bar = px.bar(
-                state_stats, 
-                x='Child_Prop', 
-                y='state',
-                orientation='h',
-                title="Proportion of 0-5 Age Enrolments (Low to High)",
-                labels={'Child_Prop': 'Ratio of 0-5 Enrolments', 'state': 'State'},
-                color='Child_Prop',
-                color_continuous_scale='Reds' 
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
+    with col_nav3:
+        if selected_states:
+            filtered_districts_list = sorted(df[df['state'].isin(selected_states)]['district'].unique())
         else:
-            st.write("No data available.")
+            filtered_districts_list = sorted(df['district'].unique())
+        selected_districts = st.multiselect("Select District(s)", filtered_districts_list)
 
-# --- TAB 3: TRENDS ---
-with tab3:
-    st.subheader("Registration Volume Timeline")
-    st.markdown("""
-    **Visualization Guide:**
-    This **Time-Series Line Chart** tracks the daily processing volume for each age group.
-    * **Utility:** Useful for monitoring the immediate impact of enrolment camps or identifying operational downtimes (drops in data).
-    * **Markers:** Each point represents a single day's aggregated data.
-    """)
-    if not filtered_df.empty:
-        daily_stats = filtered_df.groupby('date')[['age_0_5', 'age_5_17', 'age_18_greater']].sum().reset_index()
-        daily_melted = daily_stats.melt(id_vars='date', var_name='Age Group', value_name='Enrolments')
-        
-        fig_line = px.line(
-            daily_melted, 
-            x='date', 
-            y='Enrolments', 
-            color='Age Group',
-            markers=True,
-            title="Daily Enrolment Activity by Age Category"
-        )
-        st.plotly_chart(fig_line, use_container_width=True)
-    else:
-        st.write("No data available.")
+# --- Apply Filter Mask ---
+mask = (df['date'] >= pd.to_datetime(start_date)) & (df['date'] <= pd.to_datetime(end_date))
+if selected_states:
+    mask = mask & (df['state'].isin(selected_states))
+if selected_districts:
+    mask = mask & (df['district'].isin(selected_districts))
 
-# --- TAB 4: STRATEGIC INSIGHTS ---
-with tab4:
-    st.markdown("## 📌 Policy Intervention Proposal")
-    
-    st.markdown("""
-    **Module Purpose:** This section uses algorithmic analysis to compare regional performance against national benchmarks and propose actionable interventions.
-    """)
-    
-    st.markdown("""
-    <div style='background-color: rgba(255, 205, 210, 0.3); padding: 20px; border-radius: 10px; border-left: 5px solid #c62828;'>
-        <h4>🚨 Critical Finding: Regional Enrolment Disparity</h4>
-        <p>Comparative analysis reveals a significant deficit in <b>0-5 age group enrolments in Meghalaya (~19%)</b> against the national average (~43%). 
-        This disparity necessitates immediate administrative action to ensure universal coverage for child welfare schemes.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.divider()
-    
-    # Data for the insight
-    # Note: We use the full 'df' here to show the comparative insight regardless of filters
-    insight_df = df.groupby('state')[['age_0_5', 'Total Enrolment']].sum().reset_index()
-    insight_df['Child_Ratio'] = insight_df['age_0_5'] / insight_df['Total Enrolment']
-    
-    try:
-        meghalaya_val = insight_df[insight_df['state'] == 'Meghalaya']['Child_Ratio'].values[0]
-        bihar_val = insight_df[insight_df['state'] == 'Bihar']['Child_Ratio'].values[0]
-        
-        # 1. Gauge Chart Comparison
-        col_x, col_y = st.columns(2)
-        
-        with col_x:
-            st.markdown("""
-            **Visualization Guide (Gauge Chart):**
-            Displays the target state's performance (Meghalaya) relative to a benchmark high-performing state (Bihar). The 'Delta' (arrow) indicates the gap that needs to be bridged.
-            """)
-            fig_gauge = go.Figure(go.Indicator(
-                mode = "gauge+number+delta",
-                value = meghalaya_val * 100,
-                domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "Meghalaya Child Enrolment %"},
-                delta = {'reference': bihar_val * 100, 'increasing': {'color': "green"}, 'decreasing': {'color': "red"}},
-                gauge = {
-                    'axis': {'range': [None, 60], 'tickwidth': 1, 'tickcolor': "darkblue"},
-                    'bar': {'color': "#d32f2f"},
-                    'steps': [
-                        {'range': [0, 25], 'color': "#ffcdd2"},
-                        {'range': [25, 60], 'color': "white"}],
-                    'threshold': {
-                        'line': {'color': "green", 'width': 4},
-                        'thickness': 0.75,
-                        'value': bihar_val * 100}}))
-            st.plotly_chart(fig_gauge, use_container_width=True)
-            st.caption(f"Benchmark: High-Volume State (Bihar) at {bihar_val*100:.1f}%")
+filtered_df = df.loc[mask]
 
-        with col_y:
-            st.markdown("""
-            **Action Plan (Priority List):**
-            This table identifies specific districts within the underperforming state that have the lowest enrolment ratios. These are the recommended locations for immediate deployment of mobile enrolment vans.
-            """)
-            st.subheader("📍 Target Districts for Mobile Units")
-            
-            meg_df = df[df['state'] == 'Meghalaya']
-            meg_dist = meg_df.groupby('district')[['age_0_5', 'Total Enrolment']].sum().reset_index()
-            meg_dist['Ratio'] = meg_dist['age_0_5'] / meg_dist['Total Enrolment']
-            target_list = meg_dist.sort_values('Ratio').head(5)
-            
-            st.dataframe(
-                target_list.style.format({'Ratio': '{:.2%}'}).background_gradient(subset=['Ratio'], cmap='Reds_r'),
-                use_container_width=True
-            )
-    except IndexError:
-        st.error("Insufficient data to generate specific comparative insights.")
+# --- KPI Section ---
+total_enrolments = filtered_df['New_Enrolments'].sum()
+total_demo_updates = filtered_df['Demographic_Updates'].sum()
+total_bio_updates = filtered_df['Biometric_Updates'].sum()
+total_updates = total_demo_updates + total_bio_updates
+ratio = total_updates / total_enrolments if total_enrolments > 0 else total_updates
 
-# Footer (Simple, no branding)
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    st.markdown(f'<div class="metric-card"><div class="metric-title">New Enrolments</div><div class="metric-value highlight-green">{total_enrolments:,.0f}</div></div>', unsafe_allow_html=True)
+with c2:
+    st.markdown(f'<div class="metric-card"><div class="metric-title">Demographic Updates</div><div class="metric-value highlight-blue">{total_demo_updates:,.0f}</div></div>', unsafe_allow_html=True)
+with c3:
+    st.markdown(f'<div class="metric-card"><div class="metric-title">Biometric Updates</div><div class="metric-value highlight-orange">{total_bio_updates:,.0f}</div></div>', unsafe_allow_html=True)
+with c4:
+    st.markdown(f'<div class="metric-card"><div class="metric-title">Update-to-Enrol Ratio</div><div class="metric-value highlight-red">{ratio:.1f}x</div></div>', unsafe_allow_html=True)
+
+# KPI Detailed Explanation
+st.markdown("""
+<div class="guide-box">
+    <span class="insight-header">📋 How to Read the KPIs:</span>
+    <ul>
+        <li><strong>New Enrolments:</strong> Number of unique Aadhaar IDs generated. A decline here isn't bad—it indicates high saturation.</li>
+        <li><strong>Updates (Demo/Bio):</strong> Volume of changes to existing IDs. This is your primary workload now.</li>
+        <li><strong>Update-to-Enrol Ratio:</strong> The critical "Saturation Metric." 
+            <ul>
+                <li><strong>< 5x:</strong> Growth Phase. Prioritize onboarding new users.</li>
+                <li><strong>5x - 14x:</strong> Transition Phase. Balance onboarding and maintenance.</li>
+                <li><strong>> 14x:</strong> Mature Phase. Infrastructure should be 90% service-oriented.</li>
+            </ul>
+        </li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
+
+# --- Row 1: Comparison and Growth ---
 st.markdown("---")
-st.caption("Ministry of Electronics and Information Technology (MeitY) | Confidential Policy Draft | AEMS v1.0")
+col_growth_1, col_growth_2 = st.columns([1, 1])
+
+with col_growth_1:
+    st.subheader("📊 Category Radar Comparison")
+    categories = ['Enrolment', 'Demographic', 'Biometric']
+    values = [total_enrolments, total_demo_updates, total_bio_updates]
+    max_val = max(values) if max(values) > 0 else 1
+    norm_values = [v/max_val for v in values]
+    
+    fig_radar = go.Figure(data=go.Scatterpolar(r=norm_values, theta=categories, fill='toself', line_color='#007bff'))
+    fig_radar.update_layout(polar=dict(radialaxis=dict(visible=False)), showlegend=False, height=400)
+    st.plotly_chart(fig_radar, use_container_width=True)
+    
+    with st.expander("🔍 Deep Detail: Radar Analysis"):
+        st.write("""
+        This chart visualizes the "Functional Identity" of your operations.
+        - **Pull toward Enrolment:** Indicates the region is still in an "Acquisition" mode. You need more mobile camps and field staff.
+        - **Pull toward Demographic:** Suggests high residential mobility or data correction needs (names, addresses). This can often be handled via online portals or kiosks.
+        - **Pull toward Biometric:** This is the most hardware-intensive need. It implies users are updating photos or fingerprints (mandatory at ages 5 and 15). This requires physical centers with high-end scanners.
+        """)
+
+with col_growth_2:
+    st.subheader("📈 Cumulative Growth Comparison")
+    daily_growth = filtered_df.groupby('date')[['New_Enrolments', 'Total_Updates']].sum().cumsum().reset_index()
+    fig_cum = go.Figure()
+    fig_cum.add_trace(go.Scatter(x=daily_growth['date'], y=daily_growth['New_Enrolments'], name='New Enrolments', fill='tozeroy'))
+    fig_cum.add_trace(go.Scatter(x=daily_growth['date'], y=daily_growth['Total_Updates'], name='Total Updates', fill='tonexty'))
+    fig_cum.update_layout(title="Volume Progression", hovermode="x unified", height=400, template="plotly_white")
+    st.plotly_chart(fig_cum, use_container_width=True)
+    
+    with st.expander("🔍 Deep Detail: Growth Velocity"):
+        st.write("""
+        This chart shows the "Area Under the Curve," representing the total historical workload.
+        - **The Gap:** The vertical distance between 'Total Updates' and 'New Enrolments' is your **Cumulative Maintenance Burden**. 
+        - **Slope Analysis:** If the slope of the 'Updates' line is getting steeper over time, it means your existing user base is becoming more active, even if new enrolments are flat.
+        - **Strategic Use:** Use this to project future staffing needs based on the historical acceleration of the update volume.
+        """)
+
+# --- Row 2: Seasonality Heatmap & Monthly Trends ---
+st.markdown("---")
+col_seasonal_1, col_seasonal_2 = st.columns(2)
+
+with col_seasonal_1:
+    st.subheader("🗓️ Weekly Operational Peaks")
+    day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    heatmap_data = filtered_df.groupby('day_of_week')[['Total_Updates']].mean().reindex(day_order).reset_index()
+    fig_heat = px.bar(heatmap_data, x='day_of_week', y='Total_Updates', color='Total_Updates',
+                     color_continuous_scale='Viridis', labels={'Total_Updates': 'Avg Daily Load'})
+    fig_heat.update_layout(height=400, template="plotly_white", xaxis_title="")
+    st.plotly_chart(fig_heat, use_container_width=True)
+    
+    st.markdown("""
+    **Insight Detail:** This identifies **Staffing Requirements**. If Saturday/Sunday bars are higher, it indicates that users prefer weekend updates. Operationally, this means you should negotiate 'Floating Offs' for your operators to ensure 7-day coverage without increasing headcount.
+    """)
+
+with col_seasonal_2:
+    st.subheader("📅 Monthly Load Cycles")
+    month_order = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+    monthly_data = filtered_df.groupby(['month', 'month_num'])[['Total_Updates', 'New_Enrolments']].mean().sort_values('month_num').reset_index()
+    fig_month = go.Figure()
+    fig_month.add_trace(go.Bar(x=monthly_data['month'], y=monthly_data['Total_Updates'], name='Avg Updates', marker_color='#636EFA'))
+    fig_month.add_trace(go.Bar(x=monthly_data['month'], y=monthly_data['New_Enrolments'], name='Avg Enrolments', marker_color='#00CC96'))
+    fig_month.update_layout(height=400, barmode='group', template="plotly_white")
+    st.plotly_chart(fig_month, use_container_width=True)
+
+    st.markdown("""
+    **Insight Detail:** This identifies **Annual Periodicity**. Peaks in specific months (e.g., June/July) often correlate with school admissions where Aadhaar updates are mandatory. Use this to plan for seasonal 'Peak Capacity' surges.
+    """)
+
+# --- Row 3: Intensity Scatter & Regional Hotspots ---
+st.markdown("---")
+st.subheader("🎯 Strategic Intensity & Regional Hotspots")
+col_scatter, col_geo_list = st.columns([1.5, 1])
+
+with col_scatter:
+    # Analyzing the relationship between Demo and Bio updates at a granular level
+    geo_scatter = filtered_df.groupby('state' if not selected_districts else 'district')[['Demographic_Updates', 'Biometric_Updates', 'New_Enrolments']].sum().reset_index()
+    geo_scatter['Size'] = geo_scatter['New_Enrolments'].apply(lambda x: np.log(x + 1) * 5) # Scale for bubble
+    
+    fig_scatter = px.scatter(
+        geo_scatter, x='Demographic_Updates', y='Biometric_Updates', 
+        text='state' if not selected_districts else 'district',
+        size='New_Enrolments', color='Demographic_Updates',
+        title="Update Type Intensity by Region",
+        labels={'Demographic_Updates': 'Demographic Volume', 'Biometric_Updates': 'Biometric Volume'},
+        template="plotly_white"
+    )
+    st.plotly_chart(fig_scatter, use_container_width=True)
+    
+    with st.expander("🔍 Deep Detail: Intensity Scatter Analysis"):
+        st.write("""
+        This 4-Quadrant analysis identifies the **Profile** of each region:
+        - **High Demo / High Bio (Top Right):** Major Hubs. These regions need large, permanent "Mega Centers" with specialized counters for both types.
+        - **High Demo / Low Bio (Bottom Right):** "Digital First" regions. These areas might benefit from more self-service kiosks as demographic updates are easier to digitize.
+        - **Low Demo / High Bio (Top Left):** "Hardware Deficit" regions. These are likely rural or high-churn areas where mandatory biometric updates (MBU) are the main driver. They need more mobile biometric kits.
+        - **Bubble Size:** Represents new enrolments. A small bubble far in the top-right is the definition of a "Saturated Service-Only" district.
+        """)
+
+with col_geo_list:
+    st.markdown("#### 🏆 Performance Benchmarking")
+    geo_group = filtered_df.groupby('state' if not selected_districts else 'district')[['New_Enrolments', 'Total_Updates']].sum().reset_index()
+    geo_group['Update_Ratio'] = geo_group['Total_Updates'] / geo_group['New_Enrolments'].replace(0, 1)
+    
+    # Sort and highlight
+    top_efficiency = geo_group.sort_values('Update_Ratio', ascending=False).head(10)
+    st.write("**Top 10 Saturated Regions (High Ratio):**")
+    st.dataframe(top_efficiency[['state' if not selected_districts else 'district', 'Update_Ratio']].style.format({"Update_Ratio": "{:.2f}x"}).background_gradient(cmap='Reds'), use_container_width=True)
+    
+    st.markdown("""
+    **What this list tells you:** These are the regions where the old "Enrolment First" KPIs are no longer applicable. Management should judge these centers based on **Customer Waiting Time (CWT)** and **Update Success Rate** rather than "IDs generated."
+    """)
+
+# --- Row 4: Demographic Breakdowns & Lifecycle Segments ---
+st.markdown("---")
+st.subheader("👥 User Segmentation & Lifecycle Analysis")
+col_age_1, col_age_2 = st.columns(2)
+
+with col_age_1:
+    st.markdown("#### New Enrolment Funnel")
+    enrol_age = pd.DataFrame({
+        'Age Group': ['Infant (0-5)', 'Youth (5-17)', 'Adult (18+)'],
+        'Count': [filtered_df['age_0_5'].sum(), filtered_df['age_5_17'].sum(), filtered_df['age_18_greater'].sum()]
+    })
+    fig_age_enrol = px.pie(enrol_age, values='Count', names='Age Group', hole=0.5, 
+                           color_discrete_sequence=px.colors.sequential.Greens_r)
+    st.plotly_chart(fig_age_enrol, use_container_width=True)
+    
+    st.markdown("""
+    **Strategic Insight:** In a perfect system, 100% of this chart should be **0-5 years**. If the **18+ years** slice is large, it indicates a significant "Last Mile" failure where adults are only now getting IDs—likely due to mandatory linkings for welfare or banking.
+    """)
+
+with col_age_2:
+    st.markdown("#### Operational Complexity Split")
+    update_type = pd.DataFrame({
+        'Type': ['Demographic (Low Complexity)', 'Biometric (High Complexity)'],
+        'Count': [total_demo_updates, total_bio_updates]
+    })
+    fig_upd_type = px.pie(update_type, values='Count', names='Type', hole=0.5, 
+                           color_discrete_sequence=px.colors.sequential.Blues_r)
+    st.plotly_chart(fig_upd_type, use_container_width=True)
+
+    st.markdown("""
+    **Strategic Insight:** Biometric updates take on average **3x longer** to process than demographic ones. If the "High Complexity" slice is growing, your "Throughput" (number of people per hour) will naturally decrease. Management must not penalize centers for lower volumes if their complexity mix is shifting toward Biometrics.
+    """)
+
+# --- Row 5: Detailed Data Inspection ---
+st.markdown("---")
+with st.expander("🔍 Deep Dive: Master Transaction Log (Auditable Data)"):
+    st.markdown("""
+    **How to use this table:** 1. Click headers to sort by date or volume. 
+    2. Use this for 'Spot Audits' of specific districts.
+    3. Look for 'Zero Enrolment' days—these are the days a district effectively transitioned into a pure Service Center.
+    """)
+    st.dataframe(filtered_df.sort_values(['date', 'Total_Updates'], ascending=[False, False]), use_container_width=True)
+
+# --- Strategic Recommendations (Dynamic based on data) ---
+st.markdown("---")
+st.markdown("### 🎯 Final Strategic Directives")
+
+# Dynamic logic for final advice
+avg_ratio = ratio
+if avg_ratio > 10:
+    status_label = "MATURE SERVICE ECOSYSTEM"
+    status_color = "#FF4B4B"
+else:
+    status_label = "HYBRID GROWTH ECOSYSTEM"
+    status_color = "#007bff"
+
+st.markdown(f"""
+<div style='border: 2px solid {status_color}; padding: 20px; border-radius: 10px; text-align: center;'>
+    <h2 style='color: {status_color}; margin: 0;'>CURRENT STRATEGY: {status_label}</h2>
+    <p>Based on the calculated Update-to-Enrol ratio of <strong>{avg_ratio:.1f}x</strong></p>
+</div>
+""", unsafe_allow_html=True)
+
+rec_col1, rec_col2 = st.columns(2)
+with rec_col1:
+    st.success("#### 🛠️ Operational Pivot")
+    st.markdown("""
+    - **Update Center Conversion:** In all regions showing > 15x ratio, convert Enrolment Kits to 'Update Kiosks'.
+    - **Skill Training:** Shift operator training from "How to enroll" to "How to verify biometric consistency" to reduce update rejection rates.
+    """)
+
+with rec_col2:
+    st.warning("#### 📡 Infrastructure Deployment")
+    st.markdown("""
+    - **Hardware Refresh:** Prioritize Biometric Scanner upgrades in the 'Low Demo / High Bio' quadrants identified in the scatter plot.
+    - **Mobile Strategy:** If adult enrolments (18+) are high in specific districts, deploy short-term 'Saturation Camps' to close the gap quickly and move to maintenance.
+    """)
+
+# Credit bar removed as requested.

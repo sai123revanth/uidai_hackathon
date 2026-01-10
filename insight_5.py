@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
+import os
 
 # --- Page Config ---
 st.set_page_config(
@@ -99,31 +100,44 @@ st.markdown("""
 @st.cache_data
 def load_and_prep_data():
     try:
-        # Load Biometric Data
+        # --- Biometric Data (All Segments) ---
         bio_files = [
             'api_data_aadhar_biometric_0_500000.csv',
-            'api_data_aadhar_biometric_500000_1000000.csv'
+            'api_data_aadhar_biometric_500000_1000000.csv',
+            'api_data_aadhar_biometric_1000000_1500000.csv',
+            'api_data_aadhar_biometric_1500000_1861108.csv'
         ]
-        df_bio = pd.concat([pd.read_csv(f) for f in bio_files], ignore_index=True)
+        # Filter for files that actually exist to prevent crash if user hasn't downloaded all
+        existing_bio = [f for f in bio_files if os.path.exists(f)]
+        if not existing_bio: st.error("No Biometric CSV files found!"); return None, None, None
+        df_bio = pd.concat([pd.read_csv(f) for f in existing_bio], ignore_index=True)
         
-        # Load Demographic Data
+        # --- Demographic Data (All Segments) ---
         demo_files = [
+            'api_data_aadhar_demographic_0_500000.csv',
+            'api_data_aadhar_demographic_500000_1000000.csv',
             'api_data_aadhar_demographic_1000000_1500000.csv',
-            'api_data_aadhar_demographic_1500000_2000000.csv'
+            'api_data_aadhar_demographic_1500000_2000000.csv',
+            'api_data_aadhar_demographic_2000000_2071700.csv'
         ]
-        df_demo = pd.concat([pd.read_csv(f) for f in demo_files], ignore_index=True)
+        existing_demo = [f for f in demo_files if os.path.exists(f)]
+        if not existing_demo: st.error("No Demographic CSV files found!"); return None, None, None
+        df_demo = pd.concat([pd.read_csv(f) for f in existing_demo], ignore_index=True)
         
-        # Load Enrolment Data (for context/population proxy)
+        # --- Enrolment Data (All Segments) ---
         enrol_files = [
             'api_data_aadhar_enrolment_0_500000.csv',
-            'api_data_aadhar_enrolment_500000_1000000.csv'
+            'api_data_aadhar_enrolment_500000_1000000.csv',
+            'api_data_aadhar_enrolment_1000000_1006029.csv'
         ]
-        df_enrol = pd.concat([pd.read_csv(f) for f in enrol_files], ignore_index=True)
+        existing_enrol = [f for f in enrol_files if os.path.exists(f)]
+        if not existing_enrol: st.error("No Enrolment CSV files found!"); return None, None, None
+        df_enrol = pd.concat([pd.read_csv(f) for f in existing_enrol], ignore_index=True)
 
         return df_bio, df_demo, df_enrol
 
-    except FileNotFoundError as e:
-        st.error(f"File not found: {e}. Please ensure all CSV files are in the same directory.")
+    except Exception as e:
+        st.error(f"Error loading files: {e}. Please check filenames.")
         return None, None, None
 
 def process_data(df_bio, df_demo, df_enrol):

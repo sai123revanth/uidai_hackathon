@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UDAAN - The Demographic Dividend</title>
+    <title>UDAAN - Aadhar Operational Friction Analytics</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <!-- Import Plus Jakarta Sans and Rajdhani -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet">
@@ -201,7 +201,7 @@
 
         .section-title {
             font-size: 1.5rem;
-            background: linear-gradient(to right, #ffffff, #818cf8);
+            background: linear-gradient(to right, #ffffff, #f472b6); /* Pinkish gradient for friction */
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
@@ -239,31 +239,39 @@
             font-weight: 500;
         }
 
-        .ai-status-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .math-block {
+            background: rgba(0, 0, 0, 0.3);
             padding: 12px;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            margin-bottom: 16px;
-            flex-shrink: 0;
+            border-radius: 8px;
+            font-family: 'Rajdhani', monospace;
+            text-align: center;
+            margin: 10px 0;
+            border: 1px dashed var(--border);
+            font-size: 1.1rem;
+            color: var(--accent-1);
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #22c55e;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #22c55e;
-            animation: pulse 2s infinite;
+        .status-badge-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
         }
 
-        @keyframes pulse {
-            0% { opacity: 1; box-shadow: 0 0 10px #22c55e; }
-            50% { opacity: 0.5; box-shadow: 0 0 20px #22c55e; }
-            100% { opacity: 1; box-shadow: 0 0 10px #22c55e; }
+        .status-badge {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .badge-green {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         .nav-back-btn {
@@ -326,48 +334,68 @@
                 <i data-lucide="arrow-left"></i> Back to Map
             </button>
 
-            <!-- Updated Section Header to reflect "Mapping Human Mobility" -->
+            <!-- Updated Section Header for Operational Friction -->
             <div class="section-header">
-                <i data-lucide="map" style="color: var(--accent-3); width: 28px; height: 28px; margin-top: 4px;"></i>
+                <i data-lucide="alert-triangle" style="color: var(--accent-3); width: 28px; height: 28px; margin-top: 4px;"></i>
                 <div>
-                    <h1 class="section-title" style="font-size: 1.25rem; line-height: 1.1;">Mapping Human Mobility</h1>
-                    <div style="font-size: 0.8rem; color: var(--accent-1); margin-top: 6px;">Migration Hotspots</div>
+                    <h1 class="section-title" style="font-size: 1.25rem; line-height: 1.1;">Operational Friction</h1>
+                    <div style="font-size: 0.8rem; color: var(--accent-1); margin-top: 6px;">Ecosystem Health Monitor</div>
                 </div>
             </div>
 
-            <!-- Intro Section: Context setting -->
+            <!-- Intro Section: Executive Summary -->
             <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
-                Migration patterns are often hidden in the data. By comparing <strong>Demographic Updates</strong> (like changing a home address) against <strong>Biometric Updates</strong> (physical identity markers), we can identify where people are moving from and where they are settling.
+                This module acts as an advanced operational intelligence tool. It processes millions of records to identify <strong>"Friction Zones"</strong>—districts where residents face disproportionate difficulty with biometric authentication.
             </p>
 
             <!-- Key Insights Header -->
             <h3 style="color: white; font-size: 1.1rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <i data-lucide="activity" style="width: 16px; height: 16px; color: var(--accent-2);"></i> Key Insights from the Data
+                <i data-lucide="activity" style="width: 16px; height: 16px; color: var(--accent-2);"></i> Detection Logic
             </h3>
 
-            <!-- Insight Card 1: The Big Three -->
+            <!-- Insight Card 1: The Core Problem -->
             <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border);">
                 <div style="margin-bottom: 8px;">
-                    <strong style="color: var(--accent-3); display:block; font-size: 0.85rem; text-transform:uppercase; letter-spacing: 0.05em;">The Big Three</strong> 
+                    <strong style="color: var(--accent-3); display:block; font-size: 0.85rem; text-transform:uppercase; letter-spacing: 0.05em;">The Anomaly</strong> 
                 </div>
                 <p style="font-size: 0.85rem; color: #ddd; line-height: 1.5; margin: 0;">
-                    <span style="color: #fff; font-weight: 600;">Uttar Pradesh, Bihar, and Maharashtra</span> see the highest volume of activity. This indicates these states are major hubs for either sending or receiving large populations.
+                    In a healthy ecosystem, Biometric and Demographic updates often correlate. An anomaly exists when <strong style="color:#fff">Biometric Updates surge</strong> while Demographic changes remain low.
                 </p>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: var(--text-secondary);">
+                    <strong>Cause:</strong> Manual labor (fingerprint wear) or hardware failure.<br>
+                    <strong>Effect:</strong> Authentication failure for rations & banking.
+                </div>
             </div>
 
-            <!-- Insight Card 2: The Paper Trail -->
+            <!-- Insight Card 2: Methodology & Formula -->
             <div class="info-card" style="margin-bottom: 12px;">
-                <span class="info-label" style="color: var(--accent-1); font-size: 0.8rem;">The "Paper Trail"</span>
-                <p style="font-size: 0.85rem; color: #ddd; margin-top: 6px; line-height: 1.5;">
-                    When a person updates their address but <em>not</em> their biometrics, it is a strong signal of <strong>relocation</strong> rather than just routine profile maintenance.
-                </p>
+                <span class="info-label" style="color: var(--accent-1); font-size: 0.8rem;">Methodology: The Friction Index</span>
+                
+                <!-- Math Formula Display -->
+                <div class="math-block">
+                    Total Biometric Updates<br>
+                    -------------------------<br>
+                    (Total Demographic + 1)
+                </div>
+
+                <!-- Color Coded Status -->
+                <div class="status-badge-container">
+                    <div class="status-badge badge-green">
+                        <div style="color: #4ade80; font-weight: 700; font-size: 1rem;">&lt; 1.0</div>
+                        <div style="font-size: 0.7rem; color: #bbf7d0; text-transform: uppercase;">Healthy</div>
+                    </div>
+                    <div class="status-badge badge-red">
+                        <div style="color: #f87171; font-weight: 700; font-size: 1rem;">&gt; 2.0</div>
+                        <div style="font-size: 0.7rem; color: #fecaca; text-transform: uppercase;">Critical</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Insight Card 3: Predictive Planning -->
-            <div class="info-card">
-                <span class="info-label" style="color: var(--accent-2); font-size: 0.8rem;">Predictive Planning</span>
+            <!-- Insight Card 3: The Solution -->
+            <div class="info-card" style="border-left: 3px solid var(--accent-2);">
+                <span class="info-label" style="color: var(--accent-2); font-size: 0.8rem;">Strategic Solution</span>
                 <p style="font-size: 0.85rem; color: #ddd; margin-top: 6px; line-height: 1.5;">
-                    By tracking where <strong>"Demographic Update Intensity"</strong> is highest, local governments can predict the need for new schools, hospitals, and ration card services before these areas become overcrowded.
+                    Administrators can immediately identify high-friction districts and <strong>deploy Iris Scanners</strong>. This bypasses the fingerprint limitations caused by manual labor, restoring service access.
                 </p>
             </div>
 

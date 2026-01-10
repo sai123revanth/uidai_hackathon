@@ -946,14 +946,14 @@
                         </div>
                     </div>
 
-                    <!-- Family Migration Index -->
-                    <div class="module-card" data-module="Family Migration">
+                    <!-- Operational Friction Module (Formerly Family Migration) -->
+                    <div class="module-card" data-module="Operational Friction">
                         <div class="module-icon icon-migration">
-                            <i data-lucide="milestone"></i>
+                            <i data-lucide="activity"></i>
                         </div>
                         <div class="module-content">
-                            <span class="module-text">Family Migration</span>
-                            <span class="module-subtext">Multi-generational tracking</span>
+                            <span class="module-text">Operational Friction</span>
+                            <span class="module-subtext">Ecosystem Health Monitor</span>
                         </div>
                     </div>
 
@@ -1052,6 +1052,8 @@ moduleCards.forEach(card => {
             window.location.href = 'insight_3.html';
         } else if (moduleName === "Mapping Human Mobility") {
             window.location.href = 'insight_4.html';
+        } else if (moduleName === "Operational Friction") {
+            window.location.href = 'insight_5.html';
         }
     });
 });
@@ -1066,7 +1068,7 @@ async function handleAISearch() {
 
     const modules = [
         "AAdhaar analytics module", "Hidden Hyper-Growth", "The Strategic Pivot", 
-        "Mapping Human Mobility", "Family Migration", "Voter Readiness", 
+        "Mapping Human Mobility", "Operational Friction", "Voter Readiness", 
         "Delimitation Data", "Fraud Prevention"
     ];
 

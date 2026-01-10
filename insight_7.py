@@ -218,31 +218,7 @@ if selected_clusters:
     df_filtered = df_filtered[df_filtered['Cluster'].isin(selected_clusters)]
 
 # -----------------------------------------------------------------------------
-# 4. SIDEBAR (Documentation & Context)
-# -----------------------------------------------------------------------------
-with st.sidebar:
-    st.title("ℹ️ About Pulse 2026")
-    st.markdown("---")
-    st.info("""
-    **Understanding the DBDI:**
-    
-    🔴 **> 2.5 (Red):** High Correction. People are fixing names/addresses aggressively. Signals strict KYC or documentation fears.
-    
-    🔵 **< 0.2 (Blue):** High Compliance. People only update biometrics when forced. Signals low digital usage.
-    """)
-    
-    st.markdown("### 📚 Analysis Types")
-    st.markdown("""
-    * **Univariate:** Single variable analysis (e.g., Distribution of DBDI).
-    * **Bivariate:** Two variable relationship (e.g., Updates vs Corrections).
-    * **Trivariate:** Three variable interaction (e.g., Bio vs Demo vs Enrolment).
-    """)
-    
-    st.caption("UIDAI Data Hackathon 2026 | Prototype v2.1")
-    st.caption("Theme: Navy Blue & Gold")
-
-# -----------------------------------------------------------------------------
-# 5. MAIN DASHBOARD UI
+# 4. MAIN DASHBOARD UI (Sidebar Removed)
 # -----------------------------------------------------------------------------
 
 # Header Section
@@ -271,7 +247,7 @@ with col4:
     st.metric("High Anxiety Districts", anxiety_districts, "Need Intervention")
 
 # -----------------------------------------------------------------------------
-# 6. TABS & VISUALIZATIONS
+# 5. TABS & VISUALIZATIONS
 # -----------------------------------------------------------------------------
 
 # Added a new tab for "Statistical Deep Dive"

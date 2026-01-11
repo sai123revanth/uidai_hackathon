@@ -1,0 +1,25 @@
+name: Keep Streamlit Apps Awake
+
+on:
+  schedule:
+    # Runs at minute 0 of every hour
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping_apps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Run Pinger Script
+        run: python pinger.py
